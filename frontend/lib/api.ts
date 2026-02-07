@@ -1,6 +1,7 @@
 import axios from 'axios'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4321/api'
+// Use relative /api so Next.js can proxy to backend; set NEXT_PUBLIC_API_URL for a different backend
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api'
 
 const api = axios.create({
   baseURL: API_URL,

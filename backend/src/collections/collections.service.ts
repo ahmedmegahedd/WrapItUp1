@@ -7,6 +7,29 @@ import { UpdateCollectionDto } from './dto/update-collection.dto';
 export class CollectionsService {
   constructor(private supabaseService: SupabaseService) {}
 
+  /**
+   * When collection.image_url is null, use the first product's primary image (by display_order)
+   * as the display image. Does NOT overwrite a manually set collection image.
+   */
+  private getCollectionDisplayImage(collection: any): string | null {
+    if (collection.image_url != null && collection.image_url !== '') {
+      return collection.image_url;
+    }
+    const cps = collection.collection_products;
+    if (!cps || !Array.isArray(cps)) return null;
+    const sorted = [...cps]
+      .filter((cp: any) => cp.products && (cp.products.is_active !== false))
+      .sort((a: any, b: any) => (a.display_order ?? 0) - (b.display_order ?? 0));
+    const first = sorted[0];
+    if (!first?.products?.product_images?.length) return null;
+    const images = first.products.product_images;
+    const byOrder = [...images].sort(
+      (a: any, b: any) => (a.display_order ?? 0) - (b.display_order ?? 0)
+    );
+    const primary = byOrder[0];
+    return primary?.image_url ?? null;
+  }
+
   async findAll(includeInactive = false, homepageOnly = false) {
     const supabase = this.supabaseService.getClient();
     let query = supabase
@@ -22,7 +45,9 @@ export class CollectionsService {
             slug,
             base_price,
             discount_price,
-            product_images(image_url)
+            is_active,
+            points_value,
+            product_images(image_url, display_order)
           )
         )
       `)
@@ -40,7 +65,10 @@ export class CollectionsService {
 
     if (error) throw new BadRequestException(error.message);
 
-    return data;
+    return (data || []).map((c: any) => ({
+      ...c,
+      image_url: this.getCollectionDisplayImage(c) ?? c.image_url,
+    }));
   }
 
   async findOne(id: string) {
@@ -79,6 +107,7 @@ export class CollectionsService {
         });
     }
 
+    data.image_url = this.getCollectionDisplayImage(data) ?? data.image_url;
     return data;
   }
 
@@ -119,6 +148,7 @@ export class CollectionsService {
         });
     }
 
+    data.image_url = this.getCollectionDisplayImage(data) ?? data.image_url;
     return data;
   }
 
@@ -137,6 +167,7 @@ export class CollectionsService {
         is_active: createCollectionDto.is_active ?? true,
         display_order: createCollectionDto.display_order || 0,
         show_on_homepage: createCollectionDto.show_on_homepage ?? false,
+        show_in_nav: createCollectionDto.show_in_nav ?? true,
       })
       .select()
       .single();
@@ -170,6 +201,7 @@ export class CollectionsService {
     if (updateCollectionDto.is_active !== undefined) updateData.is_active = updateCollectionDto.is_active;
     if (updateCollectionDto.display_order !== undefined) updateData.display_order = updateCollectionDto.display_order;
     if (updateCollectionDto.show_on_homepage !== undefined) updateData.show_on_homepage = updateCollectionDto.show_on_homepage;
+    if (updateCollectionDto.show_in_nav !== undefined) updateData.show_in_nav = updateCollectionDto.show_in_nav;
 
     const { error } = await supabase
       .from('collections')
@@ -202,6 +234,19 @@ export class CollectionsService {
     if (error) throw new BadRequestException(error.message);
 
     return { message: 'Collection deleted successfully' };
+  }
+
+  /** Set display order for navbar dropdown. orderedIds = array of collection ids in desired order. */
+  async updateNavOrder(orderedIds: string[]) {
+    const supabase = this.supabaseService.getAdminClient();
+    for (let i = 0; i < orderedIds.length; i++) {
+      const { error } = await supabase
+        .from('collections')
+        .update({ display_order: i })
+        .eq('id', orderedIds[i]);
+      if (error) throw new BadRequestException(error.message);
+    }
+    return { message: 'Nav order updated' };
   }
 
   private generateSlug(name: string): string {

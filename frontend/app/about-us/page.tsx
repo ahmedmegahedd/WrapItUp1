@@ -30,7 +30,7 @@ export default function AboutUsPage() {
               About WrapItUp
             </h1>
             <p className="text-xl text-gray-700 max-w-2xl mx-auto leading-relaxed">
-              A family-owned business dedicated to bringing joy and warmth to your loved ones' mornings through beautiful breakfast gifts
+              A family-owned business dedicated to bringing joy and warmth to your loved ones&apos; mornings through beautiful breakfast gifts
             </p>
           </div>
         </section>
@@ -51,7 +51,7 @@ export default function AboutUsPage() {
                   It all started when we wanted to surprise a family member with something special for their birthday. We searched for the perfect breakfast gift—something that would make their morning extraordinary and show them how much they mean to us. After struggling to find exactly what we were looking for, we realized there was an opportunity to help others create these same magical moments.
                 </p>
                 <p className="text-gray-700 leading-relaxed">
-                  Today, WrapItUp specializes in curating beautiful breakfast trays and delivering them as thoughtful gifts. Whether it's a birthday breakfast surprise, an anniversary celebration, or just a spontaneous gesture of love, we're here to help you make someone's morning special.
+                  Today, WrapItUp specializes in curating beautiful breakfast trays and delivering them as thoughtful gifts. Whether it&apos;s a birthday breakfast surprise, an anniversary celebration, or just a spontaneous gesture of love, we&apos;re here to help you make someone&apos;s morning special.
                 </p>
               </div>
 
@@ -61,7 +61,7 @@ export default function AboutUsPage() {
                   Our Mission
                 </h2>
                 <p className="text-gray-700 mb-4 leading-relaxed">
-                  Our mission is simple: to make gifting breakfast trays effortless and meaningful. We believe that every breakfast can be a celebration when shared with someone you love, and we're committed to helping you create those moments.
+                  Our mission is simple: to make gifting breakfast trays effortless and meaningful. We believe that every breakfast can be a celebration when shared with someone you love, and we&apos;re committed to helping you create those moments.
                 </p>
                 <p className="text-gray-700 leading-relaxed">
                   We carefully select each breakfast tray in our collection, ensuring that every product meets our high standards for quality and beauty. From elegant designs perfect for romantic mornings to cheerful options ideal for birthday surprises, we offer a wide range of breakfast gifts to suit every occasion and personality.
@@ -74,13 +74,13 @@ export default function AboutUsPage() {
                   Why Breakfast Gifts?
                 </h2>
                 <p className="text-gray-700 mb-4 leading-relaxed">
-                  Breakfast is often called the most important meal of the day, but it's also one of the most intimate. Sharing breakfast with someone you love creates a special connection and sets a positive tone for the entire day. That's why breakfast gifts have become such a meaningful way to show someone you care.
+                  Breakfast is often called the most important meal of the day, but it&apos;s also one of the most intimate. Sharing breakfast with someone you love creates a special connection and sets a positive tone for the entire day. That&apos;s why breakfast gifts have become such a meaningful way to show someone you care.
                 </p>
                 <p className="text-gray-700 mb-4 leading-relaxed">
-                  A beautiful breakfast tray delivered as a surprise gift transforms an ordinary morning into an extraordinary experience. It's not just about the food or the tray itself—it's about the thought, the care, and the love that goes into choosing and sending such a personal gift.
+                  A beautiful breakfast tray delivered as a surprise gift transforms an ordinary morning into an extraordinary experience. It&apos;s not just about the food or the tray itself—it&apos;s about the thought, the care, and the love that goes into choosing and sending such a personal gift.
                 </p>
                 <p className="text-gray-700 leading-relaxed">
-                  Whether you're celebrating a birthday, marking an anniversary, or simply wanting to brighten someone's day, a breakfast gift from WrapItUp is a perfect way to show your love and appreciation.
+                  Whether you&apos;re celebrating a birthday, marking an anniversary, or simply wanting to brighten someone&apos;s day, a breakfast gift from WrapItUp is a perfect way to show your love and appreciation.
                 </p>
               </div>
 
@@ -93,7 +93,7 @@ export default function AboutUsPage() {
                   <li className="flex items-start">
                     <span className="text-pink-500 mr-3 text-xl">✓</span>
                     <span className="leading-relaxed">
-                      <strong className="text-gray-900">Family-Owned & Personal:</strong> As a family business, we treat every order with the same care and attention we'd give to our own loved ones.
+                      <strong className="text-gray-900">Family-Owned & Personal:</strong> As a family business, we treat every order with the same care and attention we&apos;d give to our own loved ones.
                     </span>
                   </li>
                   <li className="flex items-start">
@@ -123,10 +123,10 @@ export default function AboutUsPage() {
                   Our Commitment to You
                 </h2>
                 <p className="text-gray-700 mb-4 leading-relaxed">
-                  At WrapItUp, we're committed to making your gifting experience as smooth and joyful as possible. We understand that when you're choosing a gift for someone special, you want everything to be perfect—from the selection process to the delivery.
+                  At WrapItUp, we&apos;re committed to making your gifting experience as smooth and joyful as possible. We understand that when you&apos;re choosing a gift for someone special, you want everything to be perfect—from the selection process to the delivery.
                 </p>
                 <p className="text-gray-700 leading-relaxed">
-                  That's why we offer a carefully curated collection of breakfast trays, easy ordering, flexible delivery options, and personalized touches like card messages. We're here to help you create moments that matter, one breakfast gift at a time.
+                  That&apos;s why we offer a carefully curated collection of breakfast trays, easy ordering, flexible delivery options, and personalized touches like card messages. We&apos;re here to help you create moments that matter, one breakfast gift at a time.
                 </p>
               </div>
 

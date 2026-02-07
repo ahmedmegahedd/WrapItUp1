@@ -52,8 +52,22 @@ export async function getTimeSlots() {
   }
 }
 
+export async function getAvailableDates(startDate?: string, endDate?: string) {
+  try {
+    const params: any = {}
+    if (startDate) params.startDate = startDate
+    if (endDate) params.endDate = endDate
+    const response = await api.get('/delivery/available-dates', { params })
+    return response.data
+  } catch (error) {
+    console.error('Error fetching available dates:', error)
+    return []
+  }
+}
+
 export async function getDisabledDates() {
   try {
+    // Legacy endpoint for backward compatibility
     const response = await api.get('/delivery/disabled-dates')
     return response.data
   } catch (error) {

@@ -7,6 +7,7 @@ import api from '@/lib/api'
 export default function AdminCollectionsPage() {
   const [collections, setCollections] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
     loadCollections()
@@ -35,6 +36,15 @@ export default function AdminCollectionsPage() {
     }
   }
 
+  const searchLower = search.trim().toLowerCase()
+  const filteredCollections = searchLower
+    ? collections.filter(
+        (c) =>
+          (c.name || '').toLowerCase().includes(searchLower) ||
+          (c.slug || '').toLowerCase().includes(searchLower)
+      )
+    : collections
+
   if (loading) {
     return <div>Loading...</div>
   }
@@ -51,6 +61,21 @@ export default function AdminCollectionsPage() {
         </Link>
       </div>
 
+      <div className="mb-4">
+        <input
+          type="search"
+          placeholder="Search collections by name or slug..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+        />
+        {search && (
+          <p className="mt-1 text-sm text-gray-500">
+            Showing {filteredCollections.length} of {collections.length} collections
+          </p>
+        )}
+      </div>
+
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <table className="w-full">
           <thead className="bg-gray-50">
@@ -63,7 +88,7 @@ export default function AdminCollectionsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {collections.map((collection) => (
+            {filteredCollections.map((collection) => (
               <tr key={collection.id}>
                 <td className="px-6 py-4 whitespace-nowrap">{collection.name}</td>
                 <td className="px-6 py-4 whitespace-nowrap">{collection.slug}</td>

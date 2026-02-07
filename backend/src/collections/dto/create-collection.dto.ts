@@ -28,6 +28,10 @@ export class CreateCollectionDto {
   @IsOptional()
   show_on_homepage?: boolean;
 
+  @IsBoolean()
+  @IsOptional()
+  show_in_nav?: boolean;
+
   @IsArray()
   @IsString({ each: true })
   @IsOptional()

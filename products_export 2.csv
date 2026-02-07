@@ -1,0 +1,495 @@
+Handle,Title,Body (HTML),Vendor,Product Category,Type,Tags,Published,Option1 Name,Option1 Value,Option1 Linked To,Option2 Name,Option2 Value,Option2 Linked To,Option3 Name,Option3 Value,Option3 Linked To,Variant SKU,Variant Grams,Variant Inventory Tracker,Variant Inventory Qty,Variant Inventory Policy,Variant Fulfillment Service,Variant Price,Variant Compare At Price,Variant Requires Shipping,Variant Taxable,Unit Price Total Measure,Unit Price Total Measure Unit,Unit Price Base Measure,Unit Price Base Measure Unit,Variant Barcode,Image Src,Image Position,Image Alt Text,Gift Card,SEO Title,SEO Description,Google Shopping / Google Product Category,Google Shopping / Gender,Google Shopping / Age Group,Google Shopping / MPN,Google Shopping / Condition,Google Shopping / Custom Product,Google Shopping / Custom Label 0,Google Shopping / Custom Label 1,Google Shopping / Custom Label 2,Google Shopping / Custom Label 3,Google Shopping / Custom Label 4,Google: Custom Product (product.metafields.mm-google-shopping.custom_product),Product rating count (product.metafields.reviews.rating_count),Accessory size (product.metafields.shopify.accessory-size),Allergen information (product.metafields.shopify.allergen-information),Arrangement (product.metafields.shopify.arrangement),Balloon shape (product.metafields.shopify.balloon-shape),Birthday candle design (product.metafields.shopify.birthday-candle-design),Candle type (product.metafields.shopify.candle-type),Celebration type (product.metafields.shopify.celebration-type),Color (product.metafields.shopify.color-pattern),Dietary preferences (product.metafields.shopify.dietary-preferences),Food product form (product.metafields.shopify.food-product-form),Product form (product.metafields.shopify.product-form),Recommended age group (product.metafields.shopify.recommended-age-group),Scent (product.metafields.shopify.scent),Shape (product.metafields.shopify.shape),Tableware material (product.metafields.shopify.tableware-material),Toy/Game material (product.metafields.shopify.toy-game-material),Complementary products (product.metafields.shopify--discovery--product_recommendation.complementary_products),Related products (product.metafields.shopify--discovery--product_recommendation.related_products),Related products settings (product.metafields.shopify--discovery--product_recommendation.related_products_display),Search product boosts (product.metafields.shopify--discovery--product_search_boost.queries),Variant Image,Variant Weight Unit,Variant Tax Code,Cost per item,Status
+fruits-box,Fruits Box (large size) 1,"<h1 data-mce-fragment=""1""><span data-mce-fragment=""1"">Fruits Box</span></h1>
+<p data-mce-fragment=""1""><span data-mce-fragment=""1""></span><em>Stay healthy with this special mix of fresh fruits.</em></p>
+<p data-mce-fragment=""1""><em>What`s inside?</em></p>
+<ul>
+<li><span data-mce-fragment=""1"">A mix of seasonal fruits</span></li>
+<li><span data-mce-fragment=""1"">Nuts</span></li>
+<li><span data-mce-fragment=""1"">Biscuits</span></li>
+<li>Chocolate spread </li>
+<li>Flower</li>
+<li><span data-mce-fragment=""1"">Balloon and card that match your occasion </span></li>
+</ul>
+<ul data-mce-fragment=""1"">
+<li style=""direction: rtl; text-align: right;"">
+</li>
+</ul>
+<div id=""gtx-trans"" style=""position: absolute; left: -9px; top: 80.7812px;"">
+<div class=""gtx-trans-icon""></div>
+</div>",Wrap-it up,,"","",true,Title,Default Title,,,,,,,,"",0.0,shopify,97,deny,manual,2000.00,,true,false,,,,,"",https://cdn.shopify.com/s/files/1/0612/6927/8772/products/4.png?v=1668107025,1,"",false,,"Surprise,birthday,gift,box,breakfast,wrapitup,Cheese,platter,Flower,Balloon,card,fruits,cake,Marshmallows,boxes,chocolates,Fresh,juice,love,delivery,sandwich,Dessert,danish,Cinnamon,Nutella,Brownies,unique,sweet,Waffle,Nuts,Biscuits,healthy,Special,Basket  
+",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,flower-bouquet; customized-mug-1; macron-mini-candle; customized-balloon; flowers-roche-box,"",ahead,,,kg,,,active
+fruits-box,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/69E962BA-898A-430E-9742-CD4FE50F6CA9.jpg?v=1714499265,2,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+fruits-box,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/4C2D6442-227C-484E-8339-5C348C80BD6A.jpg?v=1715939625,3,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+fruits-box,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/B3C7A56E-D55E-4BF8-AA71-CCEDD5EDE923.jpg?v=1715939625,4,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+dessert-box,Dessert Box (large size),"<h1 data-mce-fragment=""1""><span data-mce-fragment=""1"">Desserts Box: </span></h1>
+<p data-mce-fragment=""1""><em>Pick our unique dessert box to indulge your sweet tooth.</em></p>
+<p data-mce-fragment=""1""><em>What`s inside?</em></p>
+<ul>
+<li>Nutella jar</li>
+<li>Belgian Waffle slices</li>
+<li><span data-mce-fragment=""1"">Cinnamon danish</span></li>
+<li><span data-mce-fragment=""1"">Brownies </span></li>
+<li><span data-mce-fragment=""1"">Marshmallows</span></li>
+<li><span data-mce-fragment=""1"">A mix of candies </span></li>
+<li><span data-mce-fragment=""1"">A mix of seasonal fruits</span></li>
+<li>Flower</li>
+<li>Balloon and Card that match your occasion </li>
+</ul>",Wrap-it up,Uncategorized,"","",true,Title,Default Title,,,,,,,,'0,0.0,shopify,93,deny,manual,1800.00,,true,false,,,,,"",https://cdn.shopify.com/s/files/1/0612/6927/8772/products/6.png?v=1671622286,1,"",false,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,flower-bouquet; customized-mug-1; macron-mini-candle; customized-balloon; flowers-roche-box,"",ahead,,,kg,,,active
+dessert-box,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/9C6E4DCC-FAAE-4C40-BDE9-B1BFC71B40A1.jpg?v=1706517494,2,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+dessert-box,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/BB0E568E-F786-4C19-A3FF-FEDCBAF82193.jpg?v=1731486809,3,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+personal-box1,Breakfast Box for One,"<h1>Breakfast Box</h1>
+<p><em>Start your day with our nutritious, high-energy breakfast box.</em></p>
+<p><em>What's inside?</em></p>
+<ul>
+<li><span>1 sandwich </span></li>
+<li>2 <span>Belgian waffle slices </span>
+</li>
+<li><span>1 Greek yogurt with granola and fruits</span></li>
+<li><span>A mix of seasonal fruits</span></li>
+<li><span>1 cup of chocolate spread</span></li>
+<li><span>1 Honey</span></li>
+<li><span>chocolates</span></li>
+<li><span>marshmallows </span></li>
+<li><span>1 Bottle of fresh juice</span></li>
+<li>Flower</li>
+<li>Balloon and Card customized to your occasion</li>
+</ul>
+<p> </p>
+<p>Choose from variety of sandwich fillings:<br>*Smoked Turkey breast<br>*Grilled chicken breast<br>*Roast beef</p>
+<p><br>Bread choices: <br>*Baguette <br>*Whole wheat bread</p>
+<p>your choice is added to our special sauce,cheddar cheese,tomato with oregano,olive oil,and pickeled cucumber.<br>All homemade with the freshest and best ingridients.</p>",Wrap-it up,,"","",true,Choose from variety of sandwich fillings:,Smoked Turkey breast,,Bread for sandwiches,Baguette,,,,,'0,0.0,shopify,38,deny,manual,850.00,,true,false,,,,,"",https://cdn.shopify.com/s/files/1/0612/6927/8772/files/1099ECCC-5B4D-41A7-9B57-7B3702F66F79.jpg?v=1755500386,1,"",false,,"Surprise,birthday,gift,box,breakfast,wrapitup,Cheese,platter,Flower,Balloon,card,fruits,cake,Marshmallows,boxes,chocolates,Fresh,juice,love,delivery,sandwich,Dessert,danish,Cinnamon,Nutella,Brownies,unique,sweet,Waffle,Nuts,Biscuits,healthy,Special 
+",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,flower-bouquet; strawberries-candles-large-box; macron-mini-candle; paw-mini-candle; customized-mug-1; customized-balloon; flowers-roche-box,"",ahead,,,kg,,,active
+personal-box1,,,,,,,,,Smoked Turkey breast,,,Whole wheat bread,,,,,'0,0.0,shopify,55,deny,manual,850.00,,true,false,,,,,"",https://cdn.shopify.com/s/files/1/0612/6927/8772/files/34794CE2-BAF1-4621-B6CD-CD505BD1E6F2.jpg?v=1755500386,2,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+personal-box1,,,,,,,,,Grilled chicken breast,,,Baguette,,,,,'0,0.0,shopify,54,deny,manual,850.00,,true,false,,,,,"",https://cdn.shopify.com/s/files/1/0612/6927/8772/products/3.png?v=1755500386,3,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+personal-box1,,,,,,,,,Grilled chicken breast,,,Whole wheat bread,,,,,'0,0.0,shopify,71,deny,manual,850.00,,true,false,,,,,"",https://cdn.shopify.com/s/files/1/0612/6927/8772/products/WhatsAppImage2022-11-14at9.34.44PM.jpg?v=1755500386,4,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+personal-box1,,,,,,,,,Roast beef,,,Baguette,,,,,'0,0.0,shopify,82,deny,manual,850.00,,true,false,,,,,"",https://cdn.shopify.com/s/files/1/0612/6927/8772/products/WhatsAppImage2022-11-14at9.35.07PM.jpg?v=1755500386,5,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+personal-box1,,,,,,,,,Roast beef,,,Whole wheat bread,,,,,'0,0.0,shopify,88,deny,manual,850.00,,true,false,,,,,"",https://cdn.shopify.com/s/files/1/0612/6927/8772/files/0CBD05D1-8ECA-4B60-81B1-6E85E45FC6EC.jpg?v=1755500386,6,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+personal-box1,,,,,,,,,Salmon,,,Baguette,,,,,'0,0.0,shopify,84,deny,manual,1000.00,,true,false,,,,,"",https://cdn.shopify.com/s/files/1/0612/6927/8772/files/DF805404-7D1A-45A1-9D2C-7B73ACBD8CA8.jpg?v=1755500386,7,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+personal-box1,,,,,,,,,Salmon,,,Whole wheat bread,,,,,'0,0.0,shopify,92,deny,manual,1000.00,,true,false,,,,,"",https://cdn.shopify.com/s/files/1/0612/6927/8772/files/2AC721D9-858C-4787-ACC1-0986C13A1F1E.png?v=1755500386,8,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+personal-box1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/36AE6C3D-B76E-4ABB-A1FC-8107530BD356.png?v=1755500386,9,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+personal-box1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/EB02AA41-BCC6-4CE8-9DC7-A255BF097A9A.jpg?v=1755500386,10,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+personal-box1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/4E455D77-906C-47EA-9885-B592729165D6.jpg?v=1755500386,11,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+personal-box2,Breakfast Box for Two,"<h1 style=""direction: ltr;""><strong>Breakfast Box for two Persons</strong></h1>
+<p><em>Start your day with our nutritious, high-energy breakfast box.</em></p>
+<ul>
+<li><em>What`s inside?</em></li>
+<li>2 sandwiches</li>
+<li><span>4 Belgian waffle slices </span></li>
+<li><span>2 Greek yogurt with granola and fruits</span></li>
+<li><span>A mix of seasonal fruits</span></li>
+<li><span>2 cups of chocolate spread </span></li>
+<li><span>2 Honey</span></li>
+<li><span>chocolates with a note customized to your occasion </span></li>
+<li><span>marshmallows</span></li>
+<li><span>2 Bottles of fresh juice</span></li>
+<li><span>Ballon and a card customized to your occasion </span></li>
+</ul>
+<p> </p>
+<p>Choose from variety of sandwich fillings:<br>*Smoked Turkey breast<br>*Grilled chicken breast<br>*Roast beef</p>
+<p><br>Bread choices: <br>*Baguette <br>*Whole wheat bread</p>
+<p>your choice is added to our special sauce,cheddar cheese,tomato with oregano,olive oil,and pickeled cucumber.<br>All homemade with the freshest and best ingridients.</p>
+<p> </p>
+<p><span style=""font-size: 1.4em;""> </span></p>",Wrap-it up,,"","",true,Choose from variety of frist sandwich fillings:,Smoked Turkey breast,,Choose from variety of second sandwich fillings:,Smoked Turkey breast,,Bread for sandwiches,Baguette,,"",0.0,shopify,98,deny,manual,1500.00,,true,false,,,,,"",https://cdn.shopify.com/s/files/1/0612/6927/8772/files/0BFD501E-89E9-4DC9-95F1-7B0C28A8297D.jpg?v=1744160804,1,"",false,,"Surprise,birthday,gift,box,breakfast,wrapitup,Cheese,platter,Flower,Balloon,card,fruits,cake,Marshmallows,boxes,chocolates,Fresh,juice,love,delivery,sandwich,Dessert,danish,Cinnamon,Nutella,Brownies,unique,sweet,Waffle,Nuts,Biscuits,healthy,Special 
+",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,flower-bouquet; customized-mug-1; customized-balloon; flowers-roche-box,"",ahead,,,kg,,,active
+personal-box2,,,,,,,,,Smoked Turkey breast,,,Smoked Turkey breast,,,Whole wheat bread,,"",0.0,shopify,100,deny,manual,1500.00,,true,false,,,,,"",https://cdn.shopify.com/s/files/1/0612/6927/8772/files/4412D5A5-9117-45BF-A561-57E5DC276A65.jpg?v=1763097139,2,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+personal-box2,,,,,,,,,Smoked Turkey breast,,,Grilled chicken breast,,,Baguette,,"",0.0,shopify,98,deny,manual,1500.00,,true,false,,,,,"",https://cdn.shopify.com/s/files/1/0612/6927/8772/files/1C259167-E409-4753-A75F-AE9883419068.jpg?v=1763097139,3,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+personal-box2,,,,,,,,,Smoked Turkey breast,,,Grilled chicken breast,,,Whole wheat bread,,"",0.0,shopify,99,deny,manual,1500.00,,true,false,,,,,"",https://cdn.shopify.com/s/files/1/0612/6927/8772/products/5.png?v=1763097139,4,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+personal-box2,,,,,,,,,Smoked Turkey breast,,,Roast beef,,,Baguette,,"",0.0,shopify,97,deny,manual,1500.00,,true,false,,,,,"",https://cdn.shopify.com/s/files/1/0612/6927/8772/files/795EC478-E502-4C3E-B650-6BF052DBCAA8.jpg?v=1763097139,5,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+personal-box2,,,,,,,,,Smoked Turkey breast,,,Roast beef,,,Whole wheat bread,,"",0.0,shopify,98,deny,manual,1500.00,,true,false,,,,,"",https://cdn.shopify.com/s/files/1/0612/6927/8772/products/WhatsAppImage2022-11-14at9.34.44PM_8bbdcf69-9944-442e-894b-86f46e27ee33.jpg?v=1763097139,6,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+personal-box2,,,,,,,,,Smoked Turkey breast,,,Salmon,,,Baguette,,"",0.0,shopify,100,deny,manual,1650.00,,true,false,,,,,"",https://cdn.shopify.com/s/files/1/0612/6927/8772/products/WhatsAppImage2022-11-14at9.35.07PM_52d07c27-0005-42f7-bfea-85b8d59e0196.jpg?v=1763097139,7,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+personal-box2,,,,,,,,,Smoked Turkey breast,,,Salmon,,,Whole wheat bread,,"",0.0,shopify,100,deny,manual,1650.00,,true,false,,,,,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+personal-box2,,,,,,,,,Grilled chicken breast,,,Smoked Turkey breast,,,Baguette,,"",0.0,shopify,98,deny,manual,1500.00,,true,false,,,,,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+personal-box2,,,,,,,,,Grilled chicken breast,,,Smoked Turkey breast,,,Whole wheat bread,,"",0.0,shopify,100,deny,manual,1500.00,,true,false,,,,,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+personal-box2,,,,,,,,,Grilled chicken breast,,,Grilled chicken breast,,,Baguette,,"",0.0,shopify,99,deny,manual,1500.00,,true,false,,,,,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+personal-box2,,,,,,,,,Grilled chicken breast,,,Grilled chicken breast,,,Whole wheat bread,,"",0.0,shopify,100,deny,manual,1500.00,,true,false,,,,,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+personal-box2,,,,,,,,,Grilled chicken breast,,,Roast beef,,,Baguette,,"",0.0,shopify,98,deny,manual,1500.00,,true,false,,,,,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+personal-box2,,,,,,,,,Grilled chicken breast,,,Roast beef,,,Whole wheat bread,,"",0.0,shopify,99,deny,manual,1500.00,,true,false,,,,,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+personal-box2,,,,,,,,,Grilled chicken breast,,,Salmon,,,Baguette,,"",0.0,shopify,96,deny,manual,1650.00,,true,false,,,,,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+personal-box2,,,,,,,,,Grilled chicken breast,,,Salmon,,,Whole wheat bread,,"",0.0,shopify,99,deny,manual,1650.00,,true,false,,,,,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+personal-box2,,,,,,,,,Roast beef,,,Smoked Turkey breast,,,Baguette,,"",0.0,shopify,100,deny,manual,1500.00,,true,false,,,,,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+personal-box2,,,,,,,,,Roast beef,,,Smoked Turkey breast,,,Whole wheat bread,,"",0.0,shopify,100,deny,manual,1500.00,,true,false,,,,,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+personal-box2,,,,,,,,,Roast beef,,,Grilled chicken breast,,,Baguette,,"",0.0,shopify,99,deny,manual,1500.00,,true,false,,,,,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+personal-box2,,,,,,,,,Roast beef,,,Grilled chicken breast,,,Whole wheat bread,,"",0.0,shopify,99,deny,manual,1500.00,,true,false,,,,,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+personal-box2,,,,,,,,,Roast beef,,,Roast beef,,,Baguette,,"",0.0,shopify,100,deny,manual,1500.00,,true,false,,,,,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+personal-box2,,,,,,,,,Roast beef,,,Roast beef,,,Whole wheat bread,,"",0.0,shopify,100,deny,manual,1500.00,,true,false,,,,,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+personal-box2,,,,,,,,,Roast beef,,,Salmon,,,Baguette,,"",0.0,shopify,99,deny,manual,1650.00,,true,false,,,,,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+personal-box2,,,,,,,,,Roast beef,,,Salmon,,,Whole wheat bread,,"",0.0,shopify,100,deny,manual,1650.00,,true,false,,,,,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+personal-box2,,,,,,,,,Salmon,,,Smoked Turkey breast,,,Baguette,,"",0.0,shopify,99,deny,manual,1650.00,,true,false,,,,,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+personal-box2,,,,,,,,,Salmon,,,Smoked Turkey breast,,,Whole wheat bread,,"",0.0,shopify,100,deny,manual,1650.00,,true,false,,,,,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+personal-box2,,,,,,,,,Salmon,,,Grilled chicken breast,,,Baguette,,"",0.0,shopify,100,deny,manual,1650.00,,true,false,,,,,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+personal-box2,,,,,,,,,Salmon,,,Grilled chicken breast,,,Whole wheat bread,,"",0.0,shopify,100,deny,manual,1650.00,,true,false,,,,,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+personal-box2,,,,,,,,,Salmon,,,Roast beef,,,Baguette,,"",0.0,shopify,100,deny,manual,1650.00,,true,false,,,,,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+personal-box2,,,,,,,,,Salmon,,,Roast beef,,,Whole wheat bread,,"",0.0,shopify,100,deny,manual,1650.00,,true,false,,,,,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+personal-box2,,,,,,,,,Salmon,,,Salmon,,,Baguette,,"",0.0,shopify,99,deny,manual,1800.00,,true,false,,,,,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+personal-box2,,,,,,,,,Salmon,,,Salmon,,,Whole wheat bread,,"",0.0,shopify,100,deny,manual,1800.00,,true,false,,,,,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+dessert-box-for-two,Dessert Box (medium size) 1,"<p>Dessert box: <br data-mce-fragment=""1"">Our unique dessert box to indulge your sweet tooth.<br data-mce-fragment=""1"">Nutella jar<br data-mce-fragment=""1"">Cinnamon danish/ Donuts <br data-mce-fragment=""1"">Waffle slices <br data-mce-fragment=""1"">Brownies <br data-mce-fragment=""1"">Marshmallows<br data-mce-fragment=""1"">Mix of chocolates <br data-mce-fragment=""1"">Mix of seasonal fruits</p>
+<p>------------------------------------------</p>
+<div style=""text-align: right;"">
+<div data-mce-fragment=""1"">
+<br><span style=""font-size: 1.4em;"">لو كنت من محبى الحلويات اختار بوكس الحلويات بتاعنا</span><br><span style=""font-size: 1.4em;"">ايه المكونات؟</span><br><br><span style=""font-size: 1.4em;"">دانش القرفه/دونات</span><br><span style=""font-size: 1.4em;"">شرائح الوافل البلجيكي</span><br><span style=""font-size: 1.4em;"">قطع البراونيز</span><br><span style=""font-size: 1.4em;"">برطمان نيوتيلا</span><br><span style=""font-size: 1.4em;"">مجموعه من الفواكه الموسميه</span><br><span style=""font-size: 1.4em;"">مارشميللو</span><br><span style=""font-size: 1.4em;"">مجموعه من الشوكولاته و الحلوى</span>
+</div>
+<p data-mce-fragment=""1""> </p>
+ </div>",Wrap-it up,,"","",true,Title,Default Title,,,,,,,,-2,0.0,shopify,95,deny,manual,1100.00,,true,false,,,,,"",https://cdn.shopify.com/s/files/1/0612/6927/8772/files/19179F5F-1BF5-4C08-9C54-3A260161764A.jpg?v=1731485064,1,"",false,,Dessert box: Our unique dessert box to indulge your sweet tooth.Fruit danishCinnamon danish Waffle slices Brownies MarshmallowsNutella chocolate Mix of seasonal fruits  ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,flower-bouquet; customized-mug-1,"",ahead,,,kg,,,active
+dessert-box-for-two,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/40A101F1-DCA0-4CD1-A775-33224AE5242B.jpg?v=1706518052,2,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+dessert-box-for-two,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/1A0BF528-342E-4C1A-96E8-4E176C221C8D.jpg?v=1731485064,3,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+c,Cheese Box (Large size),"<h1>Cheese Box:</h1>
+<p> Enjoy your specially curated array of cheeses from different origins, flavors, textures and nuances..</p>
+<p>what’s inside?!</p>
+<p>A mix of premium quality cheese with nuts, crackers, grapes, olives and assorted bakeries..</p>
+<p>The Box is added to a Balloon and a Card Match your occasion.</p>
+<p>The best for your guests catering or to go as a gift to your loved ones.</p>
+<p>what’s inside?</p>
+<p>Emental cheese</p>
+<p>cheddar cheese</p>
+<p>Goat cheese</p>
+<p>Roomy cheese</p>
+<p>Brie cheese</p>
+<p>honey</p>
+<p>salami</p>
+<p>Turkey</p>
+<p>olives</p>
+<p>cherry tomatoes </p>
+<p>Nuts</p>
+<p>whole wheat bread</p>
+<p>Mix of seasonal fruits </p>
+<p>added to all of these a FREE balloon and card matches your occasion </p>
+<p> </p>
+<p> </p>
+<div id=""gtx-trans"" style=""position: absolute; left: -9px; top: 80.7812px;""></div>",Wrap-it up,Uncategorized,"","",true,Add-ons,None,,,,,,,,"",0.0,,-6,deny,manual,1800.00,,true,false,,,,,"",https://cdn.shopify.com/s/files/1/0612/6927/8772/files/7E4219C7-5030-4641-B88A-90A576BBE42F.jpg?v=1707640676,1,"",false,,"Surprise,birthday,gift,box,breakfast,wrapitup,Cheese,platter,Flower,Balloon,card,fruits,cake,Marshmallows,boxes,chocolates,Fresh,juice,love,delivery,sandwich,Dessert,danish,Cinnamon,Nutella,Brownies,unique,sweet,Waffle,Nuts,Biscuits,healthy,Special 
+",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,flower-bouquet; customized-mug-1; macron-mini-candle; customized-balloon; flowers-roche-box,"",ahead,,,kg,,,active
+c,,,,,,,,,Add Salmon Cup,,,,,,,,"",0.0,,-14,deny,manual,2000.00,,true,false,,,,,"",https://cdn.shopify.com/s/files/1/0612/6927/8772/files/E6299018-1209-4257-A4CA-F4F022689BF6.jpg?v=1707640676,2,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+c,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/EAFD365E-788E-4584-9EB0-33B14B709127.jpg?v=1707640677,3,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+c,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/A55243B9-B861-43BC-8CD0-3295BC6AA572.jpg?v=1715939666,4,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+c,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/56FBAF45-37F5-4D70-9AE6-CA9416F74B09.jpg?v=1715939665,5,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+c,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/31CE46E8-2EC8-4083-BB18-9C92701495CA.jpg?v=1715939665,6,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+c,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/C7F1DA74-7CC7-490E-BB29-479BEF92B735.jpg?v=1715939666,7,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+dessert-box-medium-2,Dessert Box (medium size) 2,"<p>Dessert box: <br data-mce-fragment=""1"">Our unique dessert box to indulge your sweet tooth.</p>
+<p>what’s inside?</p>
+<p><br data-mce-fragment=""1"">2 Donuts <br data-mce-fragment=""1"">Waffle slices <br data-mce-fragment=""1"">Brownies <br data-mce-fragment=""1"">Marshmallows<br data-mce-fragment=""1"">Nutella chocolate jar<br data-mce-fragment=""1"">Mix of seasonal fruits</p>
+<p>flower</p>
+<p>Balloon and card that match your occasion</p>
+<div style=""text-align: right;"">
+<p data-mce-fragment=""1""> </p>
+ </div>",Wrap-it up,,"","",true,Title,Default Title,,,,,,,,"",0.0,shopify,99,deny,manual,1100.00,,true,false,,,,,"",https://cdn.shopify.com/s/files/1/0612/6927/8772/files/F3E97890-9C62-4C30-9432-FE7AF760B9BA.jpg?v=1731483550,1,"",false,,"Surprise,birthday,gift,box,breakfast,wrapitup,Cheese,platter,Flower,Balloon,card,fruits,cake,Marshmallows,boxes,chocolates,Fresh,juice,love,delivery,sandwich,Dessert,danish,Cinnamon,Nutella,Brownies,unique,sweet,Waffle 
+
+",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,flower-bouquet; candle-large-size; customized-mug-1; macron-mini-candle,"",ahead,,,kg,,,active
+dessert-box-medium-2,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/326111B5-93B3-4361-89C0-7C2B3D106D9E.jpg?v=1696353505,2,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+dessert-box-medium-2,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/88157486-4EBC-4301-B1E2-AFCD04F9E953.jpg?v=1731483550,3,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+special-order,Sunrise Bites for One,"<h2>
+<strong> This Breakfast box is so special as it serves those who are fond of </strong>cheese<strong>.. </strong>
+</h2>
+<p>Send it to your loved ones and make them happy.</p>
+<p><br> What’s inside?<br>*Cheese platter for one person loaded with premium kinds of cheese.<br>*Different types and flavors of bakeries and waffles<br>*Greek yogurt with granola and fruits<br>*Honey<br>*Jam<br>*Fresh fruits<br>*Bottle of fresh juice<br>*Balloon and a card</p>
+<h4><strong> </strong></h4>
+<div style=""position: absolute; left: -9px; top: 80.7812px;"" id=""gtx-trans""></div>",Wrap-it up,,"","",true,Title,Default Title,,,,,,,,"",0.0,shopify,86,deny,manual,1200.00,,true,false,,,,,"",https://cdn.shopify.com/s/files/1/0612/6927/8772/files/25E52AB3-1DA1-4AF6-A8AD-B98F15C521C2.jpg?v=1703408735,1,"",false,,"Surprise,birthday,gift,box,breakfast,wrapitup,Cheese,platter,Flower,Balloon,card,fruits,cake,Marshmallows,boxes,chocolates,Fresh,juice,love,delivery,sandwich,Dessert,danish,Cinnamon,Nutella,Brownies,unique,sweet,Waffle,Nuts,Biscuits,healthy,Special,Basket,snack,snacks
+",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,flower-bouquet; customized-mug-1; customized-balloon; flowers-roche-box,"",ahead,,,kg,,,active
+special-order,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/E16C4892-308D-4C69-96D1-95E9E2BDA102.jpg?v=1703408735,2,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+special-order,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/0DF972A3-51C6-4CE5-95E7-3C91BC50D007.jpg?v=1703408735,3,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+special-order,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/157C5057-5165-4599-A317-E3A9A1F992C0.jpg?v=1706518384,4,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+copy-of-special-order,Healthy Box,"<meta charset=""UTF-8"">
+<p>Go healthy with this breakfast box</p>
+<p>❌No Nutella</p>
+<p>❌No waffles </p>
+<p>✅Mixed Veggies </p>
+<p>✅whole wheat bread </p>
+<p><em>Start your day with our nutritious, high-energy breakfast box.</em></p>
+<p><em>What's inside?</em></p>
+<ul>
+<li><span>1 sandwich</span></li>
+<li><span>1 Greek yogurt with granola and fruits</span></li>
+<li><span>A mix of seasonal fruits</span></li>
+<li>A Platter of assorted veggies </li>
+<li><span>1 Honey</span></li>
+<li><span>1 Bottle of fresh juice</span></li>
+<li>Flower</li>
+<li>Balloon and Card that match your occasion </li>
+</ul>
+<p> </p>
+<meta charset=""UTF-8"">
+<p>Choose from variety of sandwich fillings:<br>*Smoked Turkey breast<br>*Grilled chicken breast<br>*Roast beef</p>
+<p><br>Bread choices: <br>*Baguette <br>*Whole wheat bread</p>
+<p>your choice is added to our special sauce,cheddar cheese,tomato with oregano,olive oil,and pickeled cucumber.<br>All homemade with the freshest and best ingridients.</p>
+<div id=""gtx-trans"" style=""position: absolute; left: -9px; top: 80.7812px;""></div>",Wrap-it up,,"","",true,Title,Default Title,,,,,,,,'0,0.0,shopify,80,deny,manual,850.00,,true,false,,,,,"",https://cdn.shopify.com/s/files/1/0612/6927/8772/files/11A3950C-956D-4A62-8576-83700459F8FD.jpg?v=1744716123,1,"",false,,"Surprise,birthday,gift,box,breakfast,wrapitup,Cheese,platter,Flower,Balloon,card,fruits,cake,Marshmallows,boxes,chocolates,Fresh,juice,love,delivery,sandwich,Dessert,danish,Cinnamon,Nutella,Brownies,unique,sweet,Waffle,Nuts,Biscuits,healthy,Special,Basket  
+",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,flower-bouquet; customized-mug-1; customized-balloon; flowers-roche-box,"",ahead,,,kg,,,active
+birthday-boxes,Birthday Box,"<h3>Surprise your beloved ones on their birthday with this delicious box</h3>
+<h3>What’s inside?</h3>
+<p><br>Nola mini cake <br>Cheese platter <br>Assorted bakeries <br>Seasonal fruits <br>Fresh juice <br>Chocolate with customized message</p>
+<p>Marshmallows<br>Flower <br>Balloon and a card</p>",Wrap-it up,Uncategorized,"","",true,Add-Ons,None,,,,,,,,,0.0,shopify,64,deny,manual,1800.00,,true,false,,,,,"",https://cdn.shopify.com/s/files/1/0612/6927/8772/files/AB952732-DFF9-4D16-9FEC-A2CD97ED71EB.jpg?v=1744185232,1,"",false,,"Surprise,birthday,gift,box,breakfast,wrapitup,Cheese,platter,Flower,Balloon,card,fruits,cake,Marshmallows,boxes,chocolates,Fresh,juice,love,delivery,sandwich,Dessert,danish,Cinnamon,Nutella,Brownies,unique,sweet,Waffle,Nuts,Biscuits,healthy,Special 
+",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,flower-bouquet; offet-hobena; untitled-mar18_15-14; customized-mug-1; customized-balloon; flowers-roche-box,"",ahead,,,kg,,,active
+birthday-boxes,,,,,,,,,Add Nuts,,,,,,,,"",0.0,shopify,82,deny,manual,2000.00,,true,false,,,,,"",https://cdn.shopify.com/s/files/1/0612/6927/8772/files/B6FC851E-0981-45F3-9C77-69CAC3EA7FBE.jpg?v=1744185232,2,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+birthday-boxes,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/29E26849-CADA-4A64-A70A-8860E1B219C5.jpg?v=1744185232,3,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+birthday-boxes,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/EAB493CC-A038-4206-BA4E-247DC5B5E430.jpg?v=1744185232,4,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+birthday-boxes,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/B5010DBD-9BC0-464C-BF37-90164DF4D5D4.jpg?v=1744185232,5,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+birthday-boxes,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/66074DA7-ADE6-45D6-B8CE-DF98CA8D1DD0.png?v=1744161101,6,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+birthday-boxes,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/75D60E89-7094-4E12-A401-7907C260C189.jpg?v=1744161101,7,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+special-breakfast-for-2,Sunrise Bites for Two,"<h4>Special Breakfast for Two Person</h4>
+<h4></h4>
+<p>Send it to your loved ones and make them happy.<br>What’s inside?<br><br>Cheese platter (roquford, labneh with thyme, goat cheese balls, salami, red cheddar, yellow cheddar, cherry tomatoes, olives)<br>Different types and flavors of bakeries and waffles <br>Honey <br>Jam<br>Chocolate spread <br>Seasonal fruits <br>2 bottles of fresh juice <br>Balloon and a card that match your occasion </p>",Wrap-it up,,"","",true,Title,Default Title,,,,,,,,"",0.0,shopify,88,deny,manual,1700.00,,true,false,,,,,"",https://cdn.shopify.com/s/files/1/0612/6927/8772/files/A4D6761D-2408-4D0E-A1FF-B25F36C1B33A.jpg?v=1714002385,1,"",false,,"Surprise,birthday,gift,box,breakfast,wrapitup,Cheese,platter,Flower,Balloon,card,fruits,cake,Marshmallows,boxes,chocolates,Fresh,juice,love,delivery,sandwich,Dessert,danish,Cinnamon,Nutella,Brownies,unique,sweet,Waffle,Nuts,Biscuits,healthy,Special,Basket,snack,snacks
+",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,flower-bouquet; strawberries-candles-large-box; paw-mini-candle; macron-mini-candle; customized-mug-1; customized-balloon; flowers-roche-box,"",ahead,,,kg,,,active
+special-breakfast-for-2,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/30E3646B-5573-4517-B612-E2CC312919D4.jpg?v=1714474489,2,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+special-breakfast-for-2,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/5D2C4A00-4AAB-4AA6-B505-07AD8FF9E372.jpg?v=1714474488,3,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+special-breakfast-for-2,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/884AB138-D83D-4AAA-A705-68E29319E8C3.jpg?v=1714474489,4,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+special-breakfast-for-2,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/96CC20A1-49E4-4CAA-A440-FECA83D264E0.jpg?v=1714474488,5,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+special-breakfast-for-2,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/79C45967-DD15-40FD-BADE-B17FA56A2A21.jpg?v=1714474490,6,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+special-breakfast-for-2,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/50BFC988-CE28-4BDF-BCCA-2E7BC982D6ED.jpg?v=1714474489,7,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+untitled-sep13_19-16,Fruit Box (medium size),"<p><em>Stay healthy with this special mix of fresh fruits.</em></p>
+<p><em>What`s inside?</em></p>
+<ul>
+<li><span>A mix of seasonal fruits</span></li>
+<li><span>Flower</span></li>
+<li><span>Balloon and Card that match your occasion </span></li>
+</ul>",Wrap-it up,,"","",true,Title,Default Title,,,,,,,,"",0.0,shopify,47,deny,manual,1000.00,,true,true,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/4E78C180-4D8A-4EAC-B486-329E87A65E7A.jpg?v=1723273509,1,"",false,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,flower-bouquet; customized-balloon; customized-mug-1; flowers-roche-box,"",ahead,,,kg,,,active
+untitled-sep13_19-16,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/IMG-8005.jpg?v=1723273509,2,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+untitled-sep13_19-16,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/6AB17C2D-4409-4FD7-973F-8982A2F7B566.jpg?v=1723273509,3,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+untitled-sep13_19-16,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/IMG-5751.jpg?v=1723273509,4,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+untitled-sep13_19-16,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/9CB1087C-FB73-4701-962E-C3889177A3F0.jpg?v=1723273509,5,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+birthday-box-2,Birthday Box 2,"<h3>Surprise your beloved ones on their birthday with this delicious box..</h3>
+<p>what’s inside?</p>
+<p>Nola cake</p>
+<p>Waffles</p>
+<p>Pancakes</p>
+<p>Fresh Bakeries </p>
+<p>Mix of delicious chocolates</p>
+<p>Honey</p>
+<p>Fresh fruits </p>
+<p>Bottle of fresh juice</p>
+<p>Balloon and card</p>",Wrap-it up,,"","",true,Title,Default Title,,,,,,,,"",0.0,shopify,18,deny,manual,1700.00,,true,true,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/D647A1E7-82D4-4E14-88C7-236CF9EA6740.jpg?v=1762587485,1,"",false,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,flower-bouquet; customized-mug-1; customized-balloon; flowers-roche-box,"",ahead,,,kg,,,active
+birthday-box-2,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/B27FDBEE-5CF6-49DD-8853-255528031CC4.jpg?v=1763097029,2,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+birthday-box-2,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/FEC14FE6-C2A6-4938-8683-E9DCE08DC5CD_99dd845e-91c3-4c12-a822-1d7f8e756640.jpg?v=1763097029,3,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+birthday-box-2,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/CB6E6A35-AE3F-4349-B300-F773828C182C.jpg?v=1763097029,4,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+birthday-box-2,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/62A20325-49AC-482B-93D2-8252AE39347B.jpg?v=1762587376,5,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+special-breakfast-box-for-1-person-lite,Sunrise light Bites for One,"<p>Special breakfast Box for healthy eaters ..Send this Breakfast Box to your loved ones if they are on a diet and encourage them to keep going 💪🏼 No chocolates or Waffles are added, only healthy breakfast ingredients.</p>
+<p>What’s inside?</p>
+<p>Cheese platter of premium quality with an Egg</p>
+<p>Greek yogurt with granola and fruits</p>
+<p>Whole wheat bread </p>
+<p>Honey</p>
+<p>Variety of seasonal fruits </p>
+<p>Fresh juice </p>
+<p> </p>",Wrap-it up,,"","",true,Title,Default Title,,,,,,,,"",0.0,shopify,97,deny,manual,1300.00,,true,true,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/9E942744-A43C-4D70-BC3F-90A8EED40BEB.jpg?v=1695816491,1,"",false,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,flower-bouquet; customized-mug-1; customized-balloon; flowers-roche-box,"",ahead,,,kg,,,active
+special-breakfast-box-for-1-person-lite,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/FBB0A325-364C-4E6C-B689-DBA2D9C73EEB.jpg?v=1695816491,2,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+special-breakfast-box-for-1-person-lite,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/CB6D2D38-E626-4B95-BE69-0CE6B176CF12.jpg?v=1722631296,3,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+special-breakfast-box-for-1-person-lite,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/11EB49AD-0EE9-402B-AB21-E2C5FBE8693B.jpg?v=1722631296,4,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+breakfast-gifts-wooden-tray-for-one-person,Royal Tray,<p>Our new fancy wooden tray upgraded our service to a new level🌹 A unique wooden tray served with a nutritious yet curated breakfast with a gentle written note on the background to be the perfect gift<br>What’s inside?<br>A cheese platter of premium cheese kinds<br>A fruit platter of fresh fruits <br>Fresh bakeries <br>An egg<br>Honey and jam for dessert <br>Greek yogurt with granola and fruit<br>Bottle of fresh juice <br>A note with balloons customized to your occasion ❤️</p>,Wrap-it up,,"","breakfast box delivery, breakfast gift box, breakfast gifts, Breakfast gifts delivery, breakfast tray gift, breakfast-tray, brunch-tray, premium breakfast gifts, premium-gifts, sharing-platter",true,Add-ons,None,,,,,,,,,0.0,shopify,10,deny,manual,2200.00,,true,true,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/FBD3F164-FE16-490E-9E6F-5C82BA6C35AE.jpg?v=1743354522,1,"",false,Royal Tray | breakfast gifts delivery ,"Order beautifully arranged breakfast gifts, premium breakfast gift boxes, and elegant breakfast trays—perfect for birthdays, anniversaries, and unforgettable morning surprises.
+",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,flower-bouquet; paw-mini-candle; macron-mini-candle; strawberries-candles-large-box; customized-mug-1; customized-balloon; flowers-roche-box,"",ahead,,,kg,,,active
+breakfast-gifts-wooden-tray-for-one-person,,,,,,,,,Add nuts,,,,,,,,,0.0,shopify,10,deny,manual,2400.00,,true,true,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/E6F36EE6-BDC8-48FA-BC7F-ADE94ECC6116.jpg?v=1743354522,2,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+breakfast-gifts-wooden-tray-for-one-person,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/C5583020-58DB-4BD0-9C9D-06BC0A9308AF.jpg?v=1743354522,3,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+breakfast-gifts-wooden-tray-for-one-person,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/B57472E4-4554-4F8D-B33B-9A79433B53B8.jpg?v=1743354522,4,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+breakfast-gifts-wooden-tray-for-one-person,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/BBE3F0B3-D3CE-44B6-9EC8-8D7E4A9AF6BE.jpg?v=1714295300,5,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+breakfast-gifts-wooden-tray-for-one-person,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/3FF14E39-C872-40E5-A795-A86EAC31BCAC.jpg?v=1714295299,6,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+breakfast-gifts-wooden-tray-for-one-person,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/352EC403-C63C-415B-89CA-7BB81B6DB876.jpg?v=1714295297,7,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+breakfast-gifts-wooden-tray-for-one-person,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/6F3972D2-86C5-4D14-82AF-8B3F1B168011.jpg?v=1714295298,8,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+special-breakfast-box-for-2-people-lite,Sunrise light Bites for Two,"",Wrap-it up,,"","",true,Title,Default Title,,,,,,,,"",0.0,shopify,96,deny,manual,1800.00,,true,true,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/56601688-3A93-4BEA-BBA4-852E7AF8939E.jpg?v=1718914711,1,"",false,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,flower-bouquet; customized-mug-1; customized-balloon; flowers-roche-box,"",ahead,,,kg,,,active
+special-breakfast-box-for-2-people-lite,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/A165A669-39C3-4961-B0F7-A76D2C38D7F1.jpg?v=1718914711,2,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+special-breakfast-box-for-2-people-lite,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/9FFCFE40-C0B9-4C52-A6F1-A3CB89952D03.jpg?v=1718914711,3,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+special-breakfast-box-for-2-people-lite,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/B8CD2B0A-A9E1-4726-BC1C-BCBE19FDD808.jpg?v=1718914711,4,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+cheese-tower-medium-size,Cheese Tower,"<p>Cheese tower <br>The new release from Wrap It Up..<br>Enjoy the premium quality cheese and cold cuts, in a new fancy way.<br>The best choice for family and friends gatherings👨‍👩‍👧‍👦 or to be sent as a gift to your loved ones at their doorstep 🎁<br>Available in 2 sizes:<br>Small and Medium </p>",Wrap-it up,,"","",true,Title,Default Title,,,,,,,,"",0.0,shopify,100,deny,manual,2000.00,,true,true,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/76CE1624-A63F-4B85-8FD3-84A6302E268F.jpg?v=1735047356,1,"",false,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,flower-bouquet; customized-mug; candle-large-size,"",ahead,,,kg,,,active
+cheese-tower-medium-size,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/C4F794FB-2F9E-456F-B56D-352E08BA4F14.jpg?v=1735047356,2,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+cheese-tower-medium-size,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/5CD87B9C-0DCA-4D7D-B6E5-1A50E408A312.jpg?v=1735047356,3,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+cheese-tower-medium-size,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/9C444BCB-B022-4761-8DB4-BE1BA0F6E01C.jpg?v=1735047356,4,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+cheese-tower-medium-size,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/IMG-5582.jpg?v=1735047356,5,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+cheese-tower-medium-size,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/IMG-5583.jpg?v=1735047356,6,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+cheese-tower-medium-size,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/IMG-5584.jpg?v=1735047356,7,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+breakfast-gifts-wooden-breakfast-tray-with-a-cake,Royal Tray with a Cake,"<p>Wooden breakfast tray with a cake loaded with premium cheese, bakeries, fruits, fresh juice in addition to the delicious Nutella cake </p>
+<p>you can customize the background with the message you need to deliver </p>
+<p> </p>",Wrap-it up,Uncategorized,"","breakfast box delivery, breakfast gift box, breakfast gifts, Breakfast gifts delivery, breakfast tray gift, breakfast-tray, brunch-tray, premium breakfast gifts, premium-gifts, sharing-platter",true,Title,Default Title,,,,,,,,"",0.0,shopify,10,deny,manual,2400.00,,true,true,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/B9114EBE-881C-409D-A0F9-C0F1B6EEB89F.jpg?v=1756108769,1,"",false,Royal Tray with a Cake | breakfast gifts delivery ,"Order beautifully arranged breakfast gifts, premium breakfast gift boxes, and elegant breakfast trays—perfect for birthdays, anniversaries, and unforgettable morning surprises.
+",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,flower-bouquet; macron-mini-candle; strawberries-candles-large-box; paw-mini-candle; customized-mug-1; customized-balloon; flowers-roche-box,"",ahead,,,kg,,,active
+breakfast-gifts-wooden-breakfast-tray-with-a-cake,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/B79A1347-09DB-409F-8FCC-81A1CCC00124.jpg?v=1756108769,2,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+breakfast-gifts-wooden-breakfast-tray-with-a-cake,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/680D0001-105C-4790-B962-362B78D7C602.jpg?v=1756108769,3,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+breakfast-gifts-wooden-breakfast-tray-with-a-cake,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/CF6503EA-3B43-460D-85C0-7880CC0FAAC3.jpg?v=1756108901,4,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+breakfast-gifts-wooden-breakfast-tray-with-a-cake,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/8BF6571A-EB9C-4FBE-AF0F-D6C52D5A1868.jpg?v=1756108901,5,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+breakfast-gifts-wooden-family-cheese-tray-with-a-cake,Royal Cheese Tray with a Cake,"<p>It’s Family gathering.. then let’s indulge in the fresh premium cheese platter with a cake half vanilla and half chocolate with our fresh fruits and bakeries ❤️</p>
+<p><strong>what’s inside?</strong></p>
+<p><strong> </strong></p>
+<p class=""p1""><span class=""s1"">•<span class=""Apple-tab-span""> </span>Cake chocolate or fruits </span><span class=""s1"">(centerpiece).</span></p>
+<p class=""p1""><span class=""s1""><span class=""Apple-tab-span""> </span>•<span class=""Apple-tab-span""> </span></span><span class=""s2"">Fresh fruits:</span></p>
+<p class=""p2""><span class=""s1""><span class=""Apple-tab-span""> </span>•<span class=""Apple-tab-span""> </span>seasonal fruit </span></p>
+<p class=""p2""><span class=""s1""><span class=""Apple-tab-span""> </span>•<span class=""Apple-tab-span""> </span>Kiwi (cut into star/flower shapes).</span></p>
+<p class=""p2""><span class=""s1""><span class=""Apple-tab-span""> </span>•<span class=""Apple-tab-span""> </span>Orange slices.</span></p>
+<p class=""p2""><span class=""s1""><span class=""Apple-tab-span""> </span>•<span class=""Apple-tab-span""> </span>Apple slices.</span></p>
+<p class=""p1""><span class=""s1""><span class=""Apple-tab-span""> </span>•<span class=""Apple-tab-span""> </span></span><span class=""s2"">Cheese section:</span></p>
+<p class=""p2""><span class=""s1""><span class=""Apple-tab-span""> </span>•<span class=""Apple-tab-span""> </span>Yellow cheddar cubes.</span></p>
+<p class=""p2""><span class=""s1""><span class=""Apple-tab-span""> </span>•<span class=""Apple-tab-span""> </span>Roquefort </span></p>
+<p class=""p2""><span class=""s1""><span class=""Apple-tab-span""> </span>•<span class=""Apple-tab-span""> </span>Labneh with thyme </span></p>
+<p class=""p2""><span class=""s1""><span class=""Apple-tab-span""> </span>•<span class=""Apple-tab-span""> </span>olives green and black</span></p>
+<p class=""p1""><span class=""s1""><span class=""Apple-tab-span""> </span>•<span class=""Apple-tab-span""> </span></span><span class=""s2"">Cold cuts:</span></p>
+<p class=""p2""><span class=""s1""><span class=""Apple-tab-span""> </span>•<span class=""Apple-tab-span""> </span>Rolled turkey/chicken slices.</span></p>
+<p class=""p2""><span class=""s1""><span class=""Apple-tab-span""> </span>•<span class=""Apple-tab-span""> </span>Rolled salami slices.</span></p>
+<p class=""p1""><span class=""s1""><span class=""Apple-tab-span""> </span>•<span class=""Apple-tab-span""> </span></span><span class=""s2"">Bakery items:</span></p>
+<p class=""p2""><span class=""s1""><span class=""Apple-tab-span""> </span>•<span class=""Apple-tab-span""> </span>Croissants.</span></p>
+<p class=""p1""><span class=""s1""><span class=""Apple-tab-span""> </span>•<span class=""Apple-tab-span""> </span></span><span class=""s2"">Drink:</span><span class=""s1""> Bottle of orange juice tied with a ribbon.</span></p>
+<p class=""p1""><span class=""s1""><span class=""Apple-tab-span""> </span>•<span class=""Apple-tab-span""> </span></span><span class=""s2"">Decorations:</span></p>
+<p class=""p2""><span class=""s1""><span class=""Apple-tab-span""> </span>•<span class=""Apple-tab-span""> </span>Small purple flowers.</span></p>
+<p class=""p2""><span class=""s1""><span class=""Apple-tab-span""> </span>•<span class=""Apple-tab-span""> </span>Pink ribbon around the tray.</span></p>
+<p class=""p2""><span class=""s1""><span class=""Apple-tab-span""> </span>•<span class=""Apple-tab-span""> </span>Balloons </span></p>
+<p class=""p2""><span class=""s1""><span class=""Apple-tab-span""> </span>•<span class=""Apple-tab-span""> </span>Printed customized background </span></p>
+<p> </p>
+<p>served in our rustic , elegant wooden tray🌹</p>",Wrap-it up,,"","breakfast box delivery, breakfast gift box, breakfast gifts, Breakfast gifts delivery, breakfast tray gift, breakfast-tray, brunch-tray, premium breakfast gifts, premium-gifts, sharing-platter",true,Add-ons,None,,,,,,,,,0.0,shopify,6,deny,manual,2900.00,,true,true,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/361E83D8-DFC9-4322-A4F0-9A72EDB991ED.jpg?v=1743354433,1,"",false,Royal Cheese Tray with a Cake | breakfast gifts delivery ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,flower-bouquet; macron-mini-candle; paw-mini-candle; strawberries-candles-large-box; customized-balloon; customized-mug-1; flowers-roche-box,"",ahead,,,kg,,,active
+breakfast-gifts-wooden-family-cheese-tray-with-a-cake,,,,,,,,,Add bakeries box,,,,,,,,,0.0,shopify,9,deny,manual,3100.00,,true,true,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/F2251E9B-1A77-4950-8292-1744264E392E.jpg?v=1743354433,2,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/6DAC1834-78F6-401C-8CB4-1042C5365F5B.jpg?v=1763564428,kg,,,
+breakfast-gifts-wooden-family-cheese-tray-with-a-cake,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/11D58255-EC78-4A01-92C5-D5ECD40A7C0B.jpg?v=1743354433,3,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+breakfast-gifts-wooden-family-cheese-tray-with-a-cake,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/F786058E-BC76-4E75-93AF-A33D9573610A.jpg?v=1736349090,4,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+breakfast-gifts-wooden-family-cheese-tray-with-a-cake,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/CA22697E-078C-4A86-8104-120E5DF90F67.jpg?v=1763095660,5,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+breakfast-gifts-wooden-family-cheese-tray-with-a-cake,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/80A3A94F-E592-43A1-AD59-5582A38117B5.jpg?v=1763564428,6,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+breakfast-gifts-wooden-family-cheese-tray-with-a-cake,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/4090654F-EC1B-47E9-A5FE-433E9A1F7112.jpg?v=1763564428,7,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+breakfast-gifts-wooden-family-cheese-tray-with-a-cake,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/2BD8D5A5-464F-4D48-A52C-EAC715C6907F.jpg?v=1763564428,8,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+breakfast-gifts-wooden-family-cheese-tray-with-a-cake,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/6917485E-87B3-4595-BD24-5FFA31AC8FD5.jpg?v=1763564428,9,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+breakfast-gifts-wooden-family-cheese-tray-with-a-cake,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/6DAC1834-78F6-401C-8CB4-1042C5365F5B.jpg?v=1763564428,10,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+untitled-jul8_01-08,Kids Box 2,"<p>Make your kids day sooo special. Send them their favorite food, snacks and candies wrapped with a balloon and card to be the perfect gift.</p>
+<p>what’s inside?</p>
+<p>‘Healthy’ chocolate spread Jar</p>
+<p>Chips</p>
+<p>Chocolates 🍫 </p>
+<p>Donut 🍩 </p>
+<p>Waffers </p>
+<p>Waffles 🧇 </p>
+<p>Pancakes 🥞 </p>
+<p>Fruits 🍌 </p>
+<p>Marshmallows </p>
+<p>Milk chocolate </p>
+<p> </p>",Wrap-it up,,"","",true,Title,Default Title,,,,,,,,"",0.0,shopify,99,deny,manual,1000.00,,true,true,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/13629D74-CB16-41D8-BE25-7BB0F2D1865D.jpg?v=1720420658,1,"",false,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,flower-bouquet; customized-mug; candle-large-size,"",ahead,,,kg,,,active
+untitled-jul8_01-08,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/8CF8D159-4817-4A8A-B41B-DA65B71823FD.jpg?v=1720420658,2,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+untitled-jul8_01-08,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/78C14480-BC66-4A29-8C47-F45FECD1FC8B.jpg?v=1720420659,3,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+untitled-jul8_01-08,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/97EC13F0-3C75-4086-B948-EE91E372BB67.jpg?v=1720420658,4,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+untitled-jul8_01-08,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/93CB2BD4-F933-4147-BAD5-D5D6588E34A7.jpg?v=1720420658,5,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+untitled-jul8_01-08,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/E30E0B42-7D08-4330-BFD6-8A6BF55DF08D.png?v=1722961362,6,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+kids-box-large-with-a-cake,Festive Box,"<p>Make your kids day sooo special. Send them their favorite food, snacks and candies wrapped with a balloon and card to be the perfect gift.</p>
+<p>what’s inside?</p>
+<p>Nola cake with Nutella </p>
+<p>2 ‘Healthy’ chocolate spread Jar</p>
+<p>Chips</p>
+<p>Loooots of Chocolates</p>
+<p>Donuts</p>
+<p>Waffers</p>
+<p>Waffles</p>
+<p>Pancakes</p>
+<p>Fruits</p>
+<p>Marshmallows </p>
+<p>Milk chocolate </p>
+<p> </p>",Wrap-it up,,"","",true,Title,Default Title,,,,,,,,"",0.0,shopify,99,deny,manual,2800.00,,true,true,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/99400877-4FFE-4EDD-86FD-9099E62B54D5.jpg?v=1720420917,1,"",false,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,flower-bouquet; customized-balloon; customized-mug-1; flowers-roche-box,"",ahead,,,kg,,,active
+kids-box-large-with-a-cake,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/3ACA0D88-EEEE-4A64-810D-0996A4EDEE8C.jpg?v=1720420917,2,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+kids-box-large-with-a-cake,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/27DA4A6C-5512-4A08-A314-E3B550338AF1.jpg?v=1720420917,3,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+kids-box-large-with-a-cake,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/2ECB9FB4-4E58-40BC-914A-81E2A38F695B.jpg?v=1720420917,4,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+kids-box-large-with-a-cake,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/AE4E4117-57B4-4F8E-9F91-64BAAE4CDDCB.jpg?v=1731486649,5,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+kids-box-large-with-a-cake,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/CE10DCEF-00F0-4196-8243-45416EC37C77.jpg?v=1731486649,6,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+snack-box-1,Dessert Box (medium size) 3,"<p>Snack Box for one person </p>
+<p>What’s inside?</p>
+<p>fresh bakeries </p>
+<p>Waffles</p>
+<p>Pancakes</p>
+<p>chocolates</p>
+<p>fruits</p>
+<p>healthy spread jar</p>
+<p>juice</p>
+<p>chocolate with a note on it</p>
+<p>balloon </p>
+<p>card</p>",Wrap-it up,"Food, Beverages & Tobacco > Food Items > Snack Foods","","",true,Title,Default Title,,,,,,,,"",0.0,shopify,99,deny,manual,1100.00,,true,true,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/E2D5DB1C-BA78-424A-AE55-3DA76775620F.jpg?v=1720517055,1,"",false,,,423,,,,,,,,,,,,,,,,,,,,,,,,,,,,,flower-bouquet; customized-mug; candle-large-size,"",ahead,,,kg,,,active
+snack-box-1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/34C589B4-8CBA-4181-B56F-A121ACCDCEA6.jpg?v=1720517055,2,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+snack-box-1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/C28D73A6-E024-4FD1-88F5-65727846663B.jpg?v=1720517056,3,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+snack-box-1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/AC9AFA90-F34D-4F39-A902-D87C8CE07906.jpg?v=1720517056,4,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+breakfast-gifts-wooden-fruit-tray-with-a-cake,Royal Fruit Tray with a Cake,"<p>Order our Rustic elegance wooden tray loaded with seasonal fruits and Nola cake, with donuts, waffles and chocolates.</p>
+<p>whats inside?</p>
+<p>Nola cake </p>
+<p>2 Donuts</p>
+<p>lots of seasonal fruits </p>
+<p>chocolates with a printed note customized to your occasion </p>
+<p>Balloons</p>
+<p>Background customized printed note.</p>",Wrap-it up,"Food, Beverages & Tobacco > Food Items > Bakery > Cakes & Dessert Bars > Dessert Bars","","breakfast box delivery, breakfast gift box, breakfast gifts, Breakfast gifts delivery, breakfast tray gift, breakfast-tray, brunch-tray, premium breakfast gifts, premium-gifts, sharing-platter",true,Add-ons,None,,,,,,,,,0.0,shopify,9,deny,manual,2300.00,,true,true,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/E560A4E7-26C6-4B28-BD73-0DC153963005.jpg?v=1743552831,1,"",false,Royal Fruit Tray with a Cake | breakfast gifts delivery ,"Order beautifully arranged breakfast gifts, premium breakfast gift boxes, and elegant breakfast trays—perfect for birthdays, anniversaries, and unforgettable morning surprises.
+",2194,,,,,,,,,,,,,,,,,,,,,,,,,,,,,flower-bouquet; customized-balloon; customized-mug-1; flowers-roche-box,"",ahead,,,kg,,,active
+breakfast-gifts-wooden-fruit-tray-with-a-cake,,,,,,,,,Add nuts,,,,,,,,,0.0,shopify,9,deny,manual,2500.00,,true,true,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/37FF102D-0921-4410-B4E7-C48DC0ACA559.jpg?v=1743552831,2,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+breakfast-gifts-wooden-fruit-tray-with-a-cake,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/D27DC6DA-C1EB-4804-8662-105289920F3E.jpg?v=1743552831,3,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+breakfast-gifts-wooden-fruit-tray-with-a-cake,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/4BD76A39-D5BD-4EEB-A9C1-DD79421EBB85.jpg?v=1743552831,4,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+breakfast-gifts-wooden-fruit-tray-with-a-cake,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/C165EF48-B21B-43F5-8B6C-EB1DB7774EFB.jpg?v=1743552831,5,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+breakfast-gifts-wooden-fruit-tray-with-a-cake,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/28DB0B4E-553B-46D8-B64A-73BE54203AE3.jpg?v=1721908758,6,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+breakfast-gifts-wooden-fruit-tray-with-a-cake,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/FD311437-11BF-4266-AE46-72861D9A6612.jpg?v=1721908758,7,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+breakfast-gifts-wooden-fruit-tray-with-a-cake,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/9F2C3D93-AD2F-401A-A9DC-07CC2168E19A.jpg?v=1721908758,8,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+breakfast-gifts-wooden-fruit-tray-with-a-cake,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/6556B277-8918-4B26-B665-633FF2F22AC1.jpg?v=1730553857,9,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+kids-box-for-one-2,Kids Box 3,"<p>Make your kids day sooo special. Send them their favorite food, snacks and candies wrapped with a balloon and card to be the perfect gift 🎁</p>
+<p>Our Kids Dessert Box is filled with</p>
+<p>Donuts 🍩</p>
+<p>Pancakes 🥞</p>
+<p>Chocolates 🍫 ,</p>
+<p>Chips</p>
+<p>Marshmallows 🍡</p>
+<p>Candies 🍭</p>
+<p>Juice 🧃</p>
+<p>All wrapped up with love and a balloon for that extra touch. Perfect for any occasion! 🎈</p>",Wrap-it up,"Food, Beverages & Tobacco > Food Items > Snack Foods","","",true,Title,Default Title,,,,,,,,"",0.0,shopify,98,deny,manual,1000.00,,true,true,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/1A571105-B69D-4A3C-81BB-1DF0975B3098.jpg?v=1722695743,1,"",false,,,423,,,,,,,,,,,,,,,,,,,,,,,,,,,,,flower-bouquet; customized-mug; candle-large-size,"",ahead,,,kg,,,active
+kids-box-for-one-2,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/D6B2A7C5-649F-4565-BCCE-142C531B1616.png?v=1722242472,2,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+kids-boxe,Kids Box 1,"",Wrap-it up,,"","",true,Title,Default Title,,,,,,,,"",0.0,shopify,98,deny,manual,1000.00,,true,true,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/6A8F55E9-15BB-40B5-BB48-CC2E866B30CB.jpg?v=1722696674,1,"",false,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,flower-bouquet; candle-large-size; customized-balloon; customized-mug-1; flowers-roche-box,"",ahead,,,kg,,,active
+kids-boxe,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/21A01E0F-D921-4AA5-A704-718807A4F429.jpg?v=1722696674,2,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+kids-boxe,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/379A6B1A-8B7A-44E2-B65E-B97BB67C8137.jpg?v=1722824224,3,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+breakfast-bouquet,Breakfast Bouquet,"<p>Breakfast bouquet is a Nice gift in a reasonable price.</p>
+<p>What’s inside?</p>
+<p>Croissant</p>
+<p>Paté</p>
+<p>Donut</p>
+<p>Cheese cubes with cherry tomatoes </p>
+<p>Apple</p>
+<p>Marshmallows</p>
+<p>all wrapped in a bouquet with lots if flowers, small balloon and customized card</p>",Wrap-it up,,"","",true,Card Message,Happy birthday,,,,,,,,,0.0,shopify,90,deny,manual,800.00,,true,true,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/082A48BA-2A29-4758-B658-58B597ECE27B.jpg?v=1730055751,1,"",false,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,flower-bouquet; customized-balloon; customized-mug-1; flowers-roche-box,"",ahead,,,kg,,,active
+breakfast-bouquet,,,,,,,,,Get well soon,,,,,,,,,0.0,shopify,98,deny,manual,800.00,,true,true,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/09C0FB05-E05F-4DAD-B1EC-A1DC0A890B27.jpg?v=1730056084,2,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+breakfast-bouquet,,,,,,,,,I love you,,,,,,,,,0.0,shopify,94,deny,manual,800.00,,true,true,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/03F1DE87-64AE-4839-9FD7-E9BC8E60DF55.jpg?v=1730056083,3,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+breakfast-bouquet,,,,,,,,,Thank you,,,,,,,,,0.0,shopify,99,deny,manual,800.00,,true,true,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/91FAA08F-CD7F-4028-8B6B-C1C7D00EEF7D.jpg?v=1730056083,4,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+breakfast-bouquet,,,,,,,,,Congratulations,,,,,,,,,0.0,shopify,99,deny,manual,800.00,,true,true,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+breakfast-bouquet,,,,,,,,,Good morning,,,,,,,,,0.0,shopify,96,deny,manual,800.00,,true,true,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+dessert-box-1,Dessert Box with a cake,"",Wrap-it up,"Food, Beverages & Tobacco > Food Items > Bakery","","",true,Title,Default Title,,,,,,,,,0.0,shopify,99,deny,manual,2100.00,,true,true,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/6F6EE688-2621-4C1A-AE4D-1D4F5FD0B8C7.jpg?v=1731485250,1,"",false,,,1876,,,,,,,,,,,,,,,,,,,,,,,,,,,,,flower-bouquet; customized-balloon; customized-mug-1; flowers-roche-box,"",ahead,,,kg,,,active
+dessert-box-1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/230CE7DF-9700-4EAA-A80B-57081B7646AB.jpg?v=1731485250,2,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+dessert-box-1,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/7BC6C130-5E7E-40CE-AA33-DB980FE14FDB.jpg?v=1731485250,3,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+breakfast-gifts-royal-cheese-tray,Royal Cheese Tray,"<p>Royal cheese tray </p>
+<p>assorted premium cheese and cold cuts collection, added to some bakeries..</p>
+<p>For dessert we added chocolate spread jar with waffles 🧇 and pancakes 🥞 and donut 🍩 </p>
+<p>all served in our rustic wooden tray with customized background printed note and lots of free balloons 🎈 </p>
+<p>Cheese included:</p>
+<p>cheddar cubes</p>
+<p>brie</p>
+<p>salami</p>
+<p>smoked chicken </p>
+<p>emental</p>
+<p>labneh with zaatar</p>
+<p>olives</p>
+<p> </p>
+<p>add salmon for extra fees</p>",Wrap-it up,"Food, Beverages & Tobacco > Food Items","","breakfast box delivery, breakfast gift box, breakfast gifts, Breakfast gifts delivery, breakfast tray gift, breakfast-tray, brunch-tray, premium breakfast gifts, premium-gifts",true,Add-ons,None,,,,,,,,'1001,0.0,shopify,10,deny,manual,2700.00,,true,true,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/A2298DFC-1151-4952-BC0F-720804768E79.jpg?v=1743354295,1,"",false,Royal Cheese Tray | breakfast gifts delivery ,"Order beautifully arranged breakfast gifts, premium breakfast gift boxes, and elegant breakfast trays—perfect for birthdays, anniversaries, and unforgettable morning surprises.
+",422,,,,,,,,,,,,,,,,,,,,,,,,,,,,,flower-bouquet; macron-mini-candle; paw-mini-candle; customized-mug-1; customized-balloon; flowers-roche-box,"",ahead,,,kg,,,active
+breakfast-gifts-royal-cheese-tray,,,,,,,,,Add nuts,,,,,,,,'1002,0.0,shopify,10,deny,manual,2900.00,,true,true,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/87524497-B8FA-4AC6-BEE5-C68470B6ECA7.jpg?v=1743354295,2,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+breakfast-gifts-royal-cheese-tray,,,,,,,,,Add salmon cup,,,,,,,,'1001,0.0,shopify,8,deny,manual,2900.00,,true,true,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/7FC23F04-4A03-4703-9C4E-2E91D74151C2.jpg?v=1763096102,3,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+breakfast-gifts-royal-cheese-tray,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/287DF35F-4535-4F49-AF00-A0704EFD34FF.jpg?v=1763096102,4,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+breakfast-gifts-royal-cheese-tray,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/414255CC-02DA-4B48-9CF6-49C6EADBF3FE.jpg?v=1763096102,5,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+breakfast-gifts-royal-cheese-tray,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/B4509361-8814-420E-9126-495638038799.jpg?v=1763096102,6,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+breakfast-gifts-royal-cheese-tray,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/IMG-6877.jpg?v=1763096102,7,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+flower-bouquet,Flower bouquet,"<p>Enhance your gift by adding this stunning flower bouquet to the breakfast box. With its fresh, vibrant colors and elegant touch, it’s the perfect way to make your gesture truly unforgettable and extra special.</p>",Wrap-it up,Arts & Entertainment > Party & Celebration > Gift Giving > Fresh Cut Flowers,"","",true,Color,purple,product.metafields.shopify.color-pattern,,,,,,,,0.0,shopify,5,deny,manual,500.00,,true,true,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/BF4B6C8B-D91D-461D-B507-1677C43DB0DE.jpg?v=1732316696,1,"",false,,,2899,,,,,,,,,,,,,,,,,,,,purple; red; white; yellow,,,,,,,,,,,,,,kg,,,active
+flower-bouquet,,,,,,,,,red,,,,,,,,,0.0,shopify,1,deny,manual,500.00,,true,true,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+flower-bouquet,,,,,,,,,white,,,,,,,,,0.0,shopify,6,deny,manual,500.00,,true,true,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+flower-bouquet,,,,,,,,,yellow,,,,,,,,,0.0,shopify,9,deny,manual,500.00,,true,true,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+breakfast-gift-royal-cheese-tray-with-cake-and-donuts,Royal cheese tray with Cake and Donuts,"<p>Royal trays collection never ends..</p>
+<p><span>Order beautifully arranged breakfast gifts and premium breakfast gift boxes, perfect for birthdays, anniversaries, and unforgettable morning surprises.</span></p>
+<p>Royal cheese Tray with Donuts and Cake</p>
+<p>Whats inside?</p>
+<p>Nola cake </p>
+<p>2 Donuts </p>
+<p>Waffles</p>
+<p>Assorted array of premium cheeses and cold cuts</p>
+<p>Seasonal fruits </p>
+<p>Nuts</p>
+<p>Marshmallows</p>
+<p>Bakeries </p>
+<p> All Presented in our signature wooden tray with the customized printed background note and Free festive balloons 🎈 </p>",Wrap-it up,"Food, Beverages & Tobacco > Food Items > Prepared Foods > Prepared Meals & Entrées","","breakfast box delivery, breakfast gift box, breakfast gifts, Breakfast gifts delivery, breakfast tray gift, breakfast-tray, brunch-tray, premium breakfast gifts, premium-gifts",true,Add-ons,None,,,,,,,,,0.0,shopify,6,deny,manual,2800.00,,true,true,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/33B1E036-E323-44EF-9D08-6302D1BAD20B.jpg?v=1743354346,1,"",false,Royal cheese tray with Cake and Donuts | breakfast gifts delivery ,"Order beautifully arranged breakfast gifts, premium breakfast gift boxes, and elegant breakfast trays—perfect for birthdays, anniversaries, and unforgettable morning surprises.
+",499988,,,,,,,,,,,,,,milk; nuts,,,,,,,,fresh,,,,,,,flower-bouquet; macron-mini-candle; strawberries-candles-large-box; paw-mini-candle; customized-balloon; customized-mug-1; flowers-roche-box,"",ahead,,,kg,,,active
+breakfast-gift-royal-cheese-tray-with-cake-and-donuts,,,,,,,,,Add nuts,,,,,,,,,0.0,shopify,9,deny,manual,3000.00,,true,true,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/D96533DF-C60D-4C1F-9128-2AAFCB4D5B3C.jpg?v=1743354346,2,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+breakfast-gift-royal-cheese-tray-with-cake-and-donuts,,,,,,,,,Add salmon,,,,,,,,,0.0,shopify,10,deny,manual,3000.00,,true,true,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/B5EBB717-C53B-4D14-B011-C5F3D8319DB3.jpg?v=1743354346,3,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+breakfast-gift-royal-cheese-tray-with-cake-and-donuts,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/DA1B3798-12CF-4270-87B1-DB3318F8B5D1.jpg?v=1732747120,4,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+breakfast-gift-royal-cheese-tray-with-cake-and-donuts,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/69894FF7-4D4E-4D38-A9DD-7640BE988A39.jpg?v=1762596278,5,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+breakfast-gift-royal-cheese-tray-with-cake-and-donuts,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/BE836BD3-0AFA-4B78-8193-E47A910E6E7D.jpg?v=1762596278,6,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+breakfast-gift-royal-cheese-tray-with-cake-and-donuts,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/55FCFC5C-DEF8-47A4-9218-7F036C5982E2.jpg?v=1762596278,7,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+untitled-dec14_06-33,Dessert Bouquet (Small size),"<p><span>Product Description: Desert Bouquet (Small Size)</span></p>
+<p> </p>
+<p><span>Indulge in a delightful blend of sweetness and charm with our Desert Bouquet, perfect for any occasion! This small-sized arrangement includes:</span></p>
+<p><span><span class=""Apple-tab-span""> </span></span><span>•</span><span><span class=""Apple-tab-span""> </span></span><span>3 freshly baked donuts</span><span> with a variety of tempting toppings.</span></p>
+<p><span><span class=""Apple-tab-span""> </span></span><span>•</span><span><span class=""Apple-tab-span""> </span></span><span>3 premium chocolates</span><span>, beautifully wrapped for a touch of elegance.</span></p>
+<p><span><span class=""Apple-tab-span""> </span></span><span>•</span><span><span class=""Apple-tab-span""> </span></span><span>Fresh flowers</span><span>, carefully selected to add a vibrant and fragrant flourish.</span></p>
+<p><span><span class=""Apple-tab-span""> </span></span><span>•</span><span><span class=""Apple-tab-span""> </span></span><span>A small balloon</span><span>, adding a playful and celebratory touch.</span></p>
+<p> </p>
+<p><span>Thoughtfully arranged, this bouquet is ideal for gifting or treating yourself to a unique combination of treats and blooms!</span></p>",Wrap-it up,,"","",true,Card message,Good morning,,,,,,,,,0.0,shopify,47,deny,manual,800.00,,true,true,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/A1D29271-953E-40A2-A163-A44C5110084C.jpg?v=1734151713,1,"",false,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,flower-bouquet; customized-mug; candle-large-size; customized-balloon; flowers-roche-box,"",ahead,,,kg,,,active
+untitled-dec14_06-33,,,,,,,,,Happy birthday,,,,,,,,,0.0,shopify,48,deny,manual,800.00,,true,true,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/5D180B31-2203-4B31-A105-27F317B29851.jpg?v=1734151713,2,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+untitled-dec14_06-33,,,,,,,,,I love you,,,,,,,,,0.0,shopify,49,deny,manual,800.00,,true,true,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/0CA0FF0C-FAAE-41F2-A442-2615CB62BEAC.jpg?v=1734151713,3,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+untitled-dec14_06-33,,,,,,,,,Get well soon,,,,,,,,,0.0,shopify,50,deny,manual,800.00,,true,true,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/48751C69-9847-4E5A-A568-07290F2234FB.jpg?v=1734151713,4,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+untitled-dec14_06-33,,,,,,,,,Congratulations,,,,,,,,,0.0,shopify,50,deny,manual,800.00,,true,true,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/4E5E0B68-A1D3-44A7-9753-F598197BFD50.jpg?v=1734151713,5,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,kg,,,
+untitled-dec14_06-33,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,https://cdn.shopify.com/s/files/1/0612/6927/8772/files/EB45B59C-DD1E-4DAA-B4A7-EA962FBF98F9.jpg?v=1734151713,6,"",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,

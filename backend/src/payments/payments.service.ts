@@ -17,9 +17,8 @@ export class PaymentsService {
     }
   }
 
-  async createPaymentIntent(orderId: string, amount: number, currency = 'usd') {
+  async createPaymentIntent(orderId: string, amount: number, currency = 'egp') {
     if (!this.stripe) {
-      // Return mock payment intent if Stripe is not configured
       return {
         clientSecret: 'mock_client_secret_' + orderId,
         id: 'mock_pi_' + orderId,
@@ -28,11 +27,9 @@ export class PaymentsService {
 
     try {
       const paymentIntent = await this.stripe.paymentIntents.create({
-        amount: Math.round(amount * 100), // Convert to cents
-        currency,
-        metadata: {
-          orderId,
-        },
+        amount: Math.round(amount * 100), // EGP: 1 EGP = 100 piastres (minor unit)
+        currency: currency.toLowerCase(),
+        metadata: { orderId },
       });
 
       return {

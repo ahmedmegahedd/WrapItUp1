@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { getProduct, getTimeSlots, getDisabledDates } from '@/lib/data'
+import { getProduct, getTimeSlots, getDisabledDates, getProductAddons } from '@/lib/data'
 import api from '@/lib/api'
 import { Elements } from '@stripe/react-stripe-js'
 import { stripePromise } from '@/lib/stripe'
@@ -12,10 +12,12 @@ import CheckoutForm from '@/components/CheckoutForm'
 import AddOnsModal from '@/components/AddOnsModal'
 import { generateProductSchema } from '@/lib/seo'
 import { trackProductClick } from '@/lib/analytics'
+import { useCart } from '@/contexts/CartContext'
 
 export default function ProductPage() {
   const params = useParams()
   const router = useRouter()
+  const { addItem } = useCart()
   const [product, setProduct] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>({})
@@ -25,6 +27,27 @@ export default function ProductPage() {
   const [selectedAddons, setSelectedAddons] = useState<string[]>([])
   const [timeSlots, setTimeSlots] = useState<any[]>([])
   const [disabledDates, setDisabledDates] = useState<string[]>([])
+  const [productAddons, setProductAddons] = useState<any[]>([])
+  const [addedToCart, setAddedToCart] = useState(false)
+
+  // Calculate unit price including addons for cart
+  const calculateItemPriceWithAddons = async (addonIds: string[]) => {
+    let price = calculateUnitPrice() // Get unit price (without quantity)
+    
+    if (addonIds.length > 0) {
+      try {
+        const addonPromises = addonIds.map((id) => api.get(`/addons/${id}`))
+        const responses = await Promise.all(addonPromises)
+        const addonsPrice = responses.reduce((sum, res) => sum + parseFloat(res.data.price || 0), 0)
+        price += addonsPrice
+      } catch (error) {
+        console.error('Error loading addons for price calculation:', error)
+      }
+    }
+    
+    // Return unit price (will be multiplied by quantity in cart)
+    return price
+  }
 
   useEffect(() => {
     async function loadData() {
@@ -35,6 +58,17 @@ export default function ProductPage() {
       // Track product view/click
       if (productData?.id) {
         trackProductClick(productData.id)
+      }
+
+      // Load product addons to check if modal should be shown
+      if (productData?.id) {
+        try {
+          const addons = await getProductAddons(productData.id)
+          setProductAddons(addons || [])
+        } catch (error) {
+          console.error('Error loading product addons:', error)
+          setProductAddons([])
+        }
       }
 
       const slots = await getTimeSlots()
@@ -74,20 +108,77 @@ export default function ProductPage() {
     return price * quantity
   }
 
+  const calculateUnitPrice = () => {
+    if (!product) return 0
+    let price = product.discount_price || product.base_price
+
+    if (product.product_variations) {
+      for (const variation of product.product_variations) {
+        const selectedOptionId = selectedVariations[variation.name]
+        if (selectedOptionId) {
+          const option = variation.product_variation_options?.find(
+            (opt: any) => opt.id === selectedOptionId
+          )
+          if (option) {
+            price += parseFloat(option.price_modifier || 0)
+          }
+        }
+      }
+    }
+
+    return price // Return unit price, not multiplied by quantity
+  }
+
+
   const handleAddToCart = () => {
-    setShowAddOns(true)
+    if (!product) return
+
+    // Only show addons modal if product has addons assigned
+    if (productAddons.length > 0) {
+      setShowAddOns(true)
+    } else {
+      // Add to cart directly if no addons
+      addToCart([])
+    }
+  }
+
+  const addToCart = async (addons: string[]) => {
+    if (!product) return
+
+    // Calculate unit price with variations and addons
+    const unitPrice = await calculateItemPriceWithAddons(addons)
+    
+    // Store the calculated unit price in discount_price for cart calculation
+    addItem({
+      product_id: product.id,
+      product_title: product.title,
+      product_slug: product.slug,
+      product_image: product.product_images?.[0]?.image_url,
+      base_price: product.base_price,
+      discount_price: unitPrice, // Store calculated unit price here
+      quantity,
+      selected_variations: selectedVariations,
+      selected_addons: addons,
+    })
+
+    setAddedToCart(true)
+    setSelectedAddons([])
+    setShowAddOns(false)
+    
+    // Reset after showing message
+    setTimeout(() => {
+      setAddedToCart(false)
+      setQuantity(1)
+      setSelectedVariations({})
+    }, 2000)
   }
 
   const handleAddOnsContinue = (addons: string[]) => {
-    setSelectedAddons(addons)
-    setShowAddOns(false)
-    setShowCheckout(true)
+    addToCart(addons)
   }
 
   const handleAddOnsSkip = () => {
-    setSelectedAddons([])
-    setShowAddOns(false)
-    setShowCheckout(true)
+    addToCart([])
   }
 
   if (loading) {
@@ -105,6 +196,18 @@ export default function ProductPage() {
       </div>
     )
   }
+
+  const mainImage = product.product_images?.[0]?.image_url
+  const price = product.discount_price || product.base_price
+  const productUrl = typeof window !== 'undefined' ? window.location.href : `https://wrap-itup.com/products/${product.slug}`
+  
+  const productSchema = generateProductSchema({
+    name: product.title,
+    description: product.description || `${product.title} - Beautiful breakfast tray gift`,
+    price: price,
+    image: mainImage,
+    url: productUrl,
+  })
 
   return (
     <>
@@ -132,31 +235,14 @@ export default function ProductPage() {
 
       {!showCheckout && !showAddOns && (
         <>
-          {(() => {
-            const mainImage = product.product_images?.[0]?.image_url
-            const price = product.discount_price || product.base_price
-            const productUrl = typeof window !== 'undefined' ? window.location.href : `https://wrap-itup.com/products/${product.slug}`
-            
-            const productSchema = generateProductSchema({
-              name: product.title,
-              description: product.description || `${product.title} - Beautiful breakfast tray gift`,
-              price: price,
-              image: mainImage,
-              sku: product.sku,
-              url: productUrl,
-            })
-
-            return (
-              <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
-              />
-            )
-          })()}
-          <div className="min-h-screen bg-gradient-to-b from-white to-pink-50/20 pb-24 md:pb-12">
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
+          />
+          <div className="min-h-screen bg-gradient-to-b from-white to-pink-50/20 pb-24 md:pb-12 pt-24 md:pt-32">
         <div className="container mx-auto px-4 md:px-6 max-w-7xl">
           {/* Premium Product Layout */}
-          <div className="relative pt-6 md:pt-12">
+          <div className="relative">
             {/* Product Headline - Top Left */}
             <div className="mb-6 md:mb-8">
               <h1 className="text-5xl md:text-7xl font-bold text-gray-900 tracking-tight leading-none mb-3">
@@ -292,10 +378,10 @@ export default function ProductPage() {
           <div className="container mx-auto px-4 py-4">
             <button
               onClick={handleAddToCart}
-              disabled={product.stock_quantity === 0}
+              disabled={product.stock_quantity === 0 || addedToCart}
               className="w-full bg-gray-900 text-white py-4 rounded-full text-lg font-semibold hover:bg-gray-800 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed min-h-[56px] shadow-lg active:scale-95"
             >
-              {product.stock_quantity === 0 ? 'Out of Stock' : 'Add to Cart'}
+              {addedToCart ? 'Added to Cart!' : product.stock_quantity === 0 ? 'Out of Stock' : 'Add to Cart'}
             </button>
           </div>
         </div>
@@ -304,10 +390,10 @@ export default function ProductPage() {
         <div className="hidden md:block container mx-auto px-4 md:px-6 max-w-7xl pb-12">
           <button
             onClick={handleAddToCart}
-            disabled={product.stock_quantity === 0}
+            disabled={product.stock_quantity === 0 || addedToCart}
             className="w-full max-w-md bg-gray-900 text-white py-5 rounded-full text-lg font-semibold hover:bg-gray-800 transition-all disabled:bg-gray-400 disabled:cursor-not-allowed shadow-xl hover:shadow-2xl transform hover:scale-[1.02] active:scale-100"
           >
-            {product.stock_quantity === 0 ? 'Out of Stock' : 'Add to Cart'}
+            {addedToCart ? 'Added to Cart!' : product.stock_quantity === 0 ? 'Out of Stock' : 'Add to Cart'}
           </button>
         </div>
       </div>

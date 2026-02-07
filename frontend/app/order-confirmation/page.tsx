@@ -53,7 +53,7 @@ function OrderConfirmationContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <div className="min-h-screen bg-gray-50 pt-32 md:pt-40 pb-12">
       <div className="container mx-auto px-4 max-w-2xl">
         <div className="bg-white rounded-lg shadow-lg p-8">
           <div className="text-center mb-8">
@@ -77,7 +77,7 @@ function OrderConfirmationContent() {
             </div>
             <div className="flex justify-between">
               <span className="text-gray-800">Total</span>
-              <span className="font-semibold text-xl">${order.total.toFixed(2)}</span>
+              <span className="font-semibold text-xl">E£ {order.total.toFixed(2)} (EGP)</span>
             </div>
           </div>
 
@@ -99,7 +99,7 @@ function OrderConfirmationContent() {
                       </div>
                     )}
                   </div>
-                  <div className="font-semibold">${item.line_total.toFixed(2)}</div>
+                  <div className="font-semibold">E£ {item.line_total.toFixed(2)}</div>
                 </div>
               ))}
             </div>
@@ -120,6 +120,24 @@ function OrderConfirmationContent() {
               <div>
                 <span className="font-semibold">Time Slot:</span> {order.delivery_time_slot}
               </div>
+              {order.delivery_destination_name && (
+                <div>
+                  <span className="font-semibold">Destination:</span> {order.delivery_destination_name}
+                </div>
+              )}
+              {order.delivery_address && (
+                <div>
+                  <span className="font-semibold">Address:</span> {order.delivery_address}
+                </div>
+              )}
+              {order.delivery_maps_link && (
+                <div>
+                  <span className="font-semibold">Maps:</span>{' '}
+                  <a href={order.delivery_maps_link} target="_blank" rel="noopener noreferrer" className="text-pink-600 hover:underline">
+                    View location
+                  </a>
+                </div>
+              )}
               {order.card_message && (
                 <div className="mt-3 p-3 bg-gray-50 rounded">
                   <div className="font-semibold mb-1">Card Message:</div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import api from '@/lib/api'
 
 type TimeRange = 'today' | 'last_7_days' | 'last_30_days'
@@ -65,7 +65,7 @@ export default function AnalyticsPage() {
   const [salesSummary, setSalesSummary] = useState<SalesSummary | null>(null)
   const [peakOrderHours, setPeakOrderHours] = useState<PeakOrderHour[]>([])
 
-  const loadAllData = async (isReload = false) => {
+  const loadAllData = useCallback(async (isReload = false) => {
     if (isReload) {
       setReloading(true)
     } else {
@@ -104,11 +104,11 @@ export default function AnalyticsPage() {
       setLoading(false)
       setReloading(false)
     }
-  }
+  }, [timeRange])
 
   useEffect(() => {
     loadAllData()
-  }, [timeRange])
+  }, [loadAllData])
 
   // Auto-refresh live users every 10 seconds
   useEffect(() => {

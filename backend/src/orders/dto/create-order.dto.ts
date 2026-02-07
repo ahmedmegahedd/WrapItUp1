@@ -1,4 +1,4 @@
-import { IsString, IsEmail, IsOptional, IsDateString, IsArray, ValidateNested, IsNumber, Min } from 'class-validator';
+import { IsString, IsEmail, IsOptional, IsDateString, IsArray, ValidateNested, IsNumber, Min, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class OrderItemDto {
@@ -34,11 +34,40 @@ export class CreateOrderDto {
   delivery_date: string;
 
   @IsString()
-  delivery_time_slot: string;
+  @IsOptional()
+  delivery_time_slot?: string; // Legacy: text-based time slot
+
+  @IsString()
+  @IsOptional()
+  delivery_time_slot_id?: string; // New: reference to delivery_time_slots table
 
   @IsString()
   @IsOptional()
   card_message?: string;
+
+  @IsUUID()
+  @IsOptional()
+  delivery_destination_id?: string;
+
+  @IsNumber()
+  @IsOptional()
+  delivery_fee_egp?: number;
+
+  @IsString()
+  @IsOptional()
+  delivery_address?: string;
+
+  @IsString()
+  @IsOptional()
+  delivery_maps_link?: string;
+
+  @IsUUID()
+  @IsOptional()
+  promo_code_id?: string;
+
+  @IsNumber()
+  @IsOptional()
+  discount_amount_egp?: number;
 
   @IsArray()
   @ValidateNested({ each: true })

@@ -11,7 +11,7 @@ export default async function CollectionsPage() {
     .sort((a: any, b: any) => (a.display_order ?? 0) - (b.display_order ?? 0))
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-pink-50/30 pt-6 md:pt-12 pb-24 md:pb-12">
+    <div className="min-h-screen bg-gradient-to-b from-white to-pink-50/30 pt-24 md:pt-32 pb-24 md:pb-12">
       <div className="container mx-auto px-4 max-w-7xl">
         <h1 className="text-5xl md:text-7xl font-bold mb-8 md:mb-12 text-gray-900 tracking-tight">
           Collections

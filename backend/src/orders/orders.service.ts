@@ -1,7 +1,12 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import { SupabaseService } from '../supabase/supabase.service';
 import { ProductsService } from '../products/products.service';
 import { AddonsService } from '../addons/addons.service';
+import { DeliveryService } from '../delivery/delivery.service';
+import { DeliveryDestinationsService } from '../delivery-destinations/delivery-destinations.service';
+import { PromoCodesService } from '../promo-codes/promo-codes.service';
+import { MailService } from '../mail/mail.service';
+import { LoyaltyService } from '../loyalty/loyalty.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 
@@ -11,6 +16,12 @@ export class OrdersService {
     private supabaseService: SupabaseService,
     private productsService: ProductsService,
     private addonsService: AddonsService,
+    @Inject(forwardRef(() => DeliveryService))
+    private deliveryService: DeliveryService,
+    private deliveryDestinationsService: DeliveryDestinationsService,
+    private promoCodesService: PromoCodesService,
+    private mailService: MailService,
+    private loyaltyService: LoyaltyService,
   ) {}
 
   async create(createOrderDto: CreateOrderDto) {
@@ -18,6 +29,7 @@ export class OrdersService {
 
     // Validate products and calculate totals
     let subtotal = 0;
+    let pointsEarned = 0;
     const orderItemsData = [];
 
     for (const item of createOrderDto.items) {
@@ -27,9 +39,11 @@ export class OrdersService {
         throw new BadRequestException(`Product ${product.title} is not available`);
       }
 
-      if (product.stock_quantity < item.quantity) {
-        throw new BadRequestException(`Insufficient stock for ${product.title}`);
-      }
+      await this.productsService.checkStockForOrderItem(
+        product.id,
+        item.quantity,
+        item.selected_variations,
+      );
 
       // Calculate price with variations
       let itemPrice = product.discount_price || product.base_price;
@@ -88,25 +102,55 @@ export class OrdersService {
       }
 
       subtotal += lineTotal;
+      pointsEarned += ((product as any).points_value ?? 0) * item.quantity;
+
+      const selectedVariationOptionIds = item.selected_variations || undefined;
 
       orderItemsData.push({
         product_id: product.id,
         product_title: product.title,
-        product_sku: product.sku,
+        product_sku: (product as any).sku ?? '',
         base_price: product.base_price,
         discount_price: product.discount_price,
         quantity: item.quantity,
         selected_variations: variationSnapshot,
         selected_addons: addonsSnapshot,
+        selected_variation_option_ids: selectedVariationOptionIds,
         line_total: lineTotal,
       });
-
-      // Decrease stock
-      await this.productsService.decreaseStock(product.id, item.quantity);
     }
+
+    // Delivery destination (required for new flow)
+    let deliveryDestinationName: string | null = null;
+    let deliveryFeeEgp = 0;
+    if (createOrderDto.delivery_destination_id) {
+      const dest = await this.deliveryDestinationsService.findOne(createOrderDto.delivery_destination_id);
+      deliveryDestinationName = dest.name;
+      deliveryFeeEgp = parseFloat(String(dest.fee_egp || 0));
+    } else if (createOrderDto.delivery_fee_egp != null) {
+      deliveryFeeEgp = createOrderDto.delivery_fee_egp;
+    }
+
+    const discountAmountEgp = createOrderDto.discount_amount_egp ?? 0;
+    const total = Math.max(0, subtotal - discountAmountEgp + deliveryFeeEgp);
 
     // Generate order number
     const orderNumber = await this.generateOrderNumber();
+
+    // Validate delivery time slot if ID is provided
+    let deliveryTimeSlotText = createOrderDto.delivery_time_slot;
+    if (createOrderDto.delivery_time_slot_id) {
+      try {
+        const timeSlot = await this.deliveryService.getTimeSlot(createOrderDto.delivery_time_slot_id);
+        deliveryTimeSlotText = timeSlot.label;
+      } catch (error) {
+        throw new BadRequestException('Invalid delivery time slot ID');
+      }
+    }
+
+    if (!deliveryTimeSlotText) {
+      throw new BadRequestException('Delivery time slot is required');
+    }
 
     // Create order
     const { data: order, error: orderError } = await supabase
@@ -117,10 +161,19 @@ export class OrdersService {
         customer_email: createOrderDto.customer_email,
         customer_phone: createOrderDto.customer_phone,
         delivery_date: createOrderDto.delivery_date,
-        delivery_time_slot: createOrderDto.delivery_time_slot,
+        delivery_time_slot: deliveryTimeSlotText,
+        delivery_time_slot_id: createOrderDto.delivery_time_slot_id || null,
         card_message: createOrderDto.card_message,
+        delivery_destination_id: createOrderDto.delivery_destination_id || null,
+        delivery_destination_name: deliveryDestinationName,
+        delivery_fee_egp: deliveryFeeEgp,
+        delivery_address: createOrderDto.delivery_address || null,
+        delivery_maps_link: createOrderDto.delivery_maps_link || null,
+        promo_code_id: createOrderDto.promo_code_id || null,
+        discount_amount_egp: discountAmountEgp,
         subtotal,
-        total: subtotal, // Add shipping/tax if needed
+        total,
+        points_earned: pointsEarned,
         payment_status: 'pending',
         order_status: 'pending',
       })
@@ -129,19 +182,79 @@ export class OrdersService {
 
     if (orderError) throw new BadRequestException(orderError.message);
 
-    // Create order items
-    const orderItems = orderItemsData.map((item) => ({
-      ...item,
-      order_id: order.id,
-    }));
+    const orderItems = orderItemsData.map((item) => {
+      const { selected_variation_option_ids, ...rest } = item;
+      return {
+        ...rest,
+        order_id: order.id,
+        selected_variation_option_ids: selected_variation_option_ids || null,
+      };
+    });
 
-    const { error: itemsError } = await supabase
-      .from('order_items')
-      .insert(orderItems);
-
+    const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
     if (itemsError) throw new BadRequestException(itemsError.message);
 
     return this.findOne(order.id);
+  }
+
+  /** Called after Stripe payment_intent.succeeded: decrease stock, send email, increment promo usage. */
+  async onPaymentSuccess(orderId: string): Promise<void> {
+    const order = await this.findOne(orderId);
+    const items = order.order_items || [];
+
+    for (const item of items) {
+      await this.productsService.decreaseStockForOrderItem(
+        item.product_id,
+        item.quantity,
+        item.selected_variation_option_ids,
+      );
+    }
+
+    if (order.promo_code_id) {
+      try {
+        await this.promoCodesService.incrementUsage(order.promo_code_id);
+      } catch (e) {
+        console.warn('[Orders] Failed to increment promo usage:', e);
+      }
+    }
+
+    const pointsEarned = order.points_earned ?? 0;
+    if (pointsEarned > 0) {
+      try {
+        await this.loyaltyService.grantPointsForOrder(order.id, order.customer_email, pointsEarned);
+      } catch (e) {
+        console.warn('[Orders] Failed to grant loyalty points:', e);
+      }
+    }
+
+    const deliveryDateStr =
+      typeof order.delivery_date === 'string'
+        ? order.delivery_date
+        : order.delivery_date
+          ? new Date(order.delivery_date).toISOString().split('T')[0]
+          : '';
+
+    await this.mailService.sendOrderConfirmation({
+      order_number: order.order_number,
+      customer_name: order.customer_name,
+      customer_email: order.customer_email,
+      delivery_date: deliveryDateStr,
+      delivery_time_slot: order.delivery_time_slot || '',
+      delivery_destination_name: order.delivery_destination_name || undefined,
+      delivery_address: order.delivery_address || undefined,
+      delivery_maps_link: order.delivery_maps_link || undefined,
+      items: items.map((i: any) => ({
+        product_title: i.product_title,
+        quantity: i.quantity,
+        selected_variations: i.selected_variations,
+        selected_addons: i.selected_addons,
+        line_total: parseFloat(i.line_total),
+      })),
+      subtotal_egp: parseFloat(order.subtotal),
+      discount_amount_egp: order.discount_amount_egp != null ? parseFloat(order.discount_amount_egp) : undefined,
+      delivery_fee_egp: order.delivery_fee_egp != null ? parseFloat(order.delivery_fee_egp) : undefined,
+      total_egp: parseFloat(order.total),
+    });
   }
 
   async findAll(filters?: {
@@ -252,6 +365,14 @@ export class OrdersService {
       .eq('id', id);
 
     if (error) throw new BadRequestException(error.message);
+
+    if (paymentStatus === 'paid') {
+      try {
+        await this.onPaymentSuccess(id);
+      } catch (e) {
+        console.error('[Orders] onPaymentSuccess failed:', e);
+      }
+    }
 
     return this.findOne(id);
   }

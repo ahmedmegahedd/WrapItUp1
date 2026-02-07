@@ -10,6 +10,11 @@ import { UpdateProductDto } from '../products/dto/update-product.dto';
 import { CreateCollectionDto } from '../collections/dto/create-collection.dto';
 import { UpdateCollectionDto } from '../collections/dto/update-collection.dto';
 import { UpdateOrderStatusDto } from '../orders/dto/update-order-status.dto';
+import { UpdateNavOrderDto } from './dto/update-nav-order.dto';
+import { DeliveryDestinationsService } from '../delivery-destinations/delivery-destinations.service';
+import { LoyaltyService } from '../loyalty/loyalty.service';
+import { CreateRewardDto } from '../loyalty/dto/create-reward.dto';
+import { UpdateRewardDto } from '../loyalty/dto/update-reward.dto';
 
 @Controller('admin')
 export class AdminController {
@@ -18,6 +23,8 @@ export class AdminController {
     private readonly productsService: ProductsService,
     private readonly collectionsService: CollectionsService,
     private readonly ordersService: OrdersService,
+    private readonly deliveryDestinationsService: DeliveryDestinationsService,
+    private readonly loyaltyService: LoyaltyService,
   ) {}
 
   @Post('auth/login')
@@ -81,6 +88,12 @@ export class AdminController {
     return this.collectionsService.findOne(id);
   }
 
+  @Patch('collections/nav-order')
+  @UseGuards(AdminGuard)
+  updateCollectionsNavOrder(@Body() dto: UpdateNavOrderDto) {
+    return this.collectionsService.updateNavOrder(dto.orderedIds);
+  }
+
   @Patch('collections/:id')
   @UseGuards(AdminGuard)
   updateCollection(@Param('id') id: string, @Body() updateCollectionDto: UpdateCollectionDto) {
@@ -91,6 +104,40 @@ export class AdminController {
   @UseGuards(AdminGuard)
   removeCollection(@Param('id') id: string) {
     return this.collectionsService.remove(id);
+  }
+
+  // Delivery destinations (admin)
+  @Get('delivery-destinations')
+  @UseGuards(AdminGuard)
+  findAllDeliveryDestinations() {
+    return this.deliveryDestinationsService.findAll(true);
+  }
+
+  @Get('delivery-destinations/:id')
+  @UseGuards(AdminGuard)
+  findOneDeliveryDestination(@Param('id') id: string) {
+    return this.deliveryDestinationsService.findOne(id);
+  }
+
+  @Post('delivery-destinations')
+  @UseGuards(AdminGuard)
+  createDeliveryDestination(@Body() body: { name: string; fee_egp: number; display_order?: number; is_active?: boolean }) {
+    return this.deliveryDestinationsService.create(body);
+  }
+
+  @Patch('delivery-destinations/:id')
+  @UseGuards(AdminGuard)
+  updateDeliveryDestination(
+    @Param('id') id: string,
+    @Body() body: { name?: string; fee_egp?: number; display_order?: number; is_active?: boolean },
+  ) {
+    return this.deliveryDestinationsService.update(id, body);
+  }
+
+  @Delete('delivery-destinations/:id')
+  @UseGuards(AdminGuard)
+  removeDeliveryDestination(@Param('id') id: string) {
+    return this.deliveryDestinationsService.remove(id);
   }
 
   // Orders management
@@ -122,5 +169,36 @@ export class AdminController {
   @UseGuards(AdminGuard)
   updateOrderStatus(@Param('id') id: string, @Body() updateOrderStatusDto: UpdateOrderStatusDto) {
     return this.ordersService.updateStatus(id, updateOrderStatusDto);
+  }
+
+  // Rewards / Points (loyalty)
+  @Get('rewards')
+  @UseGuards(AdminGuard)
+  findAllRewards() {
+    return this.loyaltyService.findAllRewards(false);
+  }
+
+  @Get('rewards/:id')
+  @UseGuards(AdminGuard)
+  findOneReward(@Param('id') id: string) {
+    return this.loyaltyService.getRewardById(id);
+  }
+
+  @Post('rewards')
+  @UseGuards(AdminGuard)
+  createReward(@Body() dto: CreateRewardDto) {
+    return this.loyaltyService.createReward(dto);
+  }
+
+  @Patch('rewards/:id')
+  @UseGuards(AdminGuard)
+  updateReward(@Param('id') id: string, @Body() dto: UpdateRewardDto) {
+    return this.loyaltyService.updateReward(id, dto);
+  }
+
+  @Delete('rewards/:id')
+  @UseGuards(AdminGuard)
+  removeReward(@Param('id') id: string) {
+    return this.loyaltyService.deleteReward(id);
   }
 }

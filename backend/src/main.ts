@@ -8,7 +8,11 @@ async function bootstrap() {
   });
   
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3221',
+    origin: [
+      process.env.FRONTEND_URL || 'http://localhost:3221',
+      /^http:\/\/192\.168\.\d+\.\d+(:\d+)?$/,  // local network (e.g. Expo on device)
+      /^https?:\/\/localhost(:\d+)?$/,
+    ],
     credentials: true,
   });
   
@@ -23,8 +27,8 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   
   const port = process.env.PORT || 3001;
-  await app.listen(port);
-  console.log(`Backend server running on http://localhost:${port}`);
+  await app.listen(port, '0.0.0.0');
+  console.log(`Backend server running on http://localhost:${port} (and on your network IP)`);
 }
 
 bootstrap();

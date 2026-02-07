@@ -1,132 +1,169 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
-import Image from 'next/image'
+import { useState, useRef, useEffect, useCallback } from 'react'
+
+const MAX_VIEW_SIZE = 520
+const CROP_BOX_SIZE = 320
+const OUTPUT_SIZE = 800
 
 interface ImagePreviewCropProps {
   imageUrl: string
   onCrop: (croppedImageUrl: string) => void
   onCancel: () => void
-  aspectRatio?: number // Optional aspect ratio (width/height)
+  /** Display aspect ratio (width/height). Same as how the image will be shown. Default 1 = square. */
+  aspectRatio?: number
 }
 
-export default function ImagePreviewCrop({ imageUrl, onCrop, onCancel, aspectRatio }: ImagePreviewCropProps) {
-  const [scale, setScale] = useState(1)
-  const [position, setPosition] = useState({ x: 0, y: 0 })
-  const [imageSize, setImageSize] = useState({ width: 0, height: 0 })
-  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 })
+export default function ImagePreviewCrop({ imageUrl, onCrop, onCancel, aspectRatio = 1 }: ImagePreviewCropProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const imageRef = useRef<HTMLImageElement>(null)
+
+  const [imageDisplaySize, setImageDisplaySize] = useState({ width: 0, height: 0 })
+  const [imageNaturalSize, setImageNaturalSize] = useState({ width: 0, height: 0 })
+  const [boxPosition, setBoxPosition] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
 
-  useEffect(() => {
-    if (containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect()
-      setContainerSize({ width: rect.width, height: rect.height })
-    }
-  }, [])
+  const rawBoxWidth = CROP_BOX_SIZE
+  const rawBoxHeight = Math.round(CROP_BOX_SIZE / aspectRatio)
+  const boxWidth =
+    imageDisplaySize.width > 0 && imageDisplaySize.height > 0
+      ? Math.min(rawBoxWidth, imageDisplaySize.width)
+      : rawBoxWidth
+  const boxHeight =
+    imageDisplaySize.width > 0 && imageDisplaySize.height > 0
+      ? Math.min(rawBoxHeight, imageDisplaySize.height)
+      : rawBoxHeight
 
-  useEffect(() => {
-    if (imageRef.current) {
-      const img = imageRef.current
-      img.onload = () => {
-        setImageSize({ width: img.naturalWidth, height: img.naturalHeight })
-        // Center the image initially
-        const containerWidth = containerRef.current?.clientWidth || 0
-        const containerHeight = containerRef.current?.clientHeight || 0
-        const initialScale = Math.min(
-          containerWidth / img.naturalWidth,
-          containerHeight / img.naturalHeight
-        ) * 0.8 // Start at 80% to allow some zoom
-        setScale(initialScale)
-        setPosition({
-          x: (containerWidth - img.naturalWidth * initialScale) / 2,
-          y: (containerHeight - img.naturalHeight * initialScale) / 2,
-        })
+  const clampPosition = useCallback(
+    (x: number, y: number, imgW: number, imgH: number, bw: number, bh: number) => {
+      const w = Math.min(bw, imgW)
+      const h = Math.min(bh, imgH)
+      return {
+        x: Math.max(0, Math.min(imgW - w, x)),
+        y: Math.max(0, Math.min(imgH - h, y)),
       }
+    },
+    []
+  )
+
+  useEffect(() => {
+    const img = imageRef.current
+    if (!img || !imageUrl) return
+
+    const onLoad = () => {
+      const nw = img.naturalWidth
+      const nh = img.naturalHeight
+      setImageNaturalSize({ width: nw, height: nh })
+
+      const scale = Math.min(MAX_VIEW_SIZE / nw, MAX_VIEW_SIZE / nh, 1)
+      const dw = Math.round(nw * scale)
+      const dh = Math.round(nh * scale)
+      setImageDisplaySize({ width: dw, height: dh })
+
+      const bw = Math.min(rawBoxWidth, dw)
+      const bh = Math.min(rawBoxHeight, dh)
+      const initial = {
+        x: Math.max(0, (dw - bw) / 2),
+        y: Math.max(0, (dh - bh) / 2),
+      }
+      setBoxPosition(initial)
     }
+
+    if (img.complete) onLoad()
+    else img.addEventListener('load', onLoad)
+    return () => img.removeEventListener('load', onLoad)
   }, [imageUrl])
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true)
-    setDragStart({
-      x: e.clientX - position.x,
-      y: e.clientY - position.y,
-    })
-  }
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return
-    setPosition({
-      x: e.clientX - dragStart.x,
-      y: e.clientY - dragStart.y,
-    })
-  }
-
-  const handleMouseUp = () => {
-    setIsDragging(false)
-  }
-
-  const handleWheel = (e: React.WheelEvent) => {
+  const handleBoxMouseDown = (e: React.MouseEvent) => {
     e.preventDefault()
-    const delta = e.deltaY > 0 ? 0.9 : 1.1
-    const newScale = Math.max(0.5, Math.min(3, scale * delta))
-    setScale(newScale)
+    e.stopPropagation()
+    const rect = containerRef.current?.getBoundingClientRect()
+    if (!rect) return
+    const mouseInContainerX = e.clientX - rect.left
+    const mouseInContainerY = e.clientY - rect.top
+    setIsDragging(true)
+    setDragOffset({
+      x: mouseInContainerX - boxPosition.x,
+      y: mouseInContainerY - boxPosition.y,
+    })
   }
+
+  useEffect(() => {
+    if (!isDragging) return
+
+    const handleMove = (e: MouseEvent) => {
+      const rect = containerRef.current?.getBoundingClientRect()
+      if (!rect) return
+      const mouseInContainerX = e.clientX - rect.left
+      const mouseInContainerY = e.clientY - rect.top
+      const next = clampPosition(
+        mouseInContainerX - dragOffset.x,
+        mouseInContainerY - dragOffset.y,
+        imageDisplaySize.width,
+        imageDisplaySize.height,
+        rawBoxWidth,
+        rawBoxHeight
+      )
+      setBoxPosition(next)
+    }
+
+    const handleUp = () => setIsDragging(false)
+
+    window.addEventListener('mousemove', handleMove)
+    window.addEventListener('mouseup', handleUp)
+    return () => {
+      window.removeEventListener('mousemove', handleMove)
+      window.removeEventListener('mouseup', handleUp)
+    }
+  }, [isDragging, dragOffset, imageDisplaySize, clampPosition])
 
   const handleCrop = () => {
-    if (!imageRef.current || !containerRef.current) return
+    const img = imageRef.current
+    if (!img || imageNaturalSize.width === 0) return
+
+    const nw = imageNaturalSize.width
+    const nh = imageNaturalSize.height
+    const dw = imageDisplaySize.width
+    const dh = imageDisplaySize.height
+
+    const scaleX = nw / dw
+    const scaleY = nh / dh
+
+    const sourceX = boxPosition.x * scaleX
+    const sourceY = boxPosition.y * scaleY
+    const sourceW = boxWidth * scaleX
+    const sourceH = boxHeight * scaleY
+
+    const outW = Math.max(1, Math.round(OUTPUT_SIZE))
+    const outH = Math.max(1, Math.round(OUTPUT_SIZE / aspectRatio))
 
     const canvas = document.createElement('canvas')
+    canvas.width = outW
+    canvas.height = outH
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    const containerRect = containerRef.current.getBoundingClientRect()
-    const img = imageRef.current
+    ctx.drawImage(img, sourceX, sourceY, sourceW, sourceH, 0, 0, outW, outH)
 
-    // Set canvas size to container size
-    canvas.width = containerRect.width
-    canvas.height = containerRect.height
-
-    // Calculate the source rectangle
-    const scaleX = img.naturalWidth / img.width
-    const scaleY = img.naturalHeight / img.height
-
-    const sourceX = (-position.x / scale) * scaleX
-    const sourceY = (-position.y / scale) * scaleY
-    const sourceWidth = (containerRect.width / scale) * scaleX
-    const sourceHeight = (containerRect.height / scale) * scaleY
-
-    // Draw the cropped image
-    ctx.drawImage(
-      img,
-      sourceX,
-      sourceY,
-      sourceWidth,
-      sourceHeight,
-      0,
-      0,
-      canvas.width,
-      canvas.height
+    canvas.toBlob(
+      (blob) => {
+        if (blob) {
+          onCrop(URL.createObjectURL(blob))
+        }
+      },
+      'image/png',
+      0.92
     )
-
-    // Convert to blob and create URL
-    canvas.toBlob((blob) => {
-      if (blob) {
-        const croppedUrl = URL.createObjectURL(blob)
-        onCrop(croppedUrl)
-      }
-    }, 'image/png')
   }
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col">
-        {/* Header */}
-        <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">Adjust Image</h2>
+      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full flex flex-col">
+        <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+          <h2 className="text-xl font-bold text-gray-900">Choose visible area</h2>
           <button
+            type="button"
             onClick={onCancel}
             className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
           >
@@ -134,72 +171,70 @@ export default function ImagePreviewCrop({ imageUrl, onCrop, onCancel, aspectRat
           </button>
         </div>
 
-        {/* Preview Area */}
-        <div className="flex-1 p-6 overflow-auto">
+        <div className="p-6 flex flex-col items-center">
+          <p className="text-sm text-gray-600 mb-3">
+            Drag the box to select what will be visible. The box is the same size as the displayed image.
+          </p>
+
           <div
             ref={containerRef}
-            className="relative bg-gray-100 rounded-lg overflow-hidden mx-auto"
+            className="relative bg-gray-200 rounded-lg overflow-hidden"
             style={{
-              width: '100%',
-              aspectRatio: aspectRatio ? aspectRatio.toString() : '1',
-              maxWidth: '600px',
-              maxHeight: '600px',
+              width: imageDisplaySize.width,
+              height: imageDisplaySize.height,
               touchAction: 'none',
             }}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
-            onWheel={handleWheel}
           >
             <img
               ref={imageRef}
               src={imageUrl}
-              alt="Preview"
-              className="absolute"
+              alt="Crop preview"
+              className="block w-full h-full object-contain"
               style={{
-                transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
-                transformOrigin: 'top left',
-                cursor: isDragging ? 'grabbing' : 'grab',
+                width: imageDisplaySize.width,
+                height: imageDisplaySize.height,
+                pointerEvents: 'none',
               }}
               draggable={false}
             />
+
+            <div
+              role="button"
+              tabIndex={0}
+              onMouseDown={handleBoxMouseDown}
+              className="absolute border-2 border-white shadow-[0_0_0_2px_rgba(0,0,0,0.5)] cursor-move flex items-center justify-center"
+              style={{
+                left: boxPosition.x,
+                top: boxPosition.y,
+                width: boxWidth,
+                height: boxHeight,
+                userSelect: 'none',
+              }}
+              onKeyDown={(e) => {
+                if (e.key === ' ' || e.key === 'Enter') e.preventDefault()
+              }}
+            >
+              <div className="absolute inset-0 bg-black/20 pointer-events-none" />
+            </div>
           </div>
 
-          {/* Controls */}
-          <div className="mt-6 space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Zoom: {Math.round(scale * 100)}%
-              </label>
-              <input
-                type="range"
-                min="0.5"
-                max="3"
-                step="0.1"
-                value={scale}
-                onChange={(e) => setScale(parseFloat(e.target.value))}
-                className="w-full"
-              />
-            </div>
-            <div className="text-sm text-gray-600">
-              <p>• Drag the image to reposition</p>
-              <p>• Use the slider or scroll wheel to zoom</p>
-            </div>
+          <div className="mt-4 text-xs text-gray-500">
+            Crop box: {boxWidth}×{boxHeight}px (same ratio as display)
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="p-6 border-t border-gray-200 flex gap-4 justify-end">
+        <div className="p-4 border-t border-gray-200 flex gap-3 justify-end">
           <button
+            type="button"
             onClick={onCancel}
-            className="px-6 py-2 rounded-full border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+            className="px-5 py-2 rounded-full border border-gray-300 text-gray-700 hover:bg-gray-50"
           >
             Cancel
           </button>
           <button
+            type="button"
             onClick={handleCrop}
-            className="px-6 py-2 rounded-full bg-pink-500 text-white hover:bg-pink-600 transition-colors"
+            className="px-5 py-2 rounded-full bg-pink-500 text-white hover:bg-pink-600"
           >
             Apply
           </button>

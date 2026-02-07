@@ -84,6 +84,7 @@ export class ProductsService {
     const slug = createProductDto.slug || this.generateSlug(createProductDto.title);
 
     // Create product
+    const pointsValue = createProductDto.points_value ?? 0;
     const { data: product, error: productError } = await supabase
       .from('products')
       .insert({
@@ -92,8 +93,8 @@ export class ProductsService {
         description: createProductDto.description,
         base_price: createProductDto.base_price,
         discount_price: createProductDto.discount_price,
-        sku: createProductDto.sku,
         stock_quantity: createProductDto.stock_quantity,
+        points_value: pointsValue,
         is_active: createProductDto.is_active ?? true,
       })
       .select()
@@ -130,6 +131,7 @@ export class ProductsService {
             variation_id: variationData.id,
             label: opt.label,
             price_modifier: opt.price_modifier || 0,
+            stock_quantity: opt.stock_quantity ?? 0,
             display_order: index,
           }));
 
@@ -153,8 +155,8 @@ export class ProductsService {
     if (updateProductDto.description !== undefined) updateData.description = updateProductDto.description;
     if (updateProductDto.base_price !== undefined) updateData.base_price = updateProductDto.base_price;
     if (updateProductDto.discount_price !== undefined) updateData.discount_price = updateProductDto.discount_price;
-    if (updateProductDto.sku !== undefined) updateData.sku = updateProductDto.sku;
     if (updateProductDto.stock_quantity !== undefined) updateData.stock_quantity = updateProductDto.stock_quantity;
+    if (updateProductDto.points_value !== undefined) updateData.points_value = updateProductDto.points_value;
     if (updateProductDto.is_active !== undefined) updateData.is_active = updateProductDto.is_active;
 
     const { error } = await supabase
@@ -202,6 +204,7 @@ export class ProductsService {
             variation_id: variationData.id,
             label: opt.label,
             price_modifier: opt.price_modifier || 0,
+            stock_quantity: opt.stock_quantity ?? 0,
             display_order: index,
           }));
           await supabase.from('product_variation_options').insert(options);
@@ -223,20 +226,72 @@ export class ProductsService {
 
   async decreaseStock(productId: string, quantity: number) {
     const supabase = this.supabaseService.getAdminClient();
-    
-    // Get current stock
     const product = await this.findOne(productId);
-    
     if (product.stock_quantity < quantity) {
       throw new BadRequestException('Insufficient stock');
     }
-
     const { error } = await supabase
       .from('products')
       .update({ stock_quantity: product.stock_quantity - quantity })
       .eq('id', productId);
-
     if (error) throw new BadRequestException(error.message);
+  }
+
+  /** Check if product/variation has enough stock. Throws if not. */
+  async checkStockForOrderItem(
+    productId: string,
+    quantity: number,
+    selectedVariationOptionIds?: Record<string, string>,
+  ): Promise<void> {
+    const product = await this.findOne(productId);
+    const supabase = this.supabaseService.getAdminClient();
+
+    if (selectedVariationOptionIds && Object.keys(selectedVariationOptionIds).length > 0) {
+      const optionIds = Object.values(selectedVariationOptionIds);
+      for (const optionId of optionIds) {
+        const { data: option, error } = await supabase
+          .from('product_variation_options')
+          .select('id, stock_quantity')
+          .eq('id', optionId)
+          .single();
+        if (!error && option && (option.stock_quantity ?? 0) < quantity) {
+          throw new BadRequestException(`Insufficient stock for selected option`);
+        }
+      }
+      return;
+    }
+    if ((product.stock_quantity ?? 0) < quantity) {
+      throw new BadRequestException(`Insufficient stock for ${product.title}`);
+    }
+  }
+
+  /** Decrease stock after payment success. Uses variation option stock if selected_variation_option_ids provided. */
+  async decreaseStockForOrderItem(
+    productId: string,
+    quantity: number,
+    selectedVariationOptionIds?: Record<string, string> | null,
+  ): Promise<void> {
+    const supabase = this.supabaseService.getAdminClient();
+
+    if (selectedVariationOptionIds && Object.keys(selectedVariationOptionIds).length > 0) {
+      const optionIds = Object.values(selectedVariationOptionIds);
+      for (const optionId of optionIds) {
+        const { data: option } = await supabase
+          .from('product_variation_options')
+          .select('id, stock_quantity')
+          .eq('id', optionId)
+          .single();
+        if (option != null) {
+          const current = option.stock_quantity ?? 0;
+          await supabase
+            .from('product_variation_options')
+            .update({ stock_quantity: Math.max(0, current - quantity) })
+            .eq('id', optionId);
+        }
+      }
+      return;
+    }
+    await this.decreaseStock(productId, quantity);
   }
 
   private generateSlug(title: string): string {

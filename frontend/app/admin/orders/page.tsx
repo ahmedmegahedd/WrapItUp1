@@ -45,9 +45,15 @@ export default function AdminOrdersPage() {
     return <div>Loading...</div>
   }
 
+  const formatEgp = (n: number) => `E£ ${Number(n).toFixed(2)}`
+
   return (
     <div>
       <h1 className="text-3xl font-bold mb-6">Orders</h1>
+
+      <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-900">
+        <strong>Refunds &amp; cancellations:</strong> Any refund request must be made via WhatsApp or Instagram DMs. Refunds are handled manually. Admin can cancel orders by changing order status; no automatic Stripe refunds from this panel.
+      </div>
 
       <div className="bg-white rounded-lg shadow p-4 mb-6">
         <div className="grid grid-cols-2 gap-4">
@@ -106,7 +112,7 @@ export default function AdminOrdersPage() {
                   <div>{new Date(order.delivery_date).toLocaleDateString()}</div>
                   <div className="text-sm text-gray-600">{order.delivery_time_slot}</div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap font-semibold">${order.total.toFixed(2)}</td>
+                <td className="px-6 py-4 whitespace-nowrap font-semibold">{formatEgp(order.total)}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 py-1 rounded text-sm ${
                     order.payment_status === 'paid' ? 'bg-green-100 text-green-800' :
@@ -131,23 +137,27 @@ export default function AdminOrdersPage() {
                 <td className="px-6 py-4 whitespace-nowrap">
                   <button
                     onClick={() => {
-                      const details = `
-Order #: ${order.order_number}
-Customer: ${order.customer_name}
-Email: ${order.customer_email}
-Phone: ${order.customer_phone || 'N/A'}
-Delivery: ${new Date(order.delivery_date).toLocaleDateString()} ${order.delivery_time_slot}
-Total: $${order.total.toFixed(2)}
-Payment: ${order.payment_status}
-Status: ${order.order_status}
-
-Items:
-${order.order_items?.map((item: any) => 
-  `- ${item.product_title} x${item.quantity} - $${item.line_total.toFixed(2)}`
-).join('\n')}
-
-${order.card_message ? `Card Message: ${order.card_message}` : ''}
-                      `
+                      const details = [
+                        `Order #: ${order.order_number}`,
+                        `Customer: ${order.customer_name}`,
+                        `Email: ${order.customer_email}`,
+                        `Phone: ${order.customer_phone || 'N/A'}`,
+                        `Delivery: ${new Date(order.delivery_date).toLocaleDateString()} ${order.delivery_time_slot}`,
+                        order.delivery_destination_name ? `Destination: ${order.delivery_destination_name}` : null,
+                        order.delivery_fee_egp != null ? `Delivery fee: ${formatEgp(order.delivery_fee_egp)}` : null,
+                        order.discount_amount_egp > 0 ? `Discount: -${formatEgp(order.discount_amount_egp)}` : null,
+                        `Total: ${formatEgp(order.total)} (EGP)`,
+                        `Payment: ${order.payment_status}`,
+                        `Status: ${order.order_status}`,
+                        order.delivery_address ? `Address: ${order.delivery_address}` : null,
+                        order.delivery_maps_link ? `Maps: ${order.delivery_maps_link}` : null,
+                        '',
+                        'Items:',
+                        ...(order.order_items?.map((item: any) =>
+                          `- ${item.product_title} x${item.quantity} - ${formatEgp(item.line_total)}`
+                        ) || []),
+                        order.card_message ? `\nCard message: ${order.card_message}` : '',
+                      ].filter(Boolean).join('\n')
                       alert(details)
                     }}
                     className="text-blue-600 hover:underline"

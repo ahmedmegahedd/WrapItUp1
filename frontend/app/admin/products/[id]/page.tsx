@@ -20,8 +20,8 @@ export default function AdminProductEditPage() {
     description: '',
     base_price: '',
     discount_price: '',
-    sku: '',
     stock_quantity: '',
+    points_value: '',
     is_active: true,
     image_urls: [] as string[],
     variations: [] as any[],
@@ -48,8 +48,8 @@ export default function AdminProductEditPage() {
         description: product.description || '',
         base_price: product.base_price?.toString() || '',
         discount_price: product.discount_price?.toString() || '',
-        sku: product.sku || '',
         stock_quantity: product.stock_quantity?.toString() || '',
+        points_value: product.points_value?.toString() ?? '0',
         is_active: product.is_active ?? true,
         image_urls: product.product_images?.map((img: any) => img.image_url) || [],
         variations: product.product_variations?.map((v: any) => ({
@@ -58,6 +58,7 @@ export default function AdminProductEditPage() {
           options: v.product_variation_options?.map((opt: any) => ({
             label: opt.label,
             price_modifier: opt.price_modifier?.toString() || '0',
+            stock_quantity: opt.stock_quantity?.toString() ?? '0',
           })) || [],
         })) || [],
       })
@@ -148,9 +149,10 @@ export default function AdminProductEditPage() {
           ...v,
           options: v.options
             .filter((opt: { label: string; price_modifier: string }) => opt.label.trim() !== '')
-            .map((opt: { label: string; price_modifier: string }) => ({
+            .map((opt: { label: string; price_modifier: string; stock_quantity?: string }) => ({
               ...opt,
               price_modifier: parseFloat(opt.price_modifier || '0'),
+              stock_quantity: parseInt(opt.stock_quantity || '0', 10),
             })),
         }))
         .filter((v: any) => v.name.trim() !== '' && v.options.length > 0)
@@ -160,6 +162,7 @@ export default function AdminProductEditPage() {
         base_price: parseFloat(formData.base_price),
         discount_price: formData.discount_price ? parseFloat(formData.discount_price) : undefined,
         stock_quantity: parseInt(formData.stock_quantity),
+        points_value: parseInt(formData.points_value || '0', 10),
         variations: validVariations.length > 0 ? validVariations : undefined,
       }
       // #region agent log
@@ -202,9 +205,7 @@ export default function AdminProductEditPage() {
       let errorMessage = 'Failed to save product'
       if (error?.response?.data?.message) {
         const backendMessage = error.response.data.message
-        if (backendMessage.includes('duplicate key') && backendMessage.includes('sku')) {
-          errorMessage = 'A product with this SKU already exists. Please use a unique SKU.'
-        } else if (backendMessage.includes('validation')) {
+        if (backendMessage.includes('validation')) {
           errorMessage = `Validation error: ${backendMessage}`
         } else {
           errorMessage = backendMessage
@@ -257,7 +258,7 @@ export default function AdminProductEditPage() {
     // #endregion
     setFormData((prev) => {
       const variations = [...prev.variations]
-      variations[variationIndex].options.push({ label: '', price_modifier: '0' })
+      variations[variationIndex].options.push({ label: '', price_modifier: '0', stock_quantity: '0' })
       // #region agent log
       fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'products/[id]/page.tsx:151',message:'addVariationOption after',data:{newOptionCount:variations[variationIndex].options.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
       // #endregion
@@ -333,27 +334,27 @@ export default function AdminProductEditPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block font-semibold mb-2">SKU *</label>
-            <input
-              type="text"
-              required
-              value={formData.sku}
-              onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-              className="w-full px-4 py-2 border rounded"
-            />
-          </div>
-          <div>
-            <label className="block font-semibold mb-2">Stock Quantity *</label>
-            <input
-              type="number"
-              required
-              value={formData.stock_quantity}
-              onChange={(e) => setFormData({ ...formData, stock_quantity: e.target.value })}
-              className="w-full px-4 py-2 border rounded"
-            />
-          </div>
+        <div>
+          <label className="block font-semibold mb-2">Stock Quantity *</label>
+          <input
+            type="number"
+            required
+            value={formData.stock_quantity}
+            onChange={(e) => setFormData({ ...formData, stock_quantity: e.target.value })}
+            className="w-full px-4 py-2 border rounded"
+          />
+        </div>
+
+        <div>
+          <label className="block font-semibold mb-2">Points earned from this product</label>
+          <p className="text-sm text-gray-600 mb-1">Customer earns this many loyalty points when purchasing this product.</p>
+          <input
+            type="number"
+            min="0"
+            value={formData.points_value}
+            onChange={(e) => setFormData({ ...formData, points_value: e.target.value })}
+            className="w-full px-4 py-2 border rounded"
+          />
         </div>
 
         <div>
@@ -445,8 +446,8 @@ export default function AdminProductEditPage() {
                 </button>
               </div>
               <div className="space-y-2">
-                {variation.options.map((option: { label: string; price_modifier: string }, oIndex: number) => (
-                  <div key={oIndex} className="flex gap-2">
+                {variation.options.map((option: { label: string; price_modifier: string; stock_quantity?: string }, oIndex: number) => (
+                  <div key={oIndex} className="flex flex-wrap gap-2 items-center">
                     <input
                       type="text"
                       placeholder="Option label"
@@ -456,19 +457,32 @@ export default function AdminProductEditPage() {
                         variations[vIndex].options[oIndex].label = e.target.value
                         setFormData({ ...formData, variations })
                       }}
-                      className="flex-1 px-3 py-2 border rounded"
+                      className="flex-1 min-w-[120px] px-3 py-2 border rounded"
                     />
                     <input
                       type="number"
                       step="0.01"
-                      placeholder="Price modifier"
+                      placeholder="Price mod."
                       value={option.price_modifier}
                       onChange={(e) => {
                         const variations = [...formData.variations]
                         variations[vIndex].options[oIndex].price_modifier = e.target.value
                         setFormData({ ...formData, variations })
                       }}
-                      className="w-32 px-3 py-2 border rounded"
+                      className="w-24 px-3 py-2 border rounded"
+                    />
+                    <input
+                      type="number"
+                      min={0}
+                      placeholder="Stock"
+                      value={option.stock_quantity ?? '0'}
+                      onChange={(e) => {
+                        const variations = [...formData.variations]
+                        variations[vIndex].options[oIndex].stock_quantity = e.target.value
+                        setFormData({ ...formData, variations })
+                      }}
+                      className="w-20 px-3 py-2 border rounded"
+                      title="Stock for this variation option"
                     />
                     <button
                       type="button"

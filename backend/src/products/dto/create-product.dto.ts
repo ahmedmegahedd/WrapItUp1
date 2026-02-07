@@ -11,6 +11,11 @@ export class CreateProductVariationOptionDto {
 
   @IsNumber()
   @IsOptional()
+  @Min(0)
+  stock_quantity?: number;
+
+  @IsNumber()
+  @IsOptional()
   display_order?: number;
 }
 
@@ -49,12 +54,14 @@ export class CreateProductDto {
   @Min(0)
   discount_price?: number;
 
-  @IsString()
-  sku: string;
-
   @IsNumber()
   @Min(0)
   stock_quantity: number;
+
+  @IsNumber()
+  @Min(0)
+  @IsOptional()
+  points_value?: number;
 
   @IsBoolean()
   @IsOptional()

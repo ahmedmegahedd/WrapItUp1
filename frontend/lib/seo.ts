@@ -39,7 +39,7 @@ export function createMetadata(config: SEOConfig): Metadata {
         },
       ],
       locale: 'en_US',
-      type: config.type || 'website',
+      type: config.type === 'product' ? 'website' : (config.type || 'website'),
     },
     twitter: {
       card: 'summary_large_image',
@@ -55,7 +55,6 @@ export function generateProductSchema(product: {
   description: string
   price: number
   image?: string
-  sku?: string
   url: string
 }) {
   return {
@@ -64,7 +63,6 @@ export function generateProductSchema(product: {
     name: product.name,
     description: product.description,
     image: product.image ? [product.image] : [],
-    sku: product.sku,
     offers: {
       '@type': 'Offer',
       url: product.url,

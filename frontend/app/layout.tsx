@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import FloatingNavbar from '@/components/FloatingNavbar'
 import AnalyticsProvider from '@/components/AnalyticsProvider'
+import { CartProvider } from '@/contexts/CartContext'
 import { generateOrganizationSchema } from '@/lib/seo'
 
 export const metadata: Metadata = {
@@ -54,8 +55,10 @@ export default function RootLayout({
       </head>
       <body>
         <AnalyticsProvider>
-          {children}
-          <FloatingNavbar />
+          <CartProvider>
+            {children}
+            <FloatingNavbar />
+          </CartProvider>
         </AnalyticsProvider>
       </body>
     </html>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import api from '@/lib/api'
@@ -27,23 +27,16 @@ export default function AdminAddonEditPage() {
     product_ids: [] as string[],
   })
 
-  useEffect(() => {
-    loadProducts()
-    if (!isNew) {
-      loadAddon()
-    }
-  }, [addonId])
-
-  async function loadProducts() {
+  const loadProducts = useCallback(async () => {
     try {
       const response = await api.get('/admin/products')
       setProducts(response.data || [])
     } catch (error) {
       console.error('Error loading products:', error)
     }
-  }
+  }, [])
 
-  async function loadAddon() {
+  const loadAddon = useCallback(async () => {
     try {
       const response = await api.get(`/addons/${addonId}`)
       const addon = response.data
@@ -58,7 +51,14 @@ export default function AdminAddonEditPage() {
     } catch (error) {
       console.error('Error loading add-on:', error)
     }
-  }
+  }, [addonId])
+
+  useEffect(() => {
+    loadProducts()
+    if (!isNew) {
+      loadAddon()
+    }
+  }, [addonId, isNew, loadProducts, loadAddon])
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -232,7 +232,7 @@ export default function AdminAddonEditPage() {
                 />
                 <button
                   type="button"
-                  onClick={() => removeImage(index))}
+                  onClick={() => removeImage(index)}
                   className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center z-10"
                 >
                   ×
