@@ -27,6 +27,44 @@ export default function AdminHomepagePage() {
   })
   const [heroTextSaving, setHeroTextSaving] = useState(false)
 
+  type AppSettings = {
+    home_section_order: string[]
+    promotion_visible: boolean
+    promotion_title: string
+    promotion_message: string
+    final_cta_headline: string
+    final_cta_subtext: string
+    final_cta_button: string
+    featured_products_limit: number
+  }
+  const defaultSectionOrder = [
+    'hero',
+    'featured_collections',
+    'featured_products',
+    'promotion',
+    'value_proposition',
+    'final_cta',
+  ]
+  const sectionLabels: Record<string, string> = {
+    hero: 'Hero',
+    featured_collections: 'Featured collections',
+    featured_products: 'Featured products',
+    promotion: 'Promotion banner',
+    value_proposition: 'Why choose us',
+    final_cta: 'Final CTA',
+  }
+  const [appSettings, setAppSettings] = useState<AppSettings>({
+    home_section_order: defaultSectionOrder,
+    promotion_visible: true,
+    promotion_title: 'Special offer',
+    promotion_message: 'Free delivery on orders over 250 EGP',
+    final_cta_headline: 'Ready to surprise someone?',
+    final_cta_subtext: 'Browse our collections and order in minutes.',
+    final_cta_button: 'Browse all collections',
+    featured_products_limit: 8,
+  })
+  const [appSettingsSaving, setAppSettingsSaving] = useState(false)
+
   async function loadImages() {
     try {
       const res = await api.get('/admin/homepage/hero-images')
@@ -69,9 +107,68 @@ export default function AdminHomepagePage() {
     }
   }
 
+  async function loadAppSettings() {
+    try {
+      const res = await api.get('/admin/homepage/app-settings')
+      const d = res.data
+      if (d) {
+        setAppSettings({
+          home_section_order: Array.isArray(d.home_section_order) ? d.home_section_order : defaultSectionOrder,
+          promotion_visible: d.promotion_visible !== false,
+          promotion_title: d.promotion_title ?? 'Special offer',
+          promotion_message: d.promotion_message ?? 'Free delivery on orders over 250 EGP',
+          final_cta_headline: d.final_cta_headline ?? 'Ready to surprise someone?',
+          final_cta_subtext: d.final_cta_subtext ?? 'Browse our collections and order in minutes.',
+          final_cta_button: d.final_cta_button ?? 'Browse all collections',
+          featured_products_limit: typeof d.featured_products_limit === 'number' ? d.featured_products_limit : 8,
+        })
+      }
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  async function saveAppSettings() {
+    setAppSettingsSaving(true)
+    try {
+      await api.patch('/admin/homepage/app-settings', appSettings)
+      alert('App settings saved.')
+    } catch (err: any) {
+      alert(err?.response?.data?.message || 'Failed to save')
+    } finally {
+      setAppSettingsSaving(false)
+    }
+  }
+
+  function toggleSection(sectionId: string) {
+    setAppSettings((prev) => {
+      const order = [...prev.home_section_order]
+      const idx = order.indexOf(sectionId)
+      if (idx >= 0) {
+        order.splice(idx, 1)
+      } else {
+        order.push(sectionId)
+      }
+      return { ...prev, home_section_order: order }
+    })
+  }
+
+  function moveSection(sectionId: string, dir: 'up' | 'down') {
+    setAppSettings((prev) => {
+      const order = [...prev.home_section_order]
+      const idx = order.indexOf(sectionId)
+      if (idx < 0) return prev
+      const newIdx = dir === 'up' ? idx - 1 : idx + 1
+      if (newIdx < 0 || newIdx >= order.length) return prev
+      ;[order[idx], order[newIdx]] = [order[newIdx], order[idx]]
+      return { ...prev, home_section_order: order }
+    })
+  }
+
   useEffect(() => {
     loadImages()
     loadHeroText()
+    loadAppSettings()
   }, [])
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
@@ -156,16 +253,16 @@ export default function AdminHomepagePage() {
           aspectRatio={16 / 9}
         />
       )}
-      <h1 className="text-3xl font-bold mb-6">Homepage Hero</h1>
+      <h1 className="text-3xl font-bold mb-6">App hero</h1>
       <p className="text-gray-600 mb-8">
-        Upload hero images and customize the text shown on the hero. Only one image can be active at a time.
+        Hero image and text shown on the mobile app home screen. Only one image can be active at a time.
       </p>
 
       {/* Hero text */}
       <div className="bg-white rounded-lg shadow p-6 mb-8">
         <h2 className="text-lg font-semibold mb-4">Hero text</h2>
         <p className="text-sm text-gray-500 mb-4">
-          Edit the headline, subtext, and button label shown on the homepage hero. Use a new line in the headline for a line break.
+          Edit the headline, subtext, and button label shown on the app home hero. Use a new line in the headline for a line break.
         </p>
         <div className="space-y-4 max-w-2xl">
           <div>
@@ -211,7 +308,7 @@ export default function AdminHomepagePage() {
 
       {/* Upload */}
       <div className="bg-white rounded-lg shadow p-6 mb-8">
-        <h2 className="text-lg font-semibold mb-4">Upload new hero image</h2>
+        <h2 className="text-lg font-semibold mb-4">Upload new app hero image</h2>
         <div className="flex flex-wrap items-center gap-4">
           <label className="flex items-center gap-2 cursor-pointer">
             <input
@@ -240,9 +337,144 @@ export default function AdminHomepagePage() {
         </div>
       </div>
 
+      {/* App home screen settings */}
+      <div className="bg-white rounded-lg shadow p-6 mb-8">
+        <h2 className="text-lg font-semibold mb-4">App home screen</h2>
+        <p className="text-sm text-gray-500 mb-6">
+          Control which sections appear on the app home screen and their copy. Section order and visibility, promotion banner, final CTA, and featured products count.
+        </p>
+
+        <div className="space-y-6 max-w-2xl">
+          <div>
+            <h3 className="font-medium text-gray-800 mb-2">Section order & visibility</h3>
+            <p className="text-sm text-gray-500 mb-2">Reorder or hide sections. Only checked sections are shown, in the order below.</p>
+            <ul className="space-y-1 border rounded-lg p-2 bg-gray-50">
+              {defaultSectionOrder.map((id) => {
+                const included = appSettings.home_section_order.includes(id)
+                const idx = appSettings.home_section_order.indexOf(id)
+                return (
+                  <li key={id} className="flex items-center gap-2 py-1">
+                    <input
+                      type="checkbox"
+                      checked={included}
+                      onChange={() => toggleSection(id)}
+                      className="rounded"
+                    />
+                    <span className="flex-1">{sectionLabels[id] ?? id}</span>
+                    {included && (
+                      <span className="flex gap-1">
+                        <button
+                          type="button"
+                          onClick={() => moveSection(id, 'up')}
+                          disabled={idx === 0}
+                          className="px-2 py-0.5 text-xs border rounded disabled:opacity-40"
+                        >
+                          Up
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveSection(id, 'down')}
+                          disabled={idx === appSettings.home_section_order.length - 1}
+                          className="px-2 py-0.5 text-xs border rounded disabled:opacity-40"
+                        >
+                          Down
+                        </button>
+                      </span>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+
+          <div>
+            <label className="block font-medium text-gray-800 mb-1">Featured products limit</label>
+            <input
+              type="number"
+              min={1}
+              max={20}
+              value={appSettings.featured_products_limit}
+              onChange={(e) =>
+                setAppSettings((s) => ({
+                  ...s,
+                  featured_products_limit: Math.max(1, Math.min(20, parseInt(e.target.value, 10) || 8)),
+                }))
+              }
+              className="w-24 px-3 py-2 border border-gray-300 rounded-lg"
+            />
+            <span className="ml-2 text-sm text-gray-500">products shown in “Best sellers”</span>
+          </div>
+
+          <div className="border-t pt-6">
+            <h3 className="font-medium text-gray-800 mb-3">Promotion banner</h3>
+            <label className="flex items-center gap-2 mb-3">
+              <input
+                type="checkbox"
+                checked={appSettings.promotion_visible}
+                onChange={(e) => setAppSettings((s) => ({ ...s, promotion_visible: e.target.checked }))}
+                className="rounded"
+              />
+              <span className="text-sm">Show promotion banner on home</span>
+            </label>
+            <div className="space-y-2">
+              <input
+                type="text"
+                value={appSettings.promotion_title}
+                onChange={(e) => setAppSettings((s) => ({ ...s, promotion_title: e.target.value }))}
+                placeholder="e.g. Special offer"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              />
+              <input
+                type="text"
+                value={appSettings.promotion_message}
+                onChange={(e) => setAppSettings((s) => ({ ...s, promotion_message: e.target.value }))}
+                placeholder="e.g. Free delivery on orders over 250 EGP"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              />
+            </div>
+          </div>
+
+          <div className="border-t pt-6">
+            <h3 className="font-medium text-gray-800 mb-3">Final CTA block</h3>
+            <div className="space-y-2">
+              <input
+                type="text"
+                value={appSettings.final_cta_headline}
+                onChange={(e) => setAppSettings((s) => ({ ...s, final_cta_headline: e.target.value }))}
+                placeholder="Headline"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              />
+              <input
+                type="text"
+                value={appSettings.final_cta_subtext}
+                onChange={(e) => setAppSettings((s) => ({ ...s, final_cta_subtext: e.target.value }))}
+                placeholder="Subtext"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              />
+              <input
+                type="text"
+                value={appSettings.final_cta_button}
+                onChange={(e) => setAppSettings((s) => ({ ...s, final_cta_button: e.target.value }))}
+                placeholder="Button label"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              />
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={saveAppSettings}
+            disabled={appSettingsSaving}
+            className="px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-800 disabled:opacity-50"
+          >
+            {appSettingsSaving ? 'Saving…' : 'Save app settings'}
+          </button>
+        </div>
+      </div>
+
       {/* List */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        <h2 className="text-lg font-semibold p-4 border-b">Hero images</h2>
+        <h2 className="text-lg font-semibold p-4 border-b">App hero images</h2>
         {loading ? (
           <div className="p-8 text-center text-gray-500">Loading…</div>
         ) : images.length === 0 ? (

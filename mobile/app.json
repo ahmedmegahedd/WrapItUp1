@@ -11,22 +11,27 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#fdf2f8"
+      "backgroundColor": "#ec4899"
     },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.wrapitup.mobile",
       "infoPlist": {
-        "UIBackgroundModes": ["remote-notification"]
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
       }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#fdf2f8"
+        "backgroundColor": "#ec4899"
       },
       "package": "com.wrapitup.mobile",
-      "permissions": ["RECEIVE_BOOT_COMPLETED", "VIBRATE"]
+      "permissions": [
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE"
+      ]
     },
     "plugins": [
       "expo-router",
@@ -38,7 +43,8 @@
           "color": "#ec4899",
           "sounds": []
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true

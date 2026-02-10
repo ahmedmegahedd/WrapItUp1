@@ -1,11 +1,14 @@
 import { useCallback, useRef, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import { OptimizedImage } from '@/components/OptimizedImage';
+import { SaveProductButton } from '@/components/SaveProductButton';
 import { useFocusEffect } from '@react-navigation/native';
 import { useLocalSearchParams, Stack, router } from 'expo-router';
 import { getCollectionBySlug } from '@/lib/api';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { SkeletonProductGridCard } from '@/components/skeletons';
 import { t } from '@/lib/i18n';
+import { formatPrice } from '@/lib/format';
 import { colors, spacing, borderRadius } from '@/constants/theme';
 
 export default function CollectionScreen() {
@@ -51,8 +54,18 @@ export default function CollectionScreen() {
 
   if (loading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View style={styles.container}>
+        <View style={styles.desc}>
+          <View style={{ height: 14, width: '80%', backgroundColor: colors.border, borderRadius: 4 }} />
+        </View>
+        <FlatList
+          data={[1, 2, 3, 4, 5, 6]}
+          keyExtractor={(k) => String(k)}
+          numColumns={2}
+          contentContainerStyle={styles.grid}
+          columnWrapperStyle={styles.row}
+          renderItem={() => <SkeletonProductGridCard />}
+        />
       </View>
     );
   }
@@ -92,13 +105,16 @@ export default function CollectionScreen() {
               onPress={() => router.push(`/product/${item.slug}`)}
               activeOpacity={0.8}
             >
-              {item.product_images?.[0]?.image_url ? (
-                <OptimizedImage uri={item.product_images[0].image_url} style={styles.img} />
-              ) : (
-                <View style={[styles.img, styles.imgPlaceholder]} />
-              )}
+              <View style={styles.imgWrap}>
+                {item.product_images?.[0]?.image_url ? (
+                  <OptimizedImage uri={item.product_images[0].image_url} style={styles.img} />
+                ) : (
+                  <View style={[styles.img, styles.imgPlaceholder]} />
+                )}
+                <SaveProductButton productSlug={item.slug} size={20} style={styles.saveBtn} />
+              </View>
               <Text style={styles.name} numberOfLines={2}>{item.title}</Text>
-              <Text style={styles.price}>E£ {Number(item.discount_price ?? item.base_price).toFixed(2)}</Text>
+              <Text style={styles.price}>{formatPrice(Number(item.discount_price ?? item.base_price))}</Text>
               {(item.points_value ?? 0) > 0 && (
                 <Text style={styles.pointsEarned}>
                   {t(language, 'pointsEarnedFromProduct').replace('{{points}}', String(item.points_value))}
@@ -134,8 +150,10 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  img: { width: '100%', aspectRatio: 1, resizeMode: 'cover' },
+  imgWrap: { position: 'relative', width: '100%', aspectRatio: 1 },
+  img: { width: '100%', height: '100%', resizeMode: 'cover' },
   imgPlaceholder: { backgroundColor: colors.border },
+  saveBtn: { position: 'absolute', top: spacing.xs, right: spacing.xs },
   name: { padding: spacing.sm, fontWeight: '600', color: colors.text, fontSize: 14 },
   price: { paddingHorizontal: spacing.sm, paddingBottom: spacing.sm, fontWeight: '700', color: colors.primary },
   pointsEarned: { paddingHorizontal: spacing.sm, paddingBottom: spacing.sm, fontSize: 12, color: colors.textMuted },

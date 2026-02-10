@@ -15,6 +15,7 @@ import { getRewards, getLoyaltyBalance, redeemReward } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePointsBalance } from '@/contexts/PointsBalanceContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { hapticSuccess } from '@/lib/haptics';
 import { t } from '@/lib/i18n';
 import { colors, spacing, borderRadius } from '@/constants/theme';
 import { OptimizedImage } from '@/components/OptimizedImage';
@@ -74,6 +75,7 @@ export default function RewardsScreen() {
         const result = await redeemReward(accountEmail, reward.id);
         setBalance(result.points_balance);
         refetchBalance();
+        hapticSuccess();
         Alert.alert(t(language, 'ok'), `${reward.title} ${t(language, 'redeem')}`);
       } catch (err: any) {
         Alert.alert(t(language, 'error'), err?.response?.data?.message || 'Redeem failed');

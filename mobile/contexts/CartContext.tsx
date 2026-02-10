@@ -17,6 +17,8 @@ export interface CartItem {
   calculated_price: number;
   /** Loyalty points earned when purchasing this line (from product.points_value). */
   points_value?: number;
+  /** Optional minimum order quantity for this product; cart cannot go below this. */
+  minimum_quantity?: number;
 }
 
 type CartContextType = {
@@ -75,11 +77,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return;
     }
     setItems((prev) =>
-      prev.map((i) =>
-        i.id === id
-          ? { ...i, quantity, calculated_price: (i.discount_price ?? i.base_price) * quantity }
-          : i
-      )
+      prev.map((i) => {
+        if (i.id !== id) return i;
+        // Enforce minimum order quantity when set for this product
+        const minQty = i.minimum_quantity ?? 1;
+        const clamped = Math.max(minQty, quantity);
+        return {
+          ...i,
+          quantity: clamped,
+          calculated_price: (i.discount_price ?? i.base_price) * clamped,
+        };
+      })
     );
   }, [removeItem]);
 

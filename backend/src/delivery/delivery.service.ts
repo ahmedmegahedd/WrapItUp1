@@ -40,12 +40,30 @@ export class DeliveryService {
 
     if (error) throw new BadRequestException(error.message);
 
-    // If no records exist, return all dates as available (backward compatibility)
-    if (!data || data.length === 0) {
-      return [];
+    // When admin has configured delivery days, return them (app shows only status === 'available')
+    if (data && data.length > 0) {
+      return data;
     }
 
-    return data;
+    // When no delivery_days exist yet, generate dates in range as available so the app shows a calendar.
+    // Once admin sets dates in Delivery Settings, those will be returned instead.
+    return this.generateDateRange(start, end);
+  }
+
+  /** Generate array of { date, status: 'available' } for start..end (inclusive). */
+  private generateDateRange(start: string, end: string): { date: string; status: string }[] {
+    const result: { date: string; status: string }[] = [];
+    const startD = new Date(start);
+    const endD = new Date(end);
+    const oneDay = 24 * 60 * 60 * 1000;
+    for (let t = startD.getTime(); t <= endD.getTime(); t += oneDay) {
+      const d = new Date(t);
+      result.push({
+        date: d.toISOString().split('T')[0],
+        status: 'available',
+      });
+    }
+    return result;
   }
 
   async isDateAvailable(date: string): Promise<boolean> {

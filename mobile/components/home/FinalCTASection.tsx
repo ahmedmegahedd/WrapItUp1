@@ -5,20 +5,30 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { t } from '@/lib/i18n';
 import { colors, spacing, borderRadius } from '@/constants/theme';
 
-export function FinalCTASection() {
+interface FinalCTASectionProps {
+  headline?: string;
+  subtext?: string;
+  buttonLabel?: string;
+}
+
+export function FinalCTASection({ headline, subtext, buttonLabel }: FinalCTASectionProps) {
   const { language } = useLanguage();
+
+  const displayHeadline = (headline?.trim() || t(language, 'finalCtaHeadline'));
+  const displaySubtext = (subtext?.trim() || t(language, 'finalCtaSubtext'));
+  const displayButton = (buttonLabel?.trim() || t(language, 'finalCtaButton'));
 
   return (
     <View style={styles.section}>
       <View style={styles.card}>
-        <Text style={styles.headline}>{t(language, 'finalCtaHeadline')}</Text>
-        <Text style={styles.subtext}>{t(language, 'finalCtaSubtext')}</Text>
+        <Text style={styles.headline}>{displayHeadline}</Text>
+        <Text style={styles.subtext}>{displaySubtext}</Text>
         <TouchableOpacity
           style={styles.cta}
           onPress={() => router.push('/(tabs)/collections')}
           activeOpacity={0.85}
         >
-          <Text style={styles.ctaText}>{t(language, 'finalCtaButton')}</Text>
+          <Text style={styles.ctaText}>{displayButton}</Text>
         </TouchableOpacity>
       </View>
     </View>

@@ -14,4 +14,9 @@ export class HomepageController {
   getHeroText() {
     return this.homepageService.getHeroText();
   }
+
+  @Get('app-settings')
+  getAppSettings() {
+    return this.homepageService.getAppSettings();
+  }
 }

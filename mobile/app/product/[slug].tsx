@@ -5,20 +5,24 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
   RefreshControl,
   FlatList,
   useWindowDimensions,
+  Modal,
+  Pressable,
 } from 'react-native';
 import { OptimizedImage } from '@/components/OptimizedImage';
+import { SaveProductButton } from '@/components/SaveProductButton';
 import { useFocusEffect } from '@react-navigation/native';
-import { SlideToAdd } from '@/components/SlideToAdd';
 import { useLocalSearchParams, Stack } from 'expo-router';
 import { getProductBySlug, getProductAddons } from '@/lib/api';
 import { useCart } from '@/contexts/CartContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { SkeletonProductDetail } from '@/components/skeletons';
 import { t } from '@/lib/i18n';
+import { formatPrice } from '@/lib/format';
 import { colors, spacing, borderRadius } from '@/constants/theme';
+import { hapticSuccess } from '@/lib/haptics';
 
 export default function ProductScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
@@ -31,8 +35,18 @@ export default function ProductScreen() {
   const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>({});
   const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
   const [quantity, setQuantity] = useState(1);
+  const [addedToCartJustNow, setAddedToCartJustNow] = useState(false);
+  const [addonSuggestionVisible, setAddonSuggestionVisible] = useState(false);
+  const [suggestionModalAddons, setSuggestionModalAddons] = useState<string[]>([]);
+  const addedToCartTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isFirstFocus = useRef(true);
   const prevSlug = useRef(slug);
+
+  /** Minimum order quantity for this product (1 = no minimum). Used for default quantity and floor. */
+  const minQty = product != null && product.minimum_quantity != null && product.minimum_quantity >= 1
+    ? product.minimum_quantity
+    : 1;
+  const canDecrease = quantity > minQty;
   const { width: screenWidth } = useWindowDimensions();
 
   const fetchProduct = useCallback(async (showLoading = false) => {
@@ -41,6 +55,11 @@ export default function ProductScreen() {
     try {
       const p = await getProductBySlug(slug);
       setProduct(p);
+      // Default quantity to minimum order quantity when set; otherwise 1
+      const initialQty = p.minimum_quantity != null && p.minimum_quantity >= 1
+        ? p.minimum_quantity
+        : 1;
+      setQuantity(initialQty);
       const defaults: Record<string, string> = {};
       (p.product_variations || []).forEach((v: any) => {
         const opts = v.product_variation_options || [];
@@ -68,6 +87,12 @@ export default function ProductScreen() {
       const showLoading = isFirstFocus.current;
       if (isFirstFocus.current) isFirstFocus.current = false;
       fetchProduct(showLoading);
+      return () => {
+        if (addedToCartTimeoutRef.current) {
+          clearTimeout(addedToCartTimeoutRef.current);
+          addedToCartTimeoutRef.current = null;
+        }
+      };
     }, [slug, fetchProduct])
   );
 
@@ -77,11 +102,7 @@ export default function ProductScreen() {
   }, [fetchProduct]);
 
   if (loading) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
+    return <SkeletonProductDetail />;
   }
 
   if (!product) {
@@ -108,6 +129,7 @@ export default function ProductScreen() {
     .sort((a: any, b: any) => (a.display_order ?? 0) - (b.display_order ?? 0));
 
   const handleAddToCart = () => {
+    const qtyToAdd = Math.max(minQty, quantity);
     addItem({
       product_id: product.id,
       product_title: product.title,
@@ -115,17 +137,67 @@ export default function ProductScreen() {
       product_image: images[0]?.image_url,
       base_price: product.base_price,
       discount_price: unitPrice,
-      quantity,
+      quantity: qtyToAdd,
       selected_variations: selectedVariations,
       selected_addons: selectedAddons,
       points_value: product.points_value ?? 0,
+      minimum_quantity: product.minimum_quantity != null && product.minimum_quantity >= 1 ? product.minimum_quantity : undefined,
     });
-    // Cart badge updates via CartContext; SlideToAdd shows "Added ✓" then resets.
+    hapticSuccess();
+    setAddedToCartJustNow(true);
+    if (addedToCartTimeoutRef.current) clearTimeout(addedToCartTimeoutRef.current);
+    addedToCartTimeoutRef.current = setTimeout(() => setAddedToCartJustNow(false), 2500);
+    if (addons.length > 0) {
+      setSuggestionModalAddons([]);
+      setAddonSuggestionVisible(true);
+    }
+  };
+
+  const closeAddonSuggestion = () => setAddonSuggestionVisible(false);
+
+  const addAddonsFromSuggestion = () => {
+    const addonIds = suggestionModalAddons;
+    if (addonIds.length === 0) {
+      closeAddonSuggestion();
+      return;
+    }
+    let addonsPrice = 0;
+    addonIds.forEach((id) => {
+      const a = addons.find((x) => x.id === id);
+      if (a) addonsPrice += Number(a.price ?? 0);
+    });
+    let baseUnit = Number(product.discount_price ?? product.base_price);
+    (product.product_variations || []).forEach((v: any) => {
+      const optId = selectedVariations[v.name];
+      const opt = (v.product_variation_options || []).find((o: any) => o.id === optId);
+      if (opt) baseUnit += Number(opt.price_modifier ?? 0);
+    });
+    const unitWithAddons = baseUnit + addonsPrice;
+    addItem({
+      product_id: product.id,
+      product_title: product.title,
+      product_slug: product.slug,
+      product_image: images[0]?.image_url,
+      base_price: product.base_price,
+      discount_price: unitWithAddons,
+      quantity: 1,
+      selected_variations: selectedVariations,
+      selected_addons: addonIds,
+      points_value: product.points_value ?? 0,
+      minimum_quantity: product.minimum_quantity != null && product.minimum_quantity >= 1 ? product.minimum_quantity : undefined,
+    });
+    hapticSuccess();
+    closeAddonSuggestion();
   };
 
   return (
     <>
-      <Stack.Screen options={{ title: product.title }} />
+      <Stack.Screen
+        options={{
+          title: product.title,
+          headerRight: () => <SaveProductButton productSlug={product.slug} size={24} />,
+        }}
+      />
       <View style={styles.container}>
         {/* Image gallery OUTSIDE ScrollView so horizontal swipe works on phone */}
         {images.length > 0 ? (
@@ -173,7 +245,7 @@ export default function ProductScreen() {
           showsVerticalScrollIndicator={true}
         >
           <View style={styles.body}>
-          <Text style={styles.price}>E£ {unitPrice.toFixed(2)}</Text>
+          <Text style={styles.price}>{formatPrice(unitPrice)}</Text>
           {(product.points_value ?? 0) > 0 && (
             <Text style={styles.pointsEarned}>
               {t(language, 'pointsEarnedFromProduct').replace('{{points}}', String((product.points_value ?? 0) * quantity))}
@@ -203,7 +275,7 @@ export default function ProductScreen() {
                       ]}
                     >
                       {opt.label}
-                      {Number(opt.price_modifier) > 0 ? ` (+E£ ${Number(opt.price_modifier).toFixed(2)})` : ''}
+                      {Number(opt.price_modifier) > 0 ? ` (+${formatPrice(Number(opt.price_modifier))})` : ''}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -226,7 +298,7 @@ export default function ProductScreen() {
                 >
                   <View style={[styles.checkbox, selectedAddons.includes(a.id) && styles.checkboxSelected]} />
                   <Text style={styles.addonName}>{a.name}</Text>
-                  <Text style={styles.addonPrice}>E£ {Number(a.price).toFixed(2)}</Text>
+                  <Text style={styles.addonPrice}>{formatPrice(Number(a.price))}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -236,10 +308,11 @@ export default function ProductScreen() {
             <Text style={styles.sectionTitle}>Quantity</Text>
             <View style={styles.qtyControls}>
               <TouchableOpacity
-                style={styles.qtyBtn}
-                onPress={() => setQuantity((q) => Math.max(1, q - 1))}
+                style={[styles.qtyBtn, !canDecrease && styles.qtyBtnDisabled]}
+                onPress={() => setQuantity((q) => Math.max(minQty, q - 1))}
+                disabled={!canDecrease}
               >
-                <Text style={styles.qtyBtnText}>−</Text>
+                <Text style={[styles.qtyBtnText, !canDecrease && styles.qtyBtnTextDisabled]}>−</Text>
               </TouchableOpacity>
               <Text style={styles.qtyValue}>{quantity}</Text>
               <TouchableOpacity
@@ -251,22 +324,93 @@ export default function ProductScreen() {
             </View>
           </View>
 
-          <View style={styles.addBtnWrap}>
-            <SlideToAdd
-              label={t(language, 'slideToAddToCart')}
-              addedLabel={t(language, 'addedCheck')}
-              soldOutLabel={t(language, 'soldOut')}
-              selectOptionsLabel={t(language, 'selectOptionsToContinue')}
-              status={product.in_stock === false ? 'disabled' : 'idle'}
-              onComplete={handleAddToCart}
-              onPressFallback={handleAddToCart}
-              accessibilityLabel={t(language, 'slideToAddToCart')}
-            />
-            <Text style={styles.priceHint}>E£ {calculatedPrice.toFixed(2)}</Text>
-          </View>
+          {minQty > 1 && (
+            <View style={styles.minimumOrderBanner}>
+              <Text style={styles.minimumOrderText}>
+                {t(language, 'minimumOrderQuantityMessage').replace('{{count}}', String(minQty))}
+              </Text>
+            </View>
+          )}
+
+          {(() => {
+            const stock = product.stock_quantity ?? 0;
+            const minExceedsStock = minQty > 1 && minQty > stock;
+            const addDisabled = product.in_stock === false || minExceedsStock;
+            const buttonLabel = addDisabled
+              ? t(language, 'soldOut')
+              : addedToCartJustNow
+                ? t(language, 'addedToCart')
+                : t(language, 'addToCart');
+            return (
+              <View style={styles.addBtnWrap}>
+                {minExceedsStock && (
+                  <Text style={styles.minimumOrderExceedsStock}>
+                    {t(language, 'minimumOrderExceedsStock')
+                      .replace('{{min}}', String(minQty))}
+                  </Text>
+                )}
+                <TouchableOpacity
+                  style={[
+                    styles.addToCartBtn,
+                    addDisabled && styles.addToCartBtnDisabled,
+                    addedToCartJustNow && styles.addToCartBtnSuccess,
+                  ]}
+                  onPress={handleAddToCart}
+                  disabled={addDisabled}
+                  activeOpacity={0.85}
+                  accessibilityLabel={buttonLabel}
+                >
+                  <Text style={[styles.addToCartBtnText, addDisabled && styles.addToCartBtnTextDisabled]}>
+                    {buttonLabel}
+                  </Text>
+                </TouchableOpacity>
+                <Text style={styles.priceHint}>{formatPrice(calculatedPrice)}</Text>
+              </View>
+            );
+          })()}
         </View>
         </ScrollView>
       </View>
+
+      <Modal
+        visible={addonSuggestionVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={closeAddonSuggestion}
+      >
+        <Pressable style={styles.modalOverlay} onPress={closeAddonSuggestion}>
+          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+            <Text style={styles.modalTitle}>{t(language, 'suggestAddons')}</Text>
+            {addons.map((a) => (
+              <TouchableOpacity
+                key={a.id}
+                style={styles.modalAddonRow}
+                onPress={() =>
+                  setSuggestionModalAddons((prev) =>
+                    prev.includes(a.id) ? prev.filter((id) => id !== a.id) : [...prev, a.id]
+                  )
+                }
+              >
+                <View style={[styles.checkbox, suggestionModalAddons.includes(a.id) && styles.checkboxSelected]} />
+                <Text style={styles.addonName}>{a.name}</Text>
+                <Text style={styles.addonPrice}>{formatPrice(Number(a.price))}</Text>
+              </TouchableOpacity>
+            ))}
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.modalBtnSecondary} onPress={closeAddonSuggestion}>
+                <Text style={styles.modalBtnSecondaryText}>{t(language, 'maybeLater')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalBtnPrimary, suggestionModalAddons.length === 0 && styles.modalBtnPrimaryDisabled]}
+                onPress={addAddonsFromSuggestion}
+                disabled={suggestionModalAddons.length === 0}
+              >
+                <Text style={styles.modalBtnPrimaryText}>{t(language, 'addAddonsToCart')}</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </>
   );
 }
@@ -333,16 +477,114 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  qtyBtnDisabled: { opacity: 0.5 },
   qtyBtnText: { fontSize: 20, color: colors.text },
+  qtyBtnTextDisabled: { color: colors.textMuted },
   qtyValue: { minWidth: 28, textAlign: 'center', fontWeight: '700', fontSize: 16 },
+  minimumOrderBanner: {
+    marginTop: spacing.sm,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    backgroundColor: '#fef9c3',
+    borderRadius: borderRadius.md,
+    borderStartWidth: 4,
+    borderStartColor: '#eab308',
+  },
+  minimumOrderText: {
+    fontSize: 13,
+    color: '#854d0e',
+  },
+  minimumOrderExceedsStock: {
+    fontSize: 13,
+    color: '#b91c1c',
+    marginBottom: spacing.sm,
+    textAlign: 'center',
+  },
   addBtnWrap: {
     marginTop: spacing.xl,
     marginBottom: spacing.lg,
     gap: spacing.sm,
   },
+  addToCartBtn: {
+    backgroundColor: colors.primary,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xl,
+    borderRadius: borderRadius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addToCartBtnDisabled: {
+    backgroundColor: colors.border,
+    opacity: 0.8,
+  },
+  addToCartBtnText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  addToCartBtnTextDisabled: {
+    color: colors.textMuted,
+  },
   priceHint: {
     fontSize: 13,
     color: colors.textMuted,
     textAlign: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  modalContent: {
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    width: '100%',
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: spacing.md,
+    textAlign: 'center',
+  },
+  modalAddonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: spacing.sm,
+    marginTop: spacing.lg,
+  },
+  modalBtnSecondary: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+  },
+  modalBtnSecondaryText: {
+    fontSize: 16,
+    color: colors.textMuted,
+    fontWeight: '500',
+  },
+  modalBtnPrimary: {
+    backgroundColor: colors.primary,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderRadius: borderRadius.md,
+  },
+  modalBtnPrimaryDisabled: {
+    opacity: 0.5,
+  },
+  modalBtnPrimaryText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
   },
 });

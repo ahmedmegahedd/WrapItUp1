@@ -7,7 +7,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 export class ProductsService {
   constructor(private supabaseService: SupabaseService) {}
 
-  async findAll(includeInactive = false) {
+  async findAll(includeInactive = false, showInAllCollection = false) {
     const supabase = this.supabaseService.getClient();
     let query = supabase
       .from('products')
@@ -24,12 +24,33 @@ export class ProductsService {
     if (!includeInactive) {
       query = query.eq('is_active', true);
     }
+    if (showInAllCollection) {
+      query = query.eq('show_in_all_collection', true);
+    }
 
     const { data, error } = await query;
 
     if (error) throw new BadRequestException(error.message);
 
     return data;
+  }
+
+  /** Up to 4 products marked as recommended at checkout (for "People also like" in cart). */
+  async findRecommendedAtCheckout(limit = 4) {
+    const supabase = this.supabaseService.getClient();
+    const { data, error } = await supabase
+      .from('products')
+      .select(`
+        id, title, slug, base_price, discount_price, points_value,
+        product_images(image_url, display_order)
+      `)
+      .eq('is_active', true)
+      .eq('recommended_at_checkout', true)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw new BadRequestException(error.message);
+    return data ?? [];
   }
 
   async findOne(id: string) {
@@ -85,6 +106,11 @@ export class ProductsService {
 
     // Create product
     const pointsValue = createProductDto.points_value ?? 0;
+    const minimumQuantity =
+      createProductDto.minimum_quantity != null && createProductDto.minimum_quantity >= 1
+        ? createProductDto.minimum_quantity
+        : null;
+
     const { data: product, error: productError } = await supabase
       .from('products')
       .insert({
@@ -96,6 +122,9 @@ export class ProductsService {
         stock_quantity: createProductDto.stock_quantity,
         points_value: pointsValue,
         is_active: createProductDto.is_active ?? true,
+        minimum_quantity: minimumQuantity,
+        show_in_all_collection: createProductDto.show_in_all_collection ?? false,
+        recommended_at_checkout: createProductDto.recommended_at_checkout ?? false,
       })
       .select()
       .single();
@@ -158,6 +187,19 @@ export class ProductsService {
     if (updateProductDto.stock_quantity !== undefined) updateData.stock_quantity = updateProductDto.stock_quantity;
     if (updateProductDto.points_value !== undefined) updateData.points_value = updateProductDto.points_value;
     if (updateProductDto.is_active !== undefined) updateData.is_active = updateProductDto.is_active;
+    // minimum_quantity: undefined = don't change; null or number = update (null clears minimum)
+    if (updateProductDto.minimum_quantity !== undefined) {
+      updateData.minimum_quantity =
+        updateProductDto.minimum_quantity != null && updateProductDto.minimum_quantity >= 1
+          ? updateProductDto.minimum_quantity
+          : null;
+    }
+    if (updateProductDto.show_in_all_collection !== undefined) {
+      updateData.show_in_all_collection = updateProductDto.show_in_all_collection;
+    }
+    if (updateProductDto.recommended_at_checkout !== undefined) {
+      updateData.recommended_at_checkout = updateProductDto.recommended_at_checkout;
+    }
 
     const { error } = await supabase
       .from('products')

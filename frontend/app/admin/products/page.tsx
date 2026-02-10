@@ -38,6 +38,39 @@ export default function AdminProductsPage() {
     }
   }
 
+  async function toggleShowInAll(product: { id: string; show_in_all_collection?: boolean }) {
+    const next = !product.show_in_all_collection
+    try {
+      await api.patch(`/admin/products/${product.id}`, { show_in_all_collection: next })
+      setProducts((prev) =>
+        prev.map((p) => (p.id === product.id ? { ...p, show_in_all_collection: next } : p))
+      )
+    } catch (error) {
+      console.error('Error updating show in all:', error)
+      alert('Failed to update')
+    }
+  }
+
+  const recommendedCount = products.filter((p) => p.recommended_at_checkout).length
+  const MAX_RECOMMENDED = 4
+
+  async function toggleRecommended(product: { id: string; recommended_at_checkout?: boolean }) {
+    const next = !product.recommended_at_checkout
+    if (next && recommendedCount >= MAX_RECOMMENDED) {
+      alert(`Maximum ${MAX_RECOMMENDED} products can be recommended at checkout. Uncheck one first.`)
+      return
+    }
+    try {
+      await api.patch(`/admin/products/${product.id}`, { recommended_at_checkout: next })
+      setProducts((prev) =>
+        prev.map((p) => (p.id === product.id ? { ...p, recommended_at_checkout: next } : p))
+      )
+    } catch (error) {
+      console.error('Error updating recommended:', error)
+      alert('Failed to update')
+    }
+  }
+
   const searchLower = search.trim().toLowerCase()
   const filteredProducts = searchLower
     ? products.filter(
@@ -87,6 +120,8 @@ export default function AdminProductsPage() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Images</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase w-32">Show in All</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase w-36">Recommended</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
             </tr>
           </thead>
@@ -119,6 +154,32 @@ export default function AdminProductsPage() {
                   <span className={`px-2 py-1 rounded text-sm ${product.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
                     {product.is_active ? 'Active' : 'Inactive'}
                   </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <label className="inline-flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={!!product.show_in_all_collection}
+                      onChange={() => toggleShowInAll(product)}
+                      className="rounded border-gray-300"
+                    />
+                    <span className="text-sm text-gray-600">In All</span>
+                  </label>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <label className="inline-flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={!!product.recommended_at_checkout}
+                      onChange={() => toggleRecommended(product)}
+                      className="rounded border-gray-300"
+                      disabled={!product.recommended_at_checkout && recommendedCount >= MAX_RECOMMENDED}
+                    />
+                    <span className="text-sm text-gray-600">At checkout</span>
+                  </label>
+                  {recommendedCount >= MAX_RECOMMENDED && !product.recommended_at_checkout && (
+                    <span className="block text-xs text-gray-400 mt-0.5">Max {MAX_RECOMMENDED}</span>
+                  )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <Link

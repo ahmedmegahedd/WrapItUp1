@@ -6,6 +6,7 @@ import { getOrderByNumber } from '@/lib/api';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePointsBalance } from '@/contexts/PointsBalanceContext';
 import { t } from '@/lib/i18n';
+import { formatPrice } from '@/lib/format';
 import { colors, spacing } from '@/constants/theme';
 
 const ORDER_NUMBERS_KEY = '@wrapitup_order_numbers';
@@ -69,7 +70,7 @@ export default function OrderConfirmationScreen() {
         <Text style={styles.subtitle}>{t(language, 'orderConfirmedMessage')}</Text>
         <View style={styles.card}>
           <Text style={styles.orderNum}>{order.order_number}</Text>
-          <Text style={styles.total}>E£ {Number(order.total).toFixed(2)}</Text>
+          <Text style={styles.total}>{formatPrice(Number(order.total))}</Text>
           {(order.points_earned ?? 0) > 0 && (
             <Text style={styles.pointsEarned}>
               {t(language, 'pointsEarnedConfirmation').replace('{{points}}', String(order.points_earned))}

@@ -14,19 +14,29 @@ import { Link, router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { isSupabaseConfigured } from '@/lib/supabase';
+import { registerAccount } from '@/lib/api';
+import { normalizePhoneToE164, isValidE164 } from '@/lib/phoneUtils';
 import { t } from '@/lib/i18n';
+import { hapticPrimary } from '@/lib/haptics';
 import { colors, spacing, borderRadius } from '@/constants/theme';
 
 const SUPABASE_NOT_CONFIGURED_MSG =
   'Supabase is not configured. Copy mobile/env.example to mobile/.env, set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY (from your Supabase project → Settings → API), then restart: npx expo start';
 
 export default function RegisterScreen() {
-  const { signUp } = useAuth();
+  const { signIn } = useAuth();
   const { language } = useLanguage();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const phoneE164 = normalizePhoneToE164(phone);
+  const emailValid = !!email.trim();
+  const phoneValid = isValidE164(phoneE164);
+  const passwordValid = password.length >= 6;
+  const formValid = emailValid && phoneValid && passwordValid;
 
   const handleRegister = async () => {
     if (!email.trim() || !password) {
@@ -37,17 +47,37 @@ export default function RegisterScreen() {
       Alert.alert(t(language, 'error'), t(language, 'passwordMinLength'));
       return;
     }
-    setLoading(true);
-    const { error } = await signUp(email.trim(), password, name.trim() || undefined);
-    setLoading(false);
-    if (error) {
-      Alert.alert(
-        t(language, 'signUpFailed'),
-        error.message === 'Supabase not configured' ? SUPABASE_NOT_CONFIGURED_MSG : error.message
-      );
+    if (!phoneValid) {
+      Alert.alert(t(language, 'error'), t(language, 'phoneRequired'));
       return;
     }
-    router.replace('/(tabs)');
+    hapticPrimary();
+    setLoading(true);
+    try {
+      await registerAccount({
+        email: email.trim().toLowerCase(),
+        password,
+        full_name: name.trim() || undefined,
+        phone: phoneE164,
+      });
+      const { error } = await signIn(email.trim(), password);
+      setLoading(false);
+      if (error) {
+        Alert.alert(t(language, 'signUpFailed'), error.message);
+        return;
+      }
+      router.replace('/(tabs)');
+    } catch (err: any) {
+      setLoading(false);
+      const msg = err?.response?.data?.message || err?.message || t(language, 'signUpFailed');
+      const userMsg =
+        typeof msg === 'string' && msg.toLowerCase().includes('phone')
+          ? t(language, 'phoneAlreadyRegistered')
+          : typeof msg === 'string' && msg.toLowerCase().includes('email')
+            ? t(language, 'emailAlreadyRegistered')
+            : msg;
+      Alert.alert(t(language, 'signUpFailed'), userMsg);
+    }
   };
 
   return (
@@ -66,7 +96,7 @@ export default function RegisterScreen() {
 
         <TextInput
           style={styles.input}
-          placeholder={t(language, 'nameOptional')}
+          placeholder={t(language, 'fullNameOptional')}
           placeholderTextColor={colors.textMuted}
           value={name}
           onChangeText={setName}
@@ -74,13 +104,22 @@ export default function RegisterScreen() {
         />
         <TextInput
           style={styles.input}
-          placeholder={t(language, 'email')}
+          placeholder={t(language, 'email') + ' *'}
           placeholderTextColor={colors.textMuted}
           value={email}
           onChangeText={setEmail}
           autoCapitalize="none"
           keyboardType="email-address"
           autoComplete="email"
+        />
+        <TextInput
+          style={styles.input}
+          placeholder={t(language, 'phoneRequiredLabel')}
+          placeholderTextColor={colors.textMuted}
+          value={phone}
+          onChangeText={setPhone}
+          keyboardType="phone-pad"
+          autoComplete="tel"
         />
         <TextInput
           style={styles.input}
@@ -93,9 +132,9 @@ export default function RegisterScreen() {
         />
 
         <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
+          style={[styles.button, (loading || !formValid) && styles.buttonDisabled]}
           onPress={handleRegister}
-          disabled={loading}
+          disabled={loading || !formValid}
         >
           {loading ? (
             <ActivityIndicator color="#fff" />

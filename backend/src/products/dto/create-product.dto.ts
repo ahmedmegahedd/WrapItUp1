@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsOptional, IsBoolean, IsArray, ValidateNested, Min } from 'class-validator';
+import { IsString, IsNumber, IsOptional, IsBoolean, IsArray, ValidateNested, Min, ValidateIf } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateProductVariationOptionDto {
@@ -63,9 +63,26 @@ export class CreateProductDto {
   @IsOptional()
   points_value?: number;
 
+  /** Optional minimum order quantity. When set, must be >= 1. Omit or null = no minimum. */
+  @ValidateIf((o) => o.minimum_quantity != null)
+  @IsNumber()
+  @Min(1)
+  @IsOptional()
+  minimum_quantity?: number | null;
+
   @IsBoolean()
   @IsOptional()
   is_active?: boolean;
+
+  /** When true, product appears in the app "All" collection. */
+  @IsBoolean()
+  @IsOptional()
+  show_in_all_collection?: boolean;
+
+  /** When true, product can appear in "People also like" at cart (admin may set up to 4). */
+  @IsBoolean()
+  @IsOptional()
+  recommended_at_checkout?: boolean;
 
   @IsArray()
   @IsString({ each: true })

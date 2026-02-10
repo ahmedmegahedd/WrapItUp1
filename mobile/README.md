@@ -28,6 +28,9 @@ React Native (Expo) mobile app that consumes the existing NestJS API. Admin rema
    - `EXPO_PUBLIC_SUPABASE_URL` / `EXPO_PUBLIC_SUPABASE_ANON_KEY` — From your Supabase project: **Settings → API** (URL and anon/public key). Without these, you’ll see “Supabase not configured” when signing in or up.
    - `EXPO_PUBLIC_API_URL` — NestJS API base URL. Use your machine IP (e.g. `http://192.168.1.1:3001/api`) for a physical device or emulator; `localhost` only works in simulator with port forwarding.
    - `EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY` — Stripe publishable key (e.g. `pk_test_...`) for checkout.
+   - `EXPO_PUBLIC_GOOGLE_MAPS_API_KEY` — Optional. Google Cloud API key with **Geocoding API** enabled; required for the delivery address map picker (reverse geocoding). For Android map tiles you may also need to enable Maps SDK for Android and add the key in `app.json` under `android.config.googleMaps.apiKey` (see [Expo Maps docs](https://docs.expo.dev/versions/latest/sdk/maps/)).
+
+   **If you see "Could not resolve address"** after adding the key: (1) In [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → **Library**, search for **Geocoding API** and enable it. (2) If the key has **Application restrictions** (e.g. HTTP referrers), they will block requests from the app; for development use an unrestricted key or add your app (iOS bundle ID / Android package name) under API key restrictions.
 
    Restart the dev server after changing `.env`: `npx expo start`.
 
@@ -89,4 +92,4 @@ Expo push token is requested on app launch. To send notifications (e.g. order up
 
 ## Currency
 
-All amounts are in EGP (Egyptian Pounds), displayed as “E£ X.XX”.
+All amounts are in EGP (Egyptian Pounds), displayed as “EGP X (no .00)”.

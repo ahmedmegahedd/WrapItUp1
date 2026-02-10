@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getOrderByNumber } from '@/lib/api';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { SkeletonOrderRow } from '@/components/skeletons';
 import { t } from '@/lib/i18n';
+import { formatPrice } from '@/lib/format';
 import { colors, spacing, borderRadius } from '@/constants/theme';
 
 const ORDER_NUMBERS_KEY = '@wrapitup_order_numbers';
@@ -64,8 +66,13 @@ export default function OrdersScreen() {
 
   if (loading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View style={styles.container}>
+        <View style={styles.list}>
+          <SkeletonOrderRow />
+          <SkeletonOrderRow />
+          <SkeletonOrderRow />
+          <SkeletonOrderRow />
+        </View>
       </View>
     );
   }
@@ -92,7 +99,7 @@ export default function OrdersScreen() {
           <View style={styles.card}>
             <View style={styles.cardRow}>
               <Text style={styles.orderNumber}>{item.order_number}</Text>
-              <Text style={styles.total}>E£ {Number(item.total).toFixed(2)}</Text>
+              <Text style={styles.total}>{formatPrice(Number(item.total))}</Text>
             </View>
             <Text style={styles.date}>
               {new Date(item.delivery_date).toLocaleDateString()} · {item.delivery_time_slot}

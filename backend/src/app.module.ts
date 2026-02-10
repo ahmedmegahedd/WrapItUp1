@@ -14,6 +14,7 @@ import { MailModule } from './mail/mail.module';
 import { PromoCodesModule } from './promo-codes/promo-codes.module';
 import { DeliveryDestinationsModule } from './delivery-destinations/delivery-destinations.module';
 import { LoyaltyModule } from './loyalty/loyalty.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { LoyaltyModule } from './loyalty/loyalty.module';
       isGlobal: true,
     }),
     SupabaseModule,
+    AuthModule,
     MailModule,
     ProductsModule,
     CollectionsModule,

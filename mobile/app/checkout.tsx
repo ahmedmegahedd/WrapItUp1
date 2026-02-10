@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
 import {
   View,
   Text,
@@ -10,10 +11,16 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Modal,
 } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, router } from 'expo-router';
 import { useCart } from '@/contexts/CartContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAddresses } from '@/contexts/AddressesContext';
+import { usePendingDelivery } from '@/contexts/PendingDeliveryContext';
+import { buildMapsLink } from '@/lib/geocoding';
 import { useStripe } from '@stripe/stripe-react-native';
 import {
   getTimeSlots,
@@ -23,12 +30,25 @@ import {
   createOrder,
   createPaymentIntent,
 } from '@/lib/api';
+import { hapticPrimary, hapticSuccess } from '@/lib/haptics';
 import { t } from '@/lib/i18n';
+import { formatPrice } from '@/lib/format';
 import { colors, spacing, borderRadius } from '@/constants/theme';
-import { addDays, format } from 'date-fns';
+import { addDays, format, startOfDay } from 'date-fns';
+
+function buildDefaultDeliveryDays(count = 61): { date: string; status: string }[] {
+  const today = startOfDay(new Date());
+  const days: { date: string; status: string }[] = [];
+  for (let i = 0; i < count; i++) {
+    days.push({ date: format(addDays(today, i), 'yyyy-MM-dd'), status: 'available' });
+  }
+  return days;
+}
 
 export default function CheckoutScreen() {
   const { language } = useLanguage();
+  const { addresses } = useAddresses();
+  const { takePending } = usePendingDelivery();
   const { items, getTotal, getPointsEarned, clearCart } = useCart();
   const pointsEarned = getPointsEarned();
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
@@ -42,6 +62,7 @@ export default function CheckoutScreen() {
   const [deliveryDestinationId, setDeliveryDestinationId] = useState('');
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [deliveryMapsLink, setDeliveryMapsLink] = useState('');
+  const [selectedSavedAddressId, setSelectedSavedAddressId] = useState<string | null>(null);
   const [cardMessage, setCardMessage] = useState('');
   const [promoCode, setPromoCode] = useState('');
   const [promoDiscount, setPromoDiscount] = useState(0);
@@ -49,22 +70,42 @@ export default function CheckoutScreen() {
   const [promoError, setPromoError] = useState<string | null>(null);
 
   const [timeSlots, setTimeSlots] = useState<any[]>([]);
-  const [availableDays, setAvailableDays] = useState<any[]>([]);
+  const [availableDays, setAvailableDays] = useState<any[]>(() => buildDefaultDeliveryDays());
   const [destinations, setDestinations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [calendarVisible, setCalendarVisible] = useState(false);
+  const [calendarDate, setCalendarDate] = useState(() => new Date());
 
   useEffect(() => {
-    const today = new Date();
+    const today = startOfDay(new Date());
     const end = addDays(today, 60);
+    const startStr = format(today, 'yyyy-MM-dd');
+    const endStr = format(end, 'yyyy-MM-dd');
+    const fallback = buildDefaultDeliveryDays(61);
+
     Promise.all([
-      getTimeSlots().then(setTimeSlots),
-      getAvailableDates(format(today, 'yyyy-MM-dd'), format(end, 'yyyy-MM-dd')).then(setAvailableDays),
-      getDeliveryDestinations().then(setDestinations),
-    ])
-      .catch(() => {})
-      .finally(() => setLoading(false));
+      getTimeSlots().then(setTimeSlots).catch(() => setTimeSlots([])),
+      getAvailableDates(startStr, endStr)
+        .then((list) => {
+          const normalized = Array.isArray(list) ? list : [];
+          setAvailableDays(normalized.length > 0 ? normalized : fallback);
+        })
+        .catch(() => setAvailableDays(fallback)),
+      getDeliveryDestinations().then(setDestinations).catch(() => setDestinations([])),
+    ]).finally(() => setLoading(false));
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      const pending = takePending();
+      if (pending) {
+        setDeliveryAddress(pending.deliveryAddress);
+        setDeliveryMapsLink(pending.deliveryMapsLink);
+        setSelectedSavedAddressId(null);
+      }
+    }, [takePending])
+  );
 
   const subtotal = items.reduce((s, i) => s + i.calculated_price, 0);
   const deliveryFee = destinations.find((d) => d.id === deliveryDestinationId)?.fee_egp ?? 0;
@@ -163,6 +204,7 @@ export default function CheckoutScreen() {
 
       clearCart();
       setSubmitting(false);
+      hapticSuccess();
       router.replace({ pathname: '/order-confirmation', params: { orderNumber: order.order_number } });
     } catch (e: any) {
       setSubmitting(false);
@@ -171,7 +213,11 @@ export default function CheckoutScreen() {
     }
   };
 
-  const validDays = (availableDays || []).filter((d: any) => d.status === 'available');
+  const rawAvailable = availableDays || [];
+  const validDays = rawAvailable.filter(
+    (d: any) => d && (d.status === 'available' || d.status == null) && d.date
+  );
+  const displayDays = validDays.length > 0 ? validDays : buildDefaultDeliveryDays(14);
 
   if (items.length === 0) {
     return (
@@ -231,19 +277,78 @@ export default function CheckoutScreen() {
           />
 
           <Text style={styles.section}>{t(language, 'deliveryDate')}</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dateScroll}>
-            {validDays.slice(0, 14).map((d: any) => (
+          <View style={styles.dateRowWrap}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.dateScroll}
+              contentContainerStyle={styles.dateScrollContent}
+            >
+              {displayDays.slice(0, 5).map((d: any) => {
+                const dateStr = typeof d.date === 'string' ? d.date.split('T')[0] : '';
+                if (!dateStr) return null;
+                return (
+                  <TouchableOpacity
+                    key={dateStr}
+                    style={[styles.dateChip, deliveryDate === dateStr && styles.dateChipSelected]}
+                    onPress={() => setDeliveryDate(dateStr)}
+                  >
+                    <Text style={[styles.dateChipText, deliveryDate === dateStr && styles.dateChipTextSelected]}>
+                      {format(new Date(dateStr), 'EEE d')}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
               <TouchableOpacity
-                key={d.date}
-                style={[styles.dateChip, deliveryDate === d.date && styles.dateChipSelected]}
-                onPress={() => setDeliveryDate(d.date)}
+                style={styles.dateChip}
+                onPress={() => {
+                  setCalendarDate(deliveryDate ? new Date(deliveryDate) : new Date());
+                  setCalendarVisible(true);
+                }}
               >
-                <Text style={[styles.dateChipText, deliveryDate === d.date && styles.dateChipTextSelected]}>
-                  {format(new Date(d.date), 'EEE d')}
-                </Text>
+                <Text style={styles.dateChipText}>{t(language, 'seeMore')}</Text>
               </TouchableOpacity>
-            ))}
-          </ScrollView>
+            </ScrollView>
+          </View>
+
+          <Modal visible={calendarVisible} transparent animationType="slide">
+            <TouchableOpacity
+              style={styles.calendarBackdrop}
+              activeOpacity={1}
+              onPress={() => setCalendarVisible(false)}
+            >
+              <View style={styles.calendarModal} onStartShouldSetResponder={() => true}>
+                <View style={styles.calendarHeader}>
+                  <Text style={styles.calendarTitle}>{t(language, 'deliveryDate')}</Text>
+                  <TouchableOpacity onPress={() => setCalendarVisible(false)}>
+                    <Text style={styles.calendarDone}>{t(language, 'pay').replace(/ .*/, '')}</Text>
+                  </TouchableOpacity>
+                </View>
+                <DateTimePicker
+                  value={calendarDate}
+                  mode="date"
+                  display="calendar"
+                  minimumDate={new Date()}
+                  maximumDate={addDays(startOfDay(new Date()), 60)}
+                  onChange={(_, date) => {
+                    if (date) {
+                      setCalendarDate(date);
+                      setDeliveryDate(format(date, 'yyyy-MM-dd'));
+                      if (Platform.OS === 'android') setCalendarVisible(false);
+                    }
+                  }}
+                />
+                {Platform.OS === 'ios' && (
+                  <TouchableOpacity
+                    style={styles.calendarDoneButton}
+                    onPress={() => setCalendarVisible(false)}
+                  >
+                    <Text style={styles.calendarDoneButtonText}>{t(language, 'done')}</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </TouchableOpacity>
+          </Modal>
 
           {deliveryDate && (
             <>
@@ -277,19 +382,47 @@ export default function CheckoutScreen() {
                   onPress={() => setDeliveryDestinationId(d.id)}
                 >
                   <Text style={styles.destName}>{d.name}</Text>
-                  <Text style={styles.destFee}>E£ {Number(d.fee_egp).toFixed(2)}</Text>
+                  <Text style={styles.destFee}>{formatPrice(Number(d.fee_egp))}</Text>
                 </TouchableOpacity>
               ))}
             </>
           )}
 
           <Text style={styles.section}>{t(language, 'address')}</Text>
+          {addresses.length > 0 && (
+            <>
+              <Text style={styles.sectionSub}>{t(language, 'useSavedAddress')}</Text>
+              {addresses.map((addr) => {
+                const label = addr.fullAddress || [addr.street, addr.area, addr.city].filter(Boolean).join(', ') || addr.city;
+                const isSelected = selectedSavedAddressId === addr.id;
+                return (
+                  <TouchableOpacity
+                    key={addr.id}
+                    style={[styles.destRow, isSelected && styles.destRowSelected]}
+                    onPress={() => {
+                      setSelectedSavedAddressId(addr.id);
+                      setDeliveryAddress(addr.fullAddress || [addr.street, addr.area, addr.city, addr.governorate, addr.country].filter(Boolean).join(', '));
+                      setDeliveryMapsLink(addr.mapsLink || (addr.latitude != null && addr.longitude != null ? buildMapsLink(addr.latitude, addr.longitude) : ''));
+                    }}
+                  >
+                    <Text style={styles.destName} numberOfLines={2}>{label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </>
+          )}
+          <TouchableOpacity
+            style={styles.pickOnMapBtn}
+            onPress={() => { hapticPrimary(); router.push({ pathname: '/delivery-address-map', params: { fromCheckout: '1' } }); }}
+          >
+            <Text style={styles.pickOnMapBtnText}>{t(language, 'pickOnMap')}</Text>
+          </TouchableOpacity>
           <TextInput
             style={[styles.input, styles.textArea]}
             placeholder={t(language, 'fullDeliveryAddress')}
             placeholderTextColor={colors.textMuted}
             value={deliveryAddress}
-            onChangeText={setDeliveryAddress}
+            onChangeText={(v) => { setDeliveryAddress(v); setSelectedSavedAddressId(null); }}
             multiline
           />
           <TextInput
@@ -297,7 +430,7 @@ export default function CheckoutScreen() {
             placeholder={t(language, 'googleMapsLink')}
             placeholderTextColor={colors.textMuted}
             value={deliveryMapsLink}
-            onChangeText={setDeliveryMapsLink}
+            onChangeText={(v) => { setDeliveryMapsLink(v); setSelectedSavedAddressId(null); }}
             autoCapitalize="none"
             keyboardType="url"
           />
@@ -316,7 +449,7 @@ export default function CheckoutScreen() {
             </TouchableOpacity>
           </View>
           {promoError && <Text style={styles.promoError}>{promoError}</Text>}
-          {promoDiscount > 0 && <Text style={styles.promoOk}>{t(language, 'discount')}: E£ {promoDiscount.toFixed(2)}</Text>}
+          {promoDiscount > 0 && <Text style={styles.promoOk}>{t(language, 'discount')}: {formatPrice(promoDiscount)}</Text>}
 
           <Text style={styles.section}>{t(language, 'cardMessageOptional')}</Text>
           <TextInput
@@ -328,25 +461,40 @@ export default function CheckoutScreen() {
             multiline
           />
 
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>{t(language, 'total')}</Text>
-            <Text style={styles.total}>E£ {total.toFixed(2)}</Text>
-          </View>
           {pointsEarned > 0 && (
-            <Text style={styles.pointsLine}>
-              {t(language, 'youWillEarnPoints').replace('{{points}}', String(pointsEarned))}
-            </Text>
+            <LinearGradient
+              colors={[colors.primary, colors.primaryDark]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.pointsGradientWrap}
+            >
+              <Text style={styles.pointsGradientText}>
+                {t(language, 'youWillEarnPoints').replace('{{points}}', String(pointsEarned))}
+              </Text>
+            </LinearGradient>
           )}
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>{t(language, 'subtotal')}</Text>
+            <Text style={styles.summaryValue}>{formatPrice(Math.max(0, subtotal - promoDiscount))}</Text>
+          </View>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>{t(language, 'deliveryFees')}</Text>
+            <Text style={styles.summaryValue}>{formatPrice(Number(deliveryFee))}</Text>
+          </View>
+          <View style={[styles.summaryRow, styles.totalRow]}>
+            <Text style={styles.totalLabel}>{t(language, 'total')}</Text>
+            <Text style={styles.total}>{formatPrice(total)}</Text>
+          </View>
 
           <TouchableOpacity
             style={[styles.payBtn, submitting && styles.payBtnDisabled]}
-            onPress={handlePay}
+            onPress={() => { hapticPrimary(); handlePay(); }}
             disabled={submitting}
           >
             {submitting ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.payBtnText}>{t(language, 'pay')} E£ {total.toFixed(2)}</Text>
+              <Text style={styles.payBtnText}>{t(language, 'pay')} {formatPrice(total)}</Text>
             )}
           </TouchableOpacity>
         </ScrollView>
@@ -363,6 +511,19 @@ const styles = StyleSheet.create({
   btn: { backgroundColor: colors.primary, paddingHorizontal: spacing.lg, paddingVertical: spacing.md, borderRadius: borderRadius.md },
   btnText: { color: '#fff', fontWeight: '600' },
   section: { fontWeight: '700', color: colors.text, marginTop: spacing.lg, marginBottom: spacing.sm },
+  sectionSub: { fontWeight: '600', color: colors.textMuted, fontSize: 14, marginTop: spacing.sm, marginBottom: spacing.sm },
+  pickOnMapBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.md,
+    marginBottom: spacing.sm,
+    borderRadius: borderRadius.md,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    backgroundColor: colors.backgroundMuted,
+  },
+  pickOnMapBtnText: { color: colors.primary, fontWeight: '700', fontSize: 15 },
   input: {
     borderWidth: 1,
     borderColor: colors.border,
@@ -374,7 +535,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
   },
   textArea: { minHeight: 80 },
-  dateScroll: { marginBottom: spacing.sm },
+  dateRowWrap: {
+    height: 52,
+    marginBottom: spacing.sm,
+  },
+  dateScroll: { flex: 1, height: 52 },
+  dateScrollContent: { paddingVertical: spacing.xs, alignItems: 'center' },
   dateChip: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
@@ -383,10 +549,43 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     marginRight: spacing.sm,
     backgroundColor: colors.card,
+    minHeight: 40,
+    justifyContent: 'center',
   },
   dateChipSelected: { borderColor: colors.primary, backgroundColor: colors.backgroundMuted },
   dateChipText: { fontSize: 14, color: colors.text },
   dateChipTextSelected: { color: colors.primary, fontWeight: '600' },
+  calendarBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  calendarModal: {
+    backgroundColor: colors.background,
+    borderTopLeftRadius: borderRadius.lg,
+    borderTopRightRadius: borderRadius.lg,
+    paddingBottom: spacing.xl,
+  },
+  calendarHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  calendarTitle: { fontSize: 18, fontWeight: '600', color: colors.text },
+  calendarDone: { fontSize: 16, color: colors.primary, fontWeight: '600' },
+  calendarDoneButton: {
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.md,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.primary,
+    borderRadius: borderRadius.md,
+    alignItems: 'center',
+  },
+  calendarDoneButtonText: { fontSize: 16, color: '#fff', fontWeight: '600' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.sm },
   chip: {
     paddingHorizontal: spacing.md,
@@ -424,10 +623,14 @@ const styles = StyleSheet.create({
   promoBtnText: { fontWeight: '600', color: colors.text },
   promoError: { color: colors.error, fontSize: 12, marginTop: 4 },
   promoOk: { color: colors.success, fontSize: 12, marginTop: 4 },
-  totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: spacing.xl, marginBottom: spacing.md },
+  pointsGradientWrap: { paddingVertical: spacing.sm, paddingHorizontal: spacing.md, borderRadius: borderRadius.md, marginTop: spacing.xl, marginBottom: spacing.sm },
+  pointsGradientText: { fontSize: 13, color: '#fff', fontWeight: '600', textAlign: 'center' },
+  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.sm },
+  summaryLabel: { fontSize: 15, color: colors.textMuted },
+  summaryValue: { fontSize: 15, fontWeight: '600', color: colors.text },
+  totalRow: { marginTop: spacing.sm, marginBottom: spacing.md },
   totalLabel: { fontSize: 18, fontWeight: '600', color: colors.text },
   total: { fontSize: 22, fontWeight: '700', color: colors.primary },
-  pointsLine: { fontSize: 13, color: colors.textMuted, marginBottom: spacing.sm },
   payBtn: {
     backgroundColor: colors.primary,
     padding: spacing.md,

@@ -10,9 +10,10 @@ export interface HomeData {
   refresh: () => Promise<void>;
 }
 
-const FEATURED_PRODUCTS_LIMIT = 8;
+const DEFAULT_FEATURED_PRODUCTS_LIMIT = 8;
 
-export function useHomeData(): HomeData {
+export function useHomeData(options?: { featuredLimit?: number }): HomeData {
+  const limit = options?.featuredLimit ?? DEFAULT_FEATURED_PRODUCTS_LIMIT;
   const [featuredCollections, setFeaturedCollections] = useState<any[]>([]);
   const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,8 +31,8 @@ export function useHomeData(): HomeData {
       // Prefer collections with show_on_homepage; if none, show all
       const homepage = allCollections.filter((c: any) => c.show_on_homepage);
       setFeaturedCollections(homepage.length > 0 ? homepage : allCollections);
-      // Use first N products as "featured" (backend can add is_featured later)
-      setFeaturedProducts((products || []).slice(0, FEATURED_PRODUCTS_LIMIT));
+      // Use first N products as "featured" (limit from app settings)
+      setFeaturedProducts((products || []).slice(0, limit));
     } catch (err: any) {
       setFeaturedCollections([]);
       setFeaturedProducts([]);
@@ -39,7 +40,7 @@ export function useHomeData(): HomeData {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [limit]);
 
   const refresh = useCallback(async () => {
     setLoading(true);

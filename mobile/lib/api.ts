@@ -23,6 +23,16 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+/** Register new user (email, password, phone required). Backend creates Supabase user + profile. */
+export async function registerAccount(payload: {
+  email: string;
+  password: string;
+  full_name?: string;
+  phone: string;
+}): Promise<void> {
+  await api.post('/auth/register', payload);
+}
+
 export async function getCollections(includeInactive = false, homepageOnly = false): Promise<any[]> {
   const { data } = await api.get('/collections', {
     params: {
@@ -40,11 +50,84 @@ export async function getHomepageCollections(): Promise<any[]> {
   return getCollections(false, true);
 }
 
-export async function getProducts(includeInactive = false): Promise<any[]> {
+/** Collections to show in the app navbar (show_in_nav !== false). Same as website dropdown. */
+export async function getNavbarCollections(): Promise<any[]> {
+  const list = await getCollections(false);
+  return list.filter((c: any) => c.show_in_nav !== false);
+}
+
+/** Active hero image URL for the app home hero (admin-controlled). */
+export async function getActiveHeroImage(): Promise<{ image_url: string } | null> {
+  const { data } = await api.get<{ image_url: string } | null>('/homepage/active-hero');
+  return data ?? null;
+}
+
+/** Hero headline, subtext, and button label for the app (admin-controlled). */
+export async function getHeroText(): Promise<{
+  headline: string;
+  subtext: string;
+  button_label: string;
+}> {
+  const { data } = await api.get<{ headline?: string; subtext?: string; button_label?: string }>('/homepage/hero-text');
+  return {
+    headline: data?.headline ?? '',
+    subtext: data?.subtext ?? '',
+    button_label: data?.button_label ?? '',
+  };
+}
+
+export interface AppSettings {
+  home_section_order: string[];
+  promotion_visible: boolean;
+  promotion_title: string;
+  promotion_message: string;
+  final_cta_headline: string;
+  final_cta_subtext: string;
+  final_cta_button: string;
+  featured_products_limit: number;
+}
+
+/** App home screen settings (section order, promotion, final CTA, featured limit). */
+export async function getAppSettings(): Promise<AppSettings> {
+  const { data } = await api.get<AppSettings>('/homepage/app-settings');
+  const defaultOrder = [
+    'hero',
+    'featured_collections',
+    'featured_products',
+    'promotion',
+    'value_proposition',
+    'final_cta',
+  ];
+  return {
+    home_section_order: Array.isArray(data?.home_section_order) ? data.home_section_order : defaultOrder,
+    promotion_visible: data?.promotion_visible !== false,
+    promotion_title: data?.promotion_title ?? 'Special offer',
+    promotion_message: data?.promotion_message ?? 'Free delivery on orders over 250 EGP',
+    final_cta_headline: data?.final_cta_headline ?? 'Ready to surprise someone?',
+    final_cta_subtext: data?.final_cta_subtext ?? 'Browse our collections and order in minutes.',
+    final_cta_button: data?.final_cta_button ?? 'Browse all collections',
+    featured_products_limit:
+      typeof data?.featured_products_limit === 'number' ? data.featured_products_limit : 8,
+  };
+}
+
+export async function getProducts(
+  includeInactive = false,
+  showInAllCollection = false,
+): Promise<any[]> {
   const { data } = await api.get('/products', {
-    params: { includeInactive: includeInactive ? 'true' : undefined },
+    params: {
+      includeInactive: includeInactive ? 'true' : undefined,
+      showInAllCollection: showInAllCollection ? 'true' : undefined,
+    },
   });
   return (data || []).filter((p: any) => includeInactive || p.is_active !== false);
+}
+
+/** Up to 4 products for "People also like" in cart (admin-selected). */
+export async function getRecommendedAtCheckout(): Promise<any[]> {
+  const { data } = await api.get('/products/recommended/checkout');
+  return Array.isArray(data) ? data : [];
 }
 
 export async function getCollectionBySlug(slug: string): Promise<any> {
@@ -67,11 +150,22 @@ export async function getTimeSlots(): Promise<any[]> {
   return (data || []).filter((s: any) => s.is_active !== false);
 }
 
+/** Normalize a date from API (string or ISO) to YYYY-MM-DD. */
+function toDateString(d: string | Date): string {
+  if (typeof d === 'string') return d.split('T')[0];
+  return d.toISOString().split('T')[0];
+}
+
 export async function getAvailableDates(startDate: string, endDate: string): Promise<any[]> {
   const { data } = await api.get('/delivery/available-dates', {
     params: { startDate, endDate },
   });
-  return data || [];
+  const rows = Array.isArray(data) ? data : [];
+  return rows.map((row: any) => ({
+    ...row,
+    date: toDateString(row.date),
+    status: row.status ?? 'available',
+  }));
 }
 
 export async function getDeliveryDestinations(): Promise<any[]> {
@@ -116,4 +210,36 @@ export async function getRewards(): Promise<any[]> {
 export async function redeemReward(email: string, rewardId: string): Promise<{ points_balance: number }> {
   const { data } = await api.post('/loyalty/redeem', { email: email.trim(), reward_id: rewardId });
   return data;
+}
+
+/** Onboarding: config from admin (enable/disable, slides). Graceful fallback on failure. */
+export interface OnboardingSlide {
+  id?: string;
+  title: string;
+  subtitle: string;
+  order?: number;
+}
+
+export interface OnboardingConfig {
+  enabled: boolean;
+  slides: OnboardingSlide[];
+}
+
+const DEFAULT_ONBOARDING: OnboardingConfig = {
+  enabled: false,
+  slides: [],
+};
+
+export async function getOnboardingConfig(): Promise<OnboardingConfig> {
+  try {
+    const { data } = await api.get<OnboardingConfig>('/onboarding/config');
+    if (data && typeof data.enabled === 'boolean' && Array.isArray(data.slides)) {
+      const slides = data.slides
+        .filter((s: any) => s && (s.title != null || s.subtitle != null))
+        .map((s: any) => ({ title: String(s.title ?? ''), subtitle: String(s.subtitle ?? ''), order: s.order ?? 0 }))
+        .sort((a: OnboardingSlide, b: OnboardingSlide) => (a.order ?? 0) - (b.order ?? 0));
+      return { enabled: data.enabled && slides.length > 0, slides };
+    }
+  } catch (_) {}
+  return DEFAULT_ONBOARDING;
 }

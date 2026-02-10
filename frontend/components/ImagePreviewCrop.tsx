@@ -2,9 +2,10 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 
-const MAX_VIEW_SIZE = 520
-const CROP_BOX_SIZE = 320
-const OUTPUT_SIZE = 800
+/** Max width/height of the image preview in the modal. Larger = easier to see and align. */
+const MAX_VIEW_SIZE = 720
+/** Output image width in pixels (height = width / aspectRatio). */
+const OUTPUT_SIZE = 1200
 
 interface ImagePreviewCropProps {
   imageUrl: string
@@ -24,16 +25,9 @@ export default function ImagePreviewCrop({ imageUrl, onCrop, onCancel, aspectRat
   const [isDragging, setIsDragging] = useState(false)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
 
-  const rawBoxWidth = CROP_BOX_SIZE
-  const rawBoxHeight = Math.round(CROP_BOX_SIZE / aspectRatio)
-  const boxWidth =
-    imageDisplaySize.width > 0 && imageDisplaySize.height > 0
-      ? Math.min(rawBoxWidth, imageDisplaySize.width)
-      : rawBoxWidth
-  const boxHeight =
-    imageDisplaySize.width > 0 && imageDisplaySize.height > 0
-      ? Math.min(rawBoxHeight, imageDisplaySize.height)
-      : rawBoxHeight
+  // Crop box = same size as the displayed image so "what you see is what you get"
+  const boxWidth = imageDisplaySize.width > 0 ? imageDisplaySize.width : 400
+  const boxHeight = imageDisplaySize.height > 0 ? imageDisplaySize.height : Math.round(400 / aspectRatio)
 
   const clampPosition = useCallback(
     (x: number, y: number, imgW: number, imgH: number, bw: number, bh: number) => {
@@ -60,14 +54,7 @@ export default function ImagePreviewCrop({ imageUrl, onCrop, onCancel, aspectRat
       const dw = Math.round(nw * scale)
       const dh = Math.round(nh * scale)
       setImageDisplaySize({ width: dw, height: dh })
-
-      const bw = Math.min(rawBoxWidth, dw)
-      const bh = Math.min(rawBoxHeight, dh)
-      const initial = {
-        x: Math.max(0, (dw - bw) / 2),
-        y: Math.max(0, (dh - bh) / 2),
-      }
-      setBoxPosition(initial)
+      setBoxPosition({ x: 0, y: 0 })
     }
 
     if (img.complete) onLoad()
@@ -102,8 +89,8 @@ export default function ImagePreviewCrop({ imageUrl, onCrop, onCancel, aspectRat
         mouseInContainerY - dragOffset.y,
         imageDisplaySize.width,
         imageDisplaySize.height,
-        rawBoxWidth,
-        rawBoxHeight
+        boxWidth,
+        boxHeight
       )
       setBoxPosition(next)
     }
@@ -116,7 +103,7 @@ export default function ImagePreviewCrop({ imageUrl, onCrop, onCancel, aspectRat
       window.removeEventListener('mousemove', handleMove)
       window.removeEventListener('mouseup', handleUp)
     }
-  }, [isDragging, dragOffset, imageDisplaySize, clampPosition])
+  }, [isDragging, dragOffset, imageDisplaySize, clampPosition, boxWidth, boxHeight])
 
   const handleCrop = () => {
     const img = imageRef.current
@@ -159,7 +146,7 @@ export default function ImagePreviewCrop({ imageUrl, onCrop, onCancel, aspectRat
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full flex flex-col">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full flex flex-col max-h-[90vh] overflow-hidden">
         <div className="p-4 border-b border-gray-200 flex items-center justify-between">
           <h2 className="text-xl font-bold text-gray-900">Choose visible area</h2>
           <button
@@ -171,9 +158,9 @@ export default function ImagePreviewCrop({ imageUrl, onCrop, onCancel, aspectRat
           </button>
         </div>
 
-        <div className="p-6 flex flex-col items-center">
+        <div className="p-6 flex flex-col items-center max-h-[85vh] overflow-auto">
           <p className="text-sm text-gray-600 mb-3">
-            Drag the box to select what will be visible. The box is the same size as the displayed image.
+            The area below is what will be used. It matches the display size (product/collection images are shown as squares).
           </p>
 
           <div
@@ -219,7 +206,7 @@ export default function ImagePreviewCrop({ imageUrl, onCrop, onCancel, aspectRat
           </div>
 
           <div className="mt-4 text-xs text-gray-500">
-            Crop box: {boxWidth}×{boxHeight}px (same ratio as display)
+            Preview: {boxWidth}×{boxHeight}px · Output: {OUTPUT_SIZE}×{Math.round(OUTPUT_SIZE / aspectRatio)}px
           </div>
         </div>
 

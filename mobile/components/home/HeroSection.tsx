@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useFocusEffect } from '@react-navigation/native';
+import { getActiveHeroImage, getHeroText } from '@/lib/api';
 import { t } from '@/lib/i18n';
 import { colors, spacing, borderRadius } from '@/constants/theme';
 
@@ -10,31 +12,54 @@ const HERO_MIN_HEIGHT = 280;
 
 export function HeroSection() {
   const { language } = useLanguage();
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [text, setText] = useState<{ headline: string; subtext: string; button_label: string } | null>(null);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      let cancelled = false;
+      getActiveHeroImage().then((res) => {
+        if (!cancelled && res?.image_url) setImageUrl(res.image_url);
+      }).catch(() => {});
+      getHeroText().then((res) => {
+        if (!cancelled) setText(res);
+      }).catch(() => {});
+      return () => { cancelled = true; };
+    }, [])
+  );
+
+  const headline = (text?.headline?.trim() || t(language, 'heroHeadline'));
+  const subtext = (text?.subtext?.trim() || t(language, 'heroSubtext'));
+  const buttonLabel = (text?.button_label?.trim() || t(language, 'heroCta'));
 
   return (
     <View style={styles.wrapper}>
       <View style={styles.background}>
-        <Image
-          source={{ uri: 'https://images.unsplash.com/photo-1486427944929-f4c8f8919c65?w=800&q=80' }}
-          style={StyleSheet.absoluteFill}
-          contentFit="cover"
-          transition={200}
-          cachePolicy="disk"
-        />
+        {imageUrl ? (
+          <Image
+            source={{ uri: imageUrl }}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+            transition={200}
+            cachePolicy="disk"
+          />
+        ) : (
+          <View style={[StyleSheet.absoluteFill, styles.placeholderBg]} />
+        )}
         <View style={styles.overlay} />
         <View style={styles.content}>
           <Text style={styles.headline} numberOfLines={2}>
-            {t(language, 'heroHeadline')}
+            {headline}
           </Text>
           <Text style={styles.subtext} numberOfLines={2}>
-            {t(language, 'heroSubtext')}
+            {subtext}
           </Text>
           <TouchableOpacity
             style={styles.cta}
             onPress={() => router.push('/(tabs)/collections')}
             activeOpacity={0.85}
           >
-            <Text style={styles.ctaText}>{t(language, 'heroCta')}</Text>
+            <Text style={styles.ctaText}>{buttonLabel}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -54,6 +79,9 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.xl * 2,
+  },
+  placeholderBg: {
+    backgroundColor: colors.primary,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,

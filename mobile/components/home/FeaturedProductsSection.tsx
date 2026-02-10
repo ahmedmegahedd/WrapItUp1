@@ -10,7 +10,9 @@ import {
 import { router } from 'expo-router';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { SaveProductButton } from '@/components/SaveProductButton';
 import { t } from '@/lib/i18n';
+import { formatPrice } from '@/lib/format';
 import { colors, spacing, borderRadius } from '@/constants/theme';
 
 const CARD_WIDTH = Dimensions.get('window').width * 0.4;
@@ -23,11 +25,6 @@ function getPrimaryImageUrl(product: any): string | null {
     (a: any, b: any) => (a.display_order ?? 0) - (b.display_order ?? 0)
   );
   return sorted[0]?.image_url ?? null;
-}
-
-function formatPrice(product: any): string {
-  const price = product.discount_price ?? product.base_price;
-  return `${Number(price).toLocaleString()} EGP`;
 }
 
 interface FeaturedProductsSectionProps {
@@ -59,16 +56,19 @@ export function FeaturedProductsSection({ products }: FeaturedProductsSectionPro
               onPress={() => router.push(`/product/${item.slug}`)}
               activeOpacity={0.9}
             >
-              {imageUrl ? (
-                <OptimizedImage uri={imageUrl} style={styles.cardImage} />
-              ) : (
-                <View style={[styles.cardImage, styles.placeholder]} />
-              )}
+              <View style={styles.cardImageWrap}>
+                {imageUrl ? (
+                  <OptimizedImage uri={imageUrl} style={styles.cardImage} />
+                ) : (
+                  <View style={[styles.cardImage, styles.placeholder]} />
+                )}
+                <SaveProductButton productSlug={item.slug} size={22} style={styles.saveBtn} />
+              </View>
               <View style={styles.cardInfo}>
                 <Text style={styles.cardTitle} numberOfLines={2}>
                   {item.title}
                 </Text>
-                <Text style={styles.price}>{formatPrice(item)}</Text>
+                <Text style={styles.price}>{formatPrice(Number(item.discount_price ?? item.base_price))}</Text>
                 {(item.points_value ?? 0) > 0 && (
                   <Text style={styles.pointsEarned}>
                     {t(language, 'pointsEarnedFromProduct').replace('{{points}}', String(item.points_value))}
@@ -111,11 +111,13 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 2,
   },
+  cardImageWrap: { width: '100%', aspectRatio: 1, position: 'relative' },
   cardImage: {
     width: '100%',
-    aspectRatio: 1,
+    height: '100%',
     resizeMode: 'cover',
   },
+  saveBtn: { position: 'absolute', top: spacing.sm, right: spacing.sm },
   placeholder: {
     backgroundColor: colors.border,
   },

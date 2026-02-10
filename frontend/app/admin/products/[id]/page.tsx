@@ -16,13 +16,14 @@ export default function AdminProductEditPage() {
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     title: '',
-    slug: '',
     description: '',
     base_price: '',
     discount_price: '',
     stock_quantity: '',
     points_value: '',
     is_active: true,
+    minimum_order_enabled: false,
+    minimum_quantity: '',
     image_urls: [] as string[],
     variations: [] as any[],
   })
@@ -44,13 +45,14 @@ export default function AdminProductEditPage() {
       const product = response.data
       setFormData({
         title: product.title || '',
-        slug: product.slug || '',
         description: product.description || '',
         base_price: product.base_price?.toString() || '',
         discount_price: product.discount_price?.toString() || '',
         stock_quantity: product.stock_quantity?.toString() || '',
         points_value: product.points_value?.toString() ?? '0',
         is_active: product.is_active ?? true,
+        minimum_order_enabled: product.minimum_quantity != null && product.minimum_quantity >= 1,
+        minimum_quantity: product.minimum_quantity != null ? String(product.minimum_quantity) : '1',
         image_urls: product.product_images?.map((img: any) => img.image_url) || [],
         variations: product.product_variations?.map((v: any) => ({
           name: v.name,
@@ -137,9 +139,6 @@ export default function AdminProductEditPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'products/[id]/page.tsx:100',message:'handleSubmit entry',data:{isNew,productId,formDataBefore:formData},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
     setLoading(true)
 
     try {
@@ -157,111 +156,100 @@ export default function AdminProductEditPage() {
         }))
         .filter((v: any) => v.name.trim() !== '' && v.options.length > 0)
 
-      const payload = {
-        ...formData,
-        base_price: parseFloat(formData.base_price),
-        discount_price: formData.discount_price ? parseFloat(formData.discount_price) : undefined,
-        stock_quantity: parseInt(formData.stock_quantity),
-        points_value: parseInt(formData.points_value || '0', 10),
-        variations: validVariations.length > 0 ? validVariations : undefined,
+      // Minimum order quantity: required when toggle is ON
+      if (formData.minimum_order_enabled) {
+        const minQty = parseInt(formData.minimum_quantity, 10)
+        if (!Number.isInteger(minQty) || minQty < 1) {
+          alert('When minimum order quantity is enabled, minimum quantity must be at least 1.')
+          setLoading(false)
+          return
+        }
       }
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'products/[id]/page.tsx:110',message:'variations filtered',data:{originalCount:formData.variations.length,validCount:validVariations.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'products/[id]/page.tsx:117',message:'payload before API call',data:{payload,isNew},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
+
+      const basePrice = parseFloat(formData.base_price)
+      const stockQty = parseInt(formData.stock_quantity, 10)
+      if (Number.isNaN(basePrice) || basePrice < 0) {
+        alert('Please enter a valid base price (number ≥ 0).')
+        setLoading(false)
+        return
+      }
+      if (Number.isNaN(stockQty) || stockQty < 0) {
+        alert('Please enter a valid stock quantity (whole number ≥ 0).')
+        setLoading(false)
+        return
+      }
+
+      // Only send fields allowed by backend DTO (forbidNonWhitelisted rejects extra keys).
+      // Build minimal payload: omit optional keys when empty so backend never gets invalid values.
+      const payload: Record<string, unknown> = {
+        title: formData.title.trim(),
+        base_price: basePrice,
+        stock_quantity: stockQty,
+        is_active: formData.is_active ?? true,
+      }
+      const desc = formData.description?.trim()
+      if (desc) payload.description = desc
+      const discountPrice = formData.discount_price ? parseFloat(formData.discount_price) : NaN
+      if (!Number.isNaN(discountPrice) && discountPrice >= 0) payload.discount_price = discountPrice
+      const pointsVal = parseInt(formData.points_value || '0', 10)
+      if (!Number.isNaN(pointsVal) && pointsVal >= 0) payload.points_value = pointsVal
+      if (formData.minimum_order_enabled) {
+        const minQty = parseInt(formData.minimum_quantity, 10)
+        if (!Number.isNaN(minQty) && minQty >= 1) payload.minimum_quantity = minQty
+      } else if (!isNew) {
+        payload.minimum_quantity = null
+      }
+      if (formData.image_urls?.length) payload.image_urls = formData.image_urls
+      if (validVariations.length > 0) payload.variations = validVariations
 
       let response
       if (isNew) {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'products/[id]/page.tsx:120',message:'POST API call start',data:{url:'/admin/products'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
         response = await api.post('/admin/products', payload)
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'products/[id]/page.tsx:122',message:'POST API call success',data:{status:response.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
       } else {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'products/[id]/page.tsx:125',message:'PATCH API call start',data:{url:`/admin/products/${productId}`},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
         response = await api.patch(`/admin/products/${productId}`, payload)
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'products/[id]/page.tsx:127',message:'PATCH API call success',data:{status:response.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
       }
 
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'products/[id]/page.tsx:130',message:'navigation start',data:{target:'/admin/products'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-      // #endregion
       router.push('/admin/products')
     } catch (error: any) {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'products/[id]/page.tsx:133',message:'handleSubmit error',data:{errorMessage:error?.message,errorResponse:error?.response?.data,statusCode:error?.response?.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
       console.error('Error saving product:', error)
-      
-      // Better error messages
+      if (error?.response?.data) {
+        console.error('Backend response:', error.response.data)
+      }
       let errorMessage = 'Failed to save product'
-      if (error?.response?.data?.message) {
-        const backendMessage = error.response.data.message
-        if (backendMessage.includes('validation')) {
-          errorMessage = `Validation error: ${backendMessage}`
-        } else {
-          errorMessage = backendMessage
-        }
+      const msg = error?.response?.data?.message
+      if (msg) {
+        errorMessage = Array.isArray(msg) ? msg.join(' ') : String(msg)
       }
       alert(errorMessage)
     } finally {
       setLoading(false)
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'products/[id]/page.tsx:137',message:'handleSubmit exit',data:{loading:false},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
     }
   }
 
   function addVariation() {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'products/[id]/page.tsx:134',message:'addVariation before',data:{currentVariationCount:formData.variations.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
     setFormData((prev) => {
       const newState = {
         ...prev,
         variations: [...prev.variations, { name: '', display_order: 0, options: [] }],
       }
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'products/[id]/page.tsx:137',message:'addVariation after',data:{newVariationCount:newState.variations.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
       return newState
     })
   }
 
   function removeVariation(index: number) {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'products/[id]/page.tsx:141',message:'removeVariation before',data:{index,currentVariationCount:formData.variations.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
     setFormData((prev) => {
       const newState = {
         ...prev,
         variations: prev.variations.filter((_: any, i: number) => i !== index),
       }
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'products/[id]/page.tsx:144',message:'removeVariation after',data:{newVariationCount:newState.variations.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
       return newState
     })
   }
 
   function addVariationOption(variationIndex: number) {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'products/[id]/page.tsx:148',message:'addVariationOption before',data:{variationIndex,currentOptionCount:formData.variations[variationIndex]?.options?.length || 0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
     setFormData((prev) => {
       const variations = [...prev.variations]
       variations[variationIndex].options.push({ label: '', price_modifier: '0', stock_quantity: '0' })
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'products/[id]/page.tsx:151',message:'addVariationOption after',data:{newOptionCount:variations[variationIndex].options.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
       return { ...prev, variations }
     })
   }
@@ -286,17 +274,6 @@ export default function AdminProductEditPage() {
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             className="w-full px-4 py-2 border rounded"
-          />
-        </div>
-
-        <div>
-          <label className="block font-semibold mb-2">Slug</label>
-          <input
-            type="text"
-            value={formData.slug}
-            onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-            className="w-full px-4 py-2 border rounded"
-            placeholder="Auto-generated if empty"
           />
         </div>
 
@@ -358,6 +335,41 @@ export default function AdminProductEditPage() {
         </div>
 
         <div>
+          <label className="flex items-center gap-2 mb-2">
+            <input
+              type="checkbox"
+              checked={formData.minimum_order_enabled}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  minimum_order_enabled: e.target.checked,
+                  minimum_quantity: e.target.checked ? formData.minimum_quantity || '1' : '',
+                })
+              }
+            />
+            <span>Minimum order quantity</span>
+          </label>
+          {formData.minimum_order_enabled && (
+            <div className="ml-6 mt-2">
+              <label className="block font-medium mb-1 text-gray-700">Minimum quantity</label>
+              <input
+                type="number"
+                min={1}
+                required={formData.minimum_order_enabled}
+                value={formData.minimum_quantity}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    minimum_quantity: e.target.value,
+                  }))
+                }
+                className="w-32 px-4 py-2 border rounded"
+              />
+            </div>
+          )}
+        </div>
+
+        <div>
           <label className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -391,13 +403,7 @@ export default function AdminProductEditPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    // #region agent log
-                    fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'products/[id]/page.tsx:271',message:'removeImage before',data:{index,currentImageCount:formData.image_urls.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-                    // #endregion
                     const newImageUrls = formData.image_urls.filter((_: string, i: number) => i !== index)
-                    // #region agent log
-                    fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'products/[id]/page.tsx:274',message:'removeImage after',data:{newImageCount:newImageUrls.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-                    // #endregion
                     setFormData({
                       ...formData,
                       image_urls: newImageUrls,
@@ -487,14 +493,8 @@ export default function AdminProductEditPage() {
                     <button
                       type="button"
                       onClick={() => {
-                        // #region agent log
-                        fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'products/[id]/page.tsx:432',message:'removeOption before',data:{vIndex,oIndex,currentOptionCount:formData.variations[vIndex]?.options?.length || 0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-                        // #endregion
                         const variations = [...formData.variations]
                         variations[vIndex].options = variations[vIndex].options.filter((_: any, i: number) => i !== oIndex)
-                        // #region agent log
-                        fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'products/[id]/page.tsx:435',message:'removeOption after',data:{newOptionCount:variations[vIndex].options.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-                        // #endregion
                         setFormData({ ...formData, variations })
                       }}
                       className="text-red-600 hover:underline"
@@ -526,9 +526,6 @@ export default function AdminProductEditPage() {
           <button
             type="button"
             onClick={() => {
-              // #region agent log
-              fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'products/[id]/page.tsx:380',message:'cancel button clicked',data:{target:'/admin/products'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-              // #endregion
               router.push('/admin/products')
             }}
             className="px-6 py-2 border rounded hover:bg-gray-50"

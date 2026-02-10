@@ -65,7 +65,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: '/admin/delivery-destinations', label: 'Destinations' },
     { href: '/admin/promo-codes', label: 'Promo Codes' },
     { href: '/admin/rewards', label: 'Points & Rewards' },
-    { href: '/admin/homepage', label: 'Homepage' },
+    { href: '/admin/homepage', label: 'App hero' },
     { href: '/admin/analytics', label: 'Analytics' },
   ]
 

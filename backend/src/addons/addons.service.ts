@@ -8,13 +8,10 @@ export class AddonsService {
   constructor(private supabaseService: SupabaseService) {}
 
   async findAll(includeInactive = false) {
-    const supabase = this.supabaseService.getClient();
+    const supabase = this.supabaseService.getAdminClient();
     let query = supabase
       .from('addons')
-      .select(`
-        *,
-        addon_images(*)
-      `)
+      .select('*')
       .order('created_at', { ascending: false });
 
     if (!includeInactive) {
@@ -23,13 +20,42 @@ export class AddonsService {
 
     const { data, error } = await query;
 
-    if (error) throw new BadRequestException(error.message);
+    if (error) {
+      // Table may not exist yet (run backend/supabase/addons-schema.sql in Supabase SQL Editor)
+      if (error.code === '42P01' || error.message?.includes('does not exist')) {
+        return [];
+      }
+      throw new BadRequestException(error.message || 'Failed to load add-ons');
+    }
 
-    return data;
+    if (!data || data.length === 0) return [];
+
+    const addonIds = data.map((a: { id: string }) => a.id);
+    let imagesByAddon: Record<string, any[]> = {};
+    try {
+      const { data: images } = await supabase
+        .from('addon_images')
+        .select('*')
+        .in('addon_id', addonIds)
+        .order('display_order', { ascending: true });
+      imagesByAddon = (images || []).reduce((acc: Record<string, any[]>, img: any) => {
+        const id = img.addon_id;
+        if (!acc[id]) acc[id] = [];
+        acc[id].push(img);
+        return acc;
+      }, {});
+    } catch {
+      // addon_images table may not exist yet
+    }
+
+    return data.map((addon: any) => ({
+      ...addon,
+      addon_images: imagesByAddon[addon.id] || [],
+    }));
   }
 
   async findOne(id: string) {
-    const supabase = this.supabaseService.getClient();
+    const supabase = this.supabaseService.getAdminClient();
     const { data, error } = await supabase
       .from('addons')
       .select(`
@@ -47,7 +73,7 @@ export class AddonsService {
   }
 
   async findByProductId(productId: string) {
-    const supabase = this.supabaseService.getClient();
+    const supabase = this.supabaseService.getAdminClient();
     const { data, error } = await supabase
       .from('product_addons')
       .select(`

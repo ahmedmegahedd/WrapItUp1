@@ -1,23 +1,30 @@
 import React from 'react';
-import { Text, StyleSheet } from 'react-native';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { t } from '@/lib/i18n';
-import { colors } from '@/constants/theme';
+import { View, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
 
-/** Centered brand title for the app header. Pink accent, minimal. */
+const logoSource = require('@/assets/wrapitup.avif');
+
+/** Centered brand logo for the app header. */
 export function AppHeaderTitle() {
-  const { language } = useLanguage();
   return (
-    <Text style={styles.title} numberOfLines={1}>
-      {t(language, 'appName')}
-    </Text>
+    <View style={styles.wrap}>
+      <Image
+        source={logoSource}
+        style={styles.logo}
+        contentFit="contain"
+        accessibilityLabel="Wrap It Up"
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  title: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.primary,
+  wrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logo: {
+    height: 40,
+    width: 170,
   },
 });

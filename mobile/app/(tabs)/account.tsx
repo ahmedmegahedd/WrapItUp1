@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePointsBalance } from '@/contexts/PointsBalanceContext';
+import { useSavedProducts } from '@/contexts/SavedProductsContext';
 import { AccountListRow } from '@/components/account/AccountListRow';
 import { t } from '@/lib/i18n';
 import { accountColors, accountSpacing, accountTypography } from '@/constants/accountTheme';
@@ -15,11 +16,18 @@ function getFullName(session: ReturnType<typeof useAuth>['session']): string {
   return full || session.user.email?.split('@')[0] || '';
 }
 
+function hasPhone(session: ReturnType<typeof useAuth>['session']): boolean {
+  const phone = session?.user?.user_metadata?.phone;
+  return typeof phone === 'string' && phone.trim().length > 0;
+}
+
 export default function AccountScreen() {
   const { session, signedIn, signOut } = useAuth();
   const { language } = useLanguage();
   const { balance } = usePointsBalance();
+  const { savedSlugs } = useSavedProducts();
   const fullName = getFullName(session);
+  const showAddPhonePrompt = signedIn && !hasPhone(session);
 
   const handleLogOut = () => {
     Alert.alert(t(language, 'logOutConfirmTitle'), t(language, 'logOutConfirmMessage'), [
@@ -44,6 +52,12 @@ export default function AccountScreen() {
           </Text>
         </View>
 
+        {showAddPhonePrompt && (
+          <View style={styles.addPhoneBanner}>
+            <Text style={styles.addPhoneBannerText}>{t(language, 'addPhoneLater')}</Text>
+          </View>
+        )}
+
         <View style={styles.section}>
           <AccountListRow
             icon="person-outline"
@@ -57,6 +71,15 @@ export default function AccountScreen() {
             icon="receipt-outline"
             title={t(language, 'pastOrders')}
             onPress={() => router.push('/(tabs)/orders')}
+          />
+        </View>
+
+        <View style={styles.section}>
+          <AccountListRow
+            icon="heart-outline"
+            title={t(language, 'savedProducts')}
+            onPress={() => router.push('/saved-products')}
+            rightText={savedSlugs.length > 0 ? String(savedSlugs.length) : undefined}
           />
         </View>
 
@@ -130,4 +153,18 @@ const styles = StyleSheet.create({
     marginTop: accountSpacing.md,
   },
   bottomPad: { height: accountSpacing.xl },
+  addPhoneBanner: {
+    marginHorizontal: accountSpacing.lg,
+    marginBottom: accountSpacing.md,
+    padding: accountSpacing.md,
+    backgroundColor: accountColors.cream,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: accountColors.borderLight,
+  },
+  addPhoneBannerText: {
+    ...accountTypography.caption,
+    color: accountColors.textMuted,
+    textAlign: 'center',
+  },
 });

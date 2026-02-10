@@ -1,6 +1,5 @@
 'use client'
 
-import HeroSection from './HeroSection'
 import PurposeSection from './PurposeSection'
 import CollectionsSection from './CollectionsSection'
 import HorizontalScrollSection from './HorizontalScrollSection'
@@ -12,7 +11,6 @@ export default function HomePageContent() {
   return (
     <div className="min-h-screen bg-white">
       <main className="pb-24 md:pb-0 md:pt-0">
-        <HeroSection />
         <PurposeSection />
         <CollectionsSection />
         <HorizontalScrollSection />

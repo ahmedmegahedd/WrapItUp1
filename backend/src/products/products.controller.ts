@@ -8,8 +8,19 @@ export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Get()
-  findAll(@Query('includeInactive') includeInactive?: string) {
-    return this.productsService.findAll(includeInactive === 'true');
+  findAll(
+    @Query('includeInactive') includeInactive?: string,
+    @Query('showInAllCollection') showInAllCollection?: string,
+  ) {
+    return this.productsService.findAll(
+      includeInactive === 'true',
+      showInAllCollection === 'true',
+    );
+  }
+
+  @Get('recommended/checkout')
+  findRecommendedAtCheckout() {
+    return this.productsService.findRecommendedAtCheckout(4);
   }
 
   @Get(':id')

@@ -15,6 +15,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { t } from '@/lib/i18n';
+import { hapticPrimary } from '@/lib/haptics';
 import { colors, spacing, borderRadius } from '@/constants/theme';
 
 const SUPABASE_NOT_CONFIGURED_MSG =
@@ -32,6 +33,7 @@ export default function LoginScreen() {
       Alert.alert(t(language, 'error'), t(language, 'pleaseEnterEmailPassword'));
       return;
     }
+    hapticPrimary();
     setLoading(true);
     const { error } = await signIn(email.trim(), password);
     setLoading(false);

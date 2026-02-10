@@ -37,4 +37,26 @@ export class AdminHomepageController {
   updateHeroText(@Body() body: { headline?: string; subtext?: string; button_label?: string }) {
     return this.homepageService.updateHeroText(body);
   }
+
+  @Get('app-settings')
+  getAppSettings() {
+    return this.homepageService.getAppSettings();
+  }
+
+  @Patch('app-settings')
+  updateAppSettings(
+    @Body()
+    body: {
+      home_section_order?: string[];
+      promotion_visible?: boolean;
+      promotion_title?: string;
+      promotion_message?: string;
+      final_cta_headline?: string;
+      final_cta_subtext?: string;
+      final_cta_button?: string;
+      featured_products_limit?: number;
+    },
+  ) {
+    return this.homepageService.updateAppSettings(body);
+  }
 }

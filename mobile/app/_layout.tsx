@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { View } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -8,9 +7,12 @@ import { CartProvider } from '@/contexts/CartContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { PointsBalanceProvider } from '@/contexts/PointsBalanceContext';
 import { AddressesProvider } from '@/contexts/AddressesContext';
+import { PendingDeliveryProvider } from '@/contexts/PendingDeliveryContext';
+import { SavedProductsProvider } from '@/contexts/SavedProductsContext';
 import { StripeProvider } from '@stripe/stripe-react-native';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { SplashGate } from '@/components/SplashGate';
 import { t } from '@/lib/i18n';
 
 SplashScreen.preventAutoHideAsync();
@@ -20,23 +22,30 @@ function AppContent() {
   const { language, isRTL } = useLanguage();
   return (
     <View style={{ flex: 1, direction: isRTL ? 'rtl' : 'ltr' }}>
+      <SplashGate>
       <Stack
         screenOptions={{
           headerShown: false,
+          headerBackTitle: 'back',
           contentStyle: { backgroundColor: '#fff' },
+          animation: 'fade',
         }}
       >
         <Stack.Screen name="index" />
+        <Stack.Screen name="onboarding" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="collection/[slug]" options={{ headerShown: true, title: t(language, 'collections') }} />
         <Stack.Screen name="product/[slug]" options={{ headerShown: true }} />
         <Stack.Screen name="checkout" options={{ headerShown: true, title: t(language, 'checkout') }} />
+        <Stack.Screen name="delivery-address-map" options={{ headerShown: true }} />
         <Stack.Screen name="order-confirmation" options={{ headerShown: true, title: t(language, 'orderConfirmed') }} />
+        <Stack.Screen name="(account)" options={{ headerShown: false }} />
         <Stack.Screen name="account-personal" options={{ headerShown: true }} />
         <Stack.Screen name="account-language" options={{ headerShown: true }} />
         <Stack.Screen name="talk-to-us" options={{ headerShown: true }} />
       </Stack>
+      </SplashGate>
     </View>
   );
 }
@@ -44,20 +53,20 @@ function AppContent() {
 const stripePublishableKey = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? '';
 
 export default function RootLayout() {
-  useEffect(() => {
-    SplashScreen.hideAsync();
-  }, []);
-
   return (
     <StripeProvider publishableKey={stripePublishableKey}>
       <AuthProvider>
         <LanguageProvider>
           <PointsBalanceProvider>
             <AddressesProvider>
+              <PendingDeliveryProvider>
+              <SavedProductsProvider>
               <CartProvider>
               <StatusBar style="dark" />
               <AppContent />
               </CartProvider>
+              </SavedProductsProvider>
+              </PendingDeliveryProvider>
             </AddressesProvider>
           </PointsBalanceProvider>
         </LanguageProvider>

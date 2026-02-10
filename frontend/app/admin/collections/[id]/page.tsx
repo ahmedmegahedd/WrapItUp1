@@ -141,9 +141,6 @@ export default function AdminCollectionEditPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'collections/[id]/page.tsx:105',message:'handleSubmit entry',data:{isNew,collectionId,formDataBefore:formData},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
     setLoading(true)
 
     try {
@@ -153,9 +150,6 @@ export default function AdminCollectionEditPage() {
         const orderB = formData.product_orders[b] ?? 0
         return orderA - orderB
       })
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'collections/[id]/page.tsx:115',message:'sorted product ids',data:{originalCount:formData.product_ids.length,sortedProductIds},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-      // #endregion
 
       const payload: any = {
         name: formData.name,
@@ -169,37 +163,16 @@ export default function AdminCollectionEditPage() {
       if (formData.slug) payload.slug = formData.slug
       if (formData.description) payload.description = formData.description
       if (formData.image_url) payload.image_url = formData.image_url
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'collections/[id]/page.tsx:128',message:'payload before API call',data:{payload,isNew},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
 
       let response
       if (isNew) {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'collections/[id]/page.tsx:131',message:'POST API call start',data:{url:'/admin/collections'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
         response = await api.post('/admin/collections', payload)
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'collections/[id]/page.tsx:133',message:'POST API call success',data:{status:response.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
       } else {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'collections/[id]/page.tsx:135',message:'PATCH API call start',data:{url:`/admin/collections/${collectionId}`},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
         response = await api.patch(`/admin/collections/${collectionId}`, payload)
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'collections/[id]/page.tsx:137',message:'PATCH API call success',data:{status:response.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
       }
 
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'collections/[id]/page.tsx:140',message:'navigation start',data:{target:'/admin/collections'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-      // #endregion
       router.push('/admin/collections')
     } catch (error: any) {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'collections/[id]/page.tsx:143',message:'handleSubmit error',data:{errorMessage:error?.message,errorResponse:error?.response?.data,statusCode:error?.response?.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
       console.error('Error saving collection:', error)
       
       // Better error messages
@@ -217,16 +190,10 @@ export default function AdminCollectionEditPage() {
       alert(errorMessage)
     } finally {
       setLoading(false)
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'collections/[id]/page.tsx:147',message:'handleSubmit exit',data:{loading:false},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
     }
   }
 
   function toggleProduct(productId: string) {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'collections/[id]/page.tsx:145',message:'toggleProduct before',data:{productId,isIncluded:formData.product_ids.includes(productId),currentProductCount:formData.product_ids.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
     setFormData((prev) => {
       const isIncluded = prev.product_ids.includes(productId)
       const newProductIds = isIncluded
@@ -246,23 +213,14 @@ export default function AdminCollectionEditPage() {
         product_ids: newProductIds,
         product_orders: newProductOrders,
       }
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'collections/[id]/page.tsx:163',message:'toggleProduct after',data:{newProductCount:newState.product_ids.length,newOrder:newProductOrders[productId]},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
       return newState
     })
   }
 
   function moveProductUp(productId: string) {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'collections/[id]/page.tsx:168',message:'moveProductUp before',data:{productId,currentOrder:formData.product_orders[productId] ?? 0,allOrders:formData.product_orders},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-    // #endregion
     setFormData((prev) => {
       const currentOrder = prev.product_orders[productId] ?? 0
       if (currentOrder === 0) {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'collections/[id]/page.tsx:171',message:'moveProductUp early return',data:{reason:'already at top'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-        // #endregion
         return prev
       }
 
@@ -274,9 +232,6 @@ export default function AdminCollectionEditPage() {
       if (swapProduct) {
         newOrders[swapProduct] = currentOrder
         newOrders[productId] = currentOrder - 1
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'collections/[id]/page.tsx:180',message:'moveProductUp after swap',data:{productId,newOrder:newOrders[productId],swapProduct,swapProductNewOrder:newOrders[swapProduct]},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-        // #endregion
       }
 
       return { ...prev, product_orders: newOrders }
@@ -284,16 +239,10 @@ export default function AdminCollectionEditPage() {
   }
 
   function moveProductDown(productId: string) {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'collections/[id]/page.tsx:187',message:'moveProductDown before',data:{productId,currentOrder:formData.product_orders[productId] ?? 0,maxOrder:Math.max(...Object.values(formData.product_orders), -1),allOrders:formData.product_orders},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-    // #endregion
     setFormData((prev) => {
       const currentOrder = prev.product_orders[productId] ?? 0
       const maxOrder = Math.max(...Object.values(prev.product_orders), -1)
       if (currentOrder >= maxOrder) {
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'collections/[id]/page.tsx:191',message:'moveProductDown early return',data:{reason:'already at bottom'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-        // #endregion
         return prev
       }
 
@@ -305,9 +254,6 @@ export default function AdminCollectionEditPage() {
       if (swapProduct) {
         newOrders[swapProduct] = currentOrder
         newOrders[productId] = currentOrder + 1
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'collections/[id]/page.tsx:200',message:'moveProductDown after swap',data:{productId,newOrder:newOrders[productId],swapProduct,swapProductNewOrder:newOrders[swapProduct]},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-        // #endregion
       }
 
       return { ...prev, product_orders: newOrders }
@@ -494,9 +440,6 @@ export default function AdminCollectionEditPage() {
           <button
             type="button"
             onClick={() => {
-              // #region agent log
-              fetch('http://127.0.0.1:7242/ingest/2525556f-403b-4ef7-be9e-f747e584a5ab',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'collections/[id]/page.tsx:377',message:'cancel button clicked',data:{target:'/admin/collections'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-              // #endregion
               router.push('/admin/collections')
             }}
             className="px-6 py-2 border rounded hover:bg-gray-50"

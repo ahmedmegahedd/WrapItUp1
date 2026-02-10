@@ -4,17 +4,28 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { t } from '@/lib/i18n';
 import { colors, spacing, borderRadius } from '@/constants/theme';
 
+interface PromotionSectionProps {
+  visible?: boolean;
+  title?: string;
+  message?: string;
+}
+
 /**
- * Optional highlight/promotion banner. Content from i18n; can later be driven by API (e.g. admin promo message).
+ * Optional highlight/promotion banner. Content from admin app settings or i18n fallback.
  */
-export function PromotionSection() {
+export function PromotionSection({ visible = true, title, message }: PromotionSectionProps) {
   const { language } = useLanguage();
+
+  if (!visible) return null;
+
+  const displayTitle = (title?.trim() || t(language, 'promotionTitle'));
+  const displayMessage = (message?.trim() || t(language, 'promotionMessage'));
 
   return (
     <View style={styles.section}>
       <View style={styles.banner}>
-        <Text style={styles.badge}>{t(language, 'promotionTitle')}</Text>
-        <Text style={styles.message}>{t(language, 'promotionMessage')}</Text>
+        <Text style={styles.badge}>{displayTitle}</Text>
+        <Text style={styles.message}>{displayMessage}</Text>
       </View>
     </View>
   );

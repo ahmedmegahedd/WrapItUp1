@@ -145,4 +145,80 @@ export class HomepageService {
     if (error) throw new BadRequestException(error.message);
     return data;
   }
+
+  /** Public: get mobile app settings (section order, promotion, final CTA, featured limit) */
+  async getAppSettings(): Promise<{
+    home_section_order: string[];
+    promotion_visible: boolean;
+    promotion_title: string;
+    promotion_message: string;
+    final_cta_headline: string;
+    final_cta_subtext: string;
+    final_cta_button: string;
+    featured_products_limit: number;
+  }> {
+    const supabase = this.getClient();
+    const { data: rows, error } = await supabase.from('app_settings').select('key, value');
+    if (error) throw new BadRequestException(error.message);
+
+    const map = new Map<string, unknown>();
+    (rows ?? []).forEach((r: { key: string; value: unknown }) => map.set(r.key, r.value));
+
+    const defaultOrder = [
+      'hero',
+      'featured_collections',
+      'featured_products',
+      'promotion',
+      'value_proposition',
+      'final_cta',
+    ];
+    return {
+      home_section_order: Array.isArray(map.get('home_section_order'))
+        ? (map.get('home_section_order') as string[])
+        : defaultOrder,
+      promotion_visible: map.get('promotion_visible') !== false,
+      promotion_title: (map.get('promotion_title') as string) ?? 'Special offer',
+      promotion_message: (map.get('promotion_message') as string) ?? 'Free delivery on orders over 250 EGP',
+      final_cta_headline: (map.get('final_cta_headline') as string) ?? 'Ready to surprise someone?',
+      final_cta_subtext: (map.get('final_cta_subtext') as string) ?? 'Browse our collections and order in minutes.',
+      final_cta_button: (map.get('final_cta_button') as string) ?? 'Browse all collections',
+      featured_products_limit: typeof map.get('featured_products_limit') === 'number' ? (map.get('featured_products_limit') as number) : 8,
+    };
+  }
+
+  /** Admin: update app settings (partial) */
+  async updateAppSettings(updates: {
+    home_section_order?: string[];
+    promotion_visible?: boolean;
+    promotion_title?: string;
+    promotion_message?: string;
+    final_cta_headline?: string;
+    final_cta_subtext?: string;
+    final_cta_button?: string;
+    featured_products_limit?: number;
+  }): Promise<ReturnType<HomepageService['getAppSettings']>> {
+    const supabase = this.getClient();
+    const now = new Date().toISOString();
+
+    const keyValue: Record<string, unknown> = {
+      home_section_order: updates.home_section_order,
+      promotion_visible: updates.promotion_visible,
+      promotion_title: updates.promotion_title,
+      promotion_message: updates.promotion_message,
+      final_cta_headline: updates.final_cta_headline,
+      final_cta_subtext: updates.final_cta_subtext,
+      final_cta_button: updates.final_cta_button,
+      featured_products_limit: updates.featured_products_limit,
+    };
+
+    for (const [key, value] of Object.entries(keyValue)) {
+      if (value === undefined) continue;
+      const { error } = await supabase
+        .from('app_settings')
+        .upsert({ key, value, updated_at: now }, { onConflict: 'key' });
+      if (error) throw new BadRequestException(error.message);
+    }
+
+    return this.getAppSettings();
+  }
 }
