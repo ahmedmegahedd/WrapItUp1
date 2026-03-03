@@ -1,20 +1,33 @@
-import { Controller, Post, Body, Headers, RawBodyRequest, Req } from '@nestjs/common';
+import { Controller, Post, Body, Req } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
+
+export class InitiatePaymentDto {
+  amountEGP: number;
+  orderId: string;
+  customerInfo: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+  };
+}
 
 @Controller('payments')
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
-  @Post('create-intent')
-  async createPaymentIntent(@Body() body: { orderId: string; amount: number }) {
-    return this.paymentsService.createPaymentIntent(body.orderId, body.amount);
+  @Post('initiate')
+  async initiate(@Body() body: InitiatePaymentDto) {
+    return this.paymentsService.initiatePayment(
+      body.amountEGP,
+      body.orderId,
+      body.customerInfo,
+    );
   }
 
   @Post('webhook')
-  async handleWebhook(
-    @Req() req: RawBodyRequest<Request>,
-    @Headers('stripe-signature') signature: string,
-  ) {
-    return this.paymentsService.handleWebhook(req.rawBody as Buffer, signature);
+  async handleWebhook(@Req() req: { body: Record<string, any> }) {
+    const result = await this.paymentsService.handleWebhook(req.body);
+    return result;
   }
 }

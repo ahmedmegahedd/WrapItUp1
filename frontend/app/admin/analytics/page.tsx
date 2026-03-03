@@ -2,6 +2,9 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import api from '@/lib/api'
+import SkeletonRows from '../_components/SkeletonRows'
+import AdminPageHeader from '../_components/AdminPageHeader'
+import { SkeletonCards } from '../_components/SkeletonRows'
 
 type TimeRange = 'today' | 'last_7_days' | 'last_30_days'
 
@@ -51,12 +54,17 @@ interface PeakOrderHour {
   count: number
 }
 
+const RANGE_LABELS: Record<TimeRange, string> = {
+  today: 'Today',
+  last_7_days: 'Last 7 Days',
+  last_30_days: 'Last 30 Days',
+}
+
 export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useState<TimeRange>('last_30_days')
   const [loading, setLoading] = useState(true)
   const [reloading, setReloading] = useState(false)
 
-  // Data states
   const [productClicks, setProductClicks] = useState<ProductClick[]>([])
   const [dailyUsers, setDailyUsers] = useState<DailyUsers | null>(null)
   const [liveUsers, setLiveUsers] = useState<LiveUsers | null>(null)
@@ -65,46 +73,46 @@ export default function AnalyticsPage() {
   const [salesSummary, setSalesSummary] = useState<SalesSummary | null>(null)
   const [peakOrderHours, setPeakOrderHours] = useState<PeakOrderHour[]>([])
 
-  const loadAllData = useCallback(async (isReload = false) => {
-    if (isReload) {
-      setReloading(true)
-    } else {
-      setLoading(true)
-    }
+  const loadAllData = useCallback(
+    async (isReload = false) => {
+      if (isReload) setReloading(true)
+      else setLoading(true)
 
-    try {
-      const [
-        clicksRes,
-        dailyUsersRes,
-        liveUsersRes,
-        conversionRes,
-        bestSellingRes,
-        salesRes,
-        peakHoursRes,
-      ] = await Promise.all([
-        api.get('/analytics/product-clicks'),
-        api.get(`/analytics/daily-users?timeRange=${timeRange}`),
-        api.get('/analytics/live-users?activeSeconds=60'),
-        api.get(`/analytics/conversion-counts?timeRange=${timeRange}`),
-        api.get('/analytics/best-selling-products'),
-        api.get(`/analytics/sales-summary?timeRange=${timeRange}`),
-        api.get('/analytics/peak-order-hours'),
-      ])
+      try {
+        const [
+          clicksRes,
+          dailyUsersRes,
+          liveUsersRes,
+          conversionRes,
+          bestSellingRes,
+          salesRes,
+          peakHoursRes,
+        ] = await Promise.all([
+          api.get('/analytics/product-clicks'),
+          api.get(`/analytics/daily-users?timeRange=${timeRange}`),
+          api.get('/analytics/live-users?activeSeconds=60'),
+          api.get(`/analytics/conversion-counts?timeRange=${timeRange}`),
+          api.get('/analytics/best-selling-products'),
+          api.get(`/analytics/sales-summary?timeRange=${timeRange}`),
+          api.get('/analytics/peak-order-hours'),
+        ])
 
-      setProductClicks(clicksRes.data || [])
-      setDailyUsers(dailyUsersRes.data)
-      setLiveUsers(liveUsersRes.data)
-      setConversionCounts(conversionRes.data)
-      setBestSellingProducts(bestSellingRes.data || [])
-      setSalesSummary(salesRes.data)
-      setPeakOrderHours(peakHoursRes.data || [])
-    } catch (error) {
-      console.error('Error loading analytics:', error)
-    } finally {
-      setLoading(false)
-      setReloading(false)
-    }
-  }, [timeRange])
+        setProductClicks(clicksRes.data || [])
+        setDailyUsers(dailyUsersRes.data)
+        setLiveUsers(liveUsersRes.data)
+        setConversionCounts(conversionRes.data)
+        setBestSellingProducts(bestSellingRes.data || [])
+        setSalesSummary(salesRes.data)
+        setPeakOrderHours(peakHoursRes.data || [])
+      } catch (error) {
+        console.error('Error loading analytics:', error)
+      } finally {
+        setLoading(false)
+        setReloading(false)
+      }
+    },
+    [timeRange],
+  )
 
   useEffect(() => {
     loadAllData()
@@ -116,226 +124,274 @@ export default function AnalyticsPage() {
       try {
         const res = await api.get('/analytics/live-users?activeSeconds=60')
         setLiveUsers(res.data)
-      } catch (error) {
-        console.error('Error refreshing live users:', error)
+      } catch {
+        // silent
       }
     }, 10000)
-
     return () => clearInterval(interval)
   }, [])
 
-  const handleReload = () => {
-    loadAllData(true)
+  const formatEgp = (n: number) =>
+    `E£ ${Number(n).toLocaleString('en-US', { maximumFractionDigits: 2 })}`
+
+  const rangeLabel = RANGE_LABELS[timeRange]
+
+  const sectionStyle: React.CSSProperties = {
+    background: 'var(--admin-surface)',
+    border: '1px solid var(--admin-border)',
+    borderRadius: 'var(--admin-radius)',
+    boxShadow: 'var(--admin-shadow)',
+    overflow: 'hidden',
+    marginBottom: 16,
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-600">Loading analytics...</div>
-      </div>
-    )
+  const sectionHeaderStyle: React.CSSProperties = {
+    padding: '14px 20px',
+    borderBottom: '1px solid var(--admin-border)',
+    fontWeight: 600,
+    fontSize: 14,
+    color: 'var(--admin-text)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   }
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Analytics</h1>
-        <div className="flex items-center gap-4">
+    <div style={{ padding: '24px 24px 40px', maxWidth: 1100, margin: '0 auto' }}>
+      {/* Header with controls */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 24 }}>
+        <div>
+          <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--admin-text)', margin: 0 }}>Analytics</h1>
+        </div>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <select
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value as TimeRange)}
-            className="px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white"
+            className="admin-input"
+            style={{ background: 'var(--admin-surface)', width: 'auto', padding: '8px 12px' }}
           >
             <option value="today">Today</option>
             <option value="last_7_days">Last 7 Days</option>
             <option value="last_30_days">Last 30 Days</option>
           </select>
           <button
-            onClick={handleReload}
+            type="button"
+            onClick={() => loadAllData(true)}
             disabled={reloading}
-            className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50"
+            className="admin-btn-ghost"
           >
-            {reloading ? 'Reloading...' : 'Reload'}
+            {reloading ? 'Reloading…' : '↻ Reload'}
           </button>
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Total Sales */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <div className="text-sm text-gray-600 mb-1">Total Sales</div>
-          <div className="text-3xl font-bold text-gray-900">
-            ${salesSummary?.totalSales.toFixed(2) || '0.00'}
-          </div>
-          <div className="text-xs text-gray-500 mt-1">{timeRange.replace('_', ' ')}</div>
+      {/* Summary stat cards */}
+      {loading ? (
+        <div style={{ marginBottom: 16 }}>
+          <SkeletonCards count={4} />
         </div>
-
-        {/* Total Orders */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <div className="text-sm text-gray-600 mb-1">Total Orders</div>
-          <div className="text-3xl font-bold text-gray-900">
-            {salesSummary?.totalOrders || 0}
-          </div>
-          <div className="text-xs text-gray-500 mt-1">{timeRange.replace('_', ' ')}</div>
+      ) : (
+        <div className="grid grid-cols-2 lg:grid-cols-4" style={{ gap: 14, marginBottom: 16 }}>
+          {[
+            {
+              label: 'Total Sales',
+              value: formatEgp(salesSummary?.totalSales ?? 0),
+              sub: rangeLabel,
+              icon: '💰',
+            },
+            {
+              label: 'Total Orders',
+              value: String(salesSummary?.totalOrders ?? 0),
+              sub: rangeLabel,
+              icon: '📦',
+            },
+            {
+              label: 'Live Users',
+              value: String(liveUsers?.count ?? 0),
+              sub: 'Active in last 60s',
+              icon: '🟢',
+              live: true,
+            },
+            {
+              label: 'Conversion Rate',
+              value: `${(conversionCounts?.conversionRate ?? 0).toFixed(1)}%`,
+              sub: `${conversionCounts?.orders ?? 0} orders / ${conversionCounts?.sessions ?? 0} sessions`,
+              icon: '📈',
+            },
+          ].map((card) => (
+            <div
+              key={card.label}
+              style={{
+                background: 'var(--admin-surface)',
+                border: `1px solid ${card.live ? 'var(--admin-success)' : 'var(--admin-border)'}`,
+                borderRadius: 'var(--admin-radius)',
+                padding: '18px 20px',
+                boxShadow: 'var(--admin-shadow)',
+              }}
+            >
+              <div style={{ fontSize: 20, marginBottom: 10 }}>{card.icon}</div>
+              <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--admin-text)', lineHeight: 1 }}>
+                {card.value}
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--admin-text)', marginTop: 6 }}>
+                {card.label}
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--admin-text-3)', marginTop: 3 }}>{card.sub}</div>
+            </div>
+          ))}
         </div>
+      )}
 
-        {/* Live Users */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <div className="text-sm text-gray-600 mb-1">Live Users</div>
-          <div className="text-3xl font-bold text-gray-900">{liveUsers?.count || 0}</div>
-          <div className="text-xs text-gray-500 mt-1">Active now (last 60s)</div>
-        </div>
-
-        {/* Conversion Rate */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-          <div className="text-sm text-gray-600 mb-1">Conversion Rate</div>
-          <div className="text-3xl font-bold text-gray-900">
-            {conversionCounts?.conversionRate.toFixed(1) || '0.0'}%
-          </div>
-          <div className="text-xs text-gray-500 mt-1">
-            {conversionCounts?.orders || 0} orders / {conversionCounts?.sessions || 0} sessions
-          </div>
+      {/* Daily users */}
+      <div style={sectionStyle}>
+        <div style={sectionHeaderStyle}>Daily Users</div>
+        <div
+          className="grid grid-cols-3"
+          style={{ gap: 1, background: 'var(--admin-border)' }}
+        >
+          {[
+            { label: 'Today', value: dailyUsers?.today ?? 0 },
+            { label: 'Last 7 Days', value: dailyUsers?.last7Days ?? 0 },
+            { label: 'Last 30 Days', value: dailyUsers?.last30Days ?? 0 },
+          ].map((stat) => (
+            <div
+              key={stat.label}
+              style={{
+                padding: '20px',
+                textAlign: 'center',
+                background: 'var(--admin-surface)',
+              }}
+            >
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--admin-text)' }}>
+                {loading ? '—' : stat.value}
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--admin-text-2)', marginTop: 4 }}>
+                {stat.label}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Daily Users */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Daily Users</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="text-center p-4 bg-gray-50 rounded-lg">
-            <div className="text-2xl font-bold text-gray-900">{dailyUsers?.today || 0}</div>
-            <div className="text-sm text-gray-600 mt-1">Today</div>
-          </div>
-          <div className="text-center p-4 bg-gray-50 rounded-lg">
-            <div className="text-2xl font-bold text-gray-900">{dailyUsers?.last7Days || 0}</div>
-            <div className="text-sm text-gray-600 mt-1">Last 7 Days</div>
-          </div>
-          <div className="text-center p-4 bg-gray-50 rounded-lg">
-            <div className="text-2xl font-bold text-gray-900">{dailyUsers?.last30Days || 0}</div>
-            <div className="text-sm text-gray-600 mt-1">Last 30 Days</div>
-          </div>
+      {/* Best selling products */}
+      <div style={sectionStyle}>
+        <div style={sectionHeaderStyle}>
+          <span>Best Selling Products</span>
+          <span style={{ fontSize: 12, color: 'var(--admin-text-3)', fontWeight: 400 }}>All time</span>
         </div>
-      </div>
-
-      {/* Best Selling Products */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-gray-900">Best Selling Products</h2>
-          <button
-            onClick={handleReload}
-            disabled={reloading}
-            className="text-sm text-gray-600 hover:text-gray-900"
-          >
-            {reloading ? 'Reloading...' : 'Reload'}
-          </button>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200">
-                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Rank</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                  Product
-                </th>
-                <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">
-                  Orders
-                </th>
-                <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">
-                  Revenue
-                </th>
-                <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">
-                  Quantity
-                </th>
+        <table className="admin-table">
+          <thead>
+            <tr>
+              <th style={{ width: 50 }}>Rank</th>
+              <th>Product</th>
+              <th style={{ textAlign: 'right' }}>Orders</th>
+              <th style={{ textAlign: 'right' }}>Revenue</th>
+              <th style={{ textAlign: 'right' }}>Qty</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <SkeletonRows cols={5} rows={5} />
+            ) : bestSellingProducts.length === 0 ? (
+              <tr>
+                <td colSpan={5} style={{ textAlign: 'center', padding: '32px 20px', color: 'var(--admin-text-3)', fontSize: 14 }}>
+                  No sales data available
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {bestSellingProducts.length > 0 ? (
-                bestSellingProducts.map((product) => (
-                  <tr key={product.product_id} className="border-b border-gray-100">
-                    <td className="py-3 px-4 text-gray-900 font-medium">#{product.rank}</td>
-                    <td className="py-3 px-4 text-gray-900">{product.product_title}</td>
-                    <td className="py-3 px-4 text-right text-gray-900">{product.orders_count}</td>
-                    <td className="py-3 px-4 text-right text-gray-900">
-                      ${product.total_revenue.toFixed(2)}
-                    </td>
-                    <td className="py-3 px-4 text-right text-gray-900">
-                      {product.total_quantity}
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={5} className="py-8 text-center text-gray-500">
-                    No sales data available
+            ) : (
+              bestSellingProducts.map((product) => (
+                <tr key={product.product_id}>
+                  <td>
+                    <span style={{ fontWeight: 700, color: 'var(--admin-accent)' }}>#{product.rank}</span>
                   </td>
+                  <td style={{ fontWeight: 500 }}>{product.product_title}</td>
+                  <td style={{ textAlign: 'right', fontWeight: 600 }}>{product.orders_count}</td>
+                  <td style={{ textAlign: 'right', fontWeight: 600 }}>{formatEgp(product.total_revenue)}</td>
+                  <td style={{ textAlign: 'right', color: 'var(--admin-text-2)' }}>{product.total_quantity}</td>
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
 
-      {/* Product Clicks */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Product Clicks</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200">
-                <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                  Product
-                </th>
-                <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">
-                  Clicks
-                </th>
+      {/* Product clicks */}
+      <div style={sectionStyle}>
+        <div style={sectionHeaderStyle}>Product Clicks</div>
+        <table className="admin-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th style={{ textAlign: 'right' }}>Clicks</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <SkeletonRows cols={2} rows={5} />
+            ) : productClicks.length === 0 ? (
+              <tr>
+                <td colSpan={2} style={{ textAlign: 'center', padding: '32px 20px', color: 'var(--admin-text-3)', fontSize: 14 }}>
+                  No clicks tracked yet
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {productClicks.length > 0 ? (
-                productClicks.map((click) => (
-                  <tr key={click.product_id} className="border-b border-gray-100">
-                    <td className="py-3 px-4 text-gray-900">{click.product_title}</td>
-                    <td className="py-3 px-4 text-right text-gray-900">{click.click_count}</td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={2} className="py-8 text-center text-gray-500">
-                    No clicks tracked yet
-                  </td>
+            ) : (
+              productClicks.map((click) => (
+                <tr key={click.product_id}>
+                  <td style={{ fontWeight: 500 }}>{click.product_title}</td>
+                  <td style={{ textAlign: 'right', fontWeight: 700 }}>{click.click_count}</td>
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
 
-      {/* Peak Order Hours */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Peak Order Hours (Last 7 Days)</h2>
-        <div className="space-y-2">
-          {peakOrderHours.length > 0 ? (
-            peakOrderHours.slice(0, 10).map((hour) => (
-              <div key={hour.hour} className="flex items-center gap-4">
-                <div className="w-32 text-sm text-gray-700">{hour.hourLabel}</div>
-                <div className="flex-1">
-                  <div className="bg-gray-200 rounded-full h-6 relative">
+      {/* Peak order hours */}
+      <div style={sectionStyle}>
+        <div style={sectionHeaderStyle}>
+          <span>Peak Order Hours</span>
+          <span style={{ fontSize: 12, color: 'var(--admin-text-3)', fontWeight: 400 }}>Last 7 days</span>
+        </div>
+        <div style={{ padding: '16px 20px' }}>
+          {loading ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="admin-skeleton" style={{ height: 24, marginBottom: 10, borderRadius: 4 }} />
+            ))
+          ) : peakOrderHours.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--admin-text-3)', fontSize: 14 }}>
+              No order data available
+            </div>
+          ) : (
+            peakOrderHours.slice(0, 10).map((hour) => {
+              const pct = (hour.count / peakOrderHours[0].count) * 100
+              return (
+                <div
+                  key={hour.hour}
+                  style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 8 }}
+                >
+                  <div style={{ width: 90, fontSize: 13, color: 'var(--admin-text-2)', flexShrink: 0 }}>
+                    {hour.hourLabel}
+                  </div>
+                  <div style={{ flex: 1, height: 22, background: 'var(--admin-surface-2)', borderRadius: 4, overflow: 'hidden' }}>
                     <div
-                      className="bg-gray-900 rounded-full h-6 flex items-center justify-end pr-2"
                       style={{
-                        width: `${(hour.count / peakOrderHours[0].count) * 100}%`,
+                        width: `${pct}%`,
+                        height: '100%',
+                        background: 'var(--admin-accent)',
+                        borderRadius: 4,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'flex-end',
+                        paddingRight: 8,
+                        transition: 'width 0.4s ease',
                       }}
                     >
-                      <span className="text-xs text-white font-medium">{hour.count}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: 'white' }}>{hour.count}</span>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))
-          ) : (
-            <div className="text-center text-gray-500 py-8">No order data available</div>
+              )
+            })
           )}
         </div>
       </div>

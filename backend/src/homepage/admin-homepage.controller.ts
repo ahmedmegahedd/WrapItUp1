@@ -1,9 +1,13 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards } from '@nestjs/common';
 import { HomepageService } from './homepage.service';
 import { AdminGuard } from '../admin/guards/admin.guard';
+import { PermissionGuard } from '../admin/guards/permission.guard';
+import { RequirePermission } from '../admin/decorators/require-permission.decorator';
+import { ADMIN_PERMISSIONS } from '../admin/admin-permissions.const';
 
 @Controller('admin/homepage')
-@UseGuards(AdminGuard)
+@UseGuards(AdminGuard, PermissionGuard)
+@RequirePermission(ADMIN_PERMISSIONS.HOMEPAGE_VIEW)
 export class AdminHomepageController {
   constructor(private readonly homepageService: HomepageService) {}
 

@@ -39,29 +39,6 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Custom croissant cursor - 64x64 PNG; hotspot 32 32 = center */
-html,
-body,
-body * {
-  cursor: url('/croissant-cursor-64.png') 32 32, auto !important;
-}
-
-a,
-button,
-[role="button"],
-input[type="submit"],
-input[type="button"],
-label[for],
-[type="button"] {
-  cursor: url('/croissant-cursor-64.png') 32 32, pointer !important;
-}
-
-/* Restore text cursor in inputs */
-input:not([type="submit"]):not([type="button"]),
-textarea {
-  cursor: text !important;
-}
-
 /* Mobile-first: Ensure tap targets are at least 44px */
 button, a, input[type="button"], input[type="submit"] {
   min-height: 44px;

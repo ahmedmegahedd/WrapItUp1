@@ -15,6 +15,8 @@ import { PromoCodesModule } from './promo-codes/promo-codes.module';
 import { DeliveryDestinationsModule } from './delivery-destinations/delivery-destinations.module';
 import { LoyaltyModule } from './loyalty/loyalty.module';
 import { AuthModule } from './auth/auth.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { InventoryModule } from './inventory/inventory.module';
 
 @Module({
   imports: [
@@ -36,6 +38,8 @@ import { AuthModule } from './auth/auth.module';
     AddonsModule,
     HomepageModule,
     LoyaltyModule,
+    NotificationsModule,
+    InventoryModule,
   ],
 })
 export class AppModule {}

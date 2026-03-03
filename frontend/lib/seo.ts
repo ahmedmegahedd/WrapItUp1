@@ -20,7 +20,7 @@ export function createMetadata(config: SEOConfig): Metadata {
   const imageUrl = config.image || config.product?.image || `${siteUrl}/og-image.jpg`
 
   return {
-    title: `${config.title} | WrapItUp - Breakfast Trays as Gifts`,
+    title: config.title,
     description: config.description,
     alternates: {
       canonical: fullUrl,

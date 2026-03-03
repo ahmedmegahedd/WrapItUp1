@@ -380,4 +380,106 @@ export class AnalyticsService {
 
     return result;
   }
+
+  // ----- Customer analytics (RPC-based, scalable) -----
+
+  async getRepeatCustomerRate() {
+    const supabase = this.supabaseService.getAdminClient();
+    const { data, error } = await supabase.rpc('get_analytics_repeat_customer_rate');
+    if (error) throw new Error(error.message);
+    const r = (data ?? {}) as Record<string, unknown>;
+    return {
+      total_customers: Number(r.total_customers ?? 0),
+      repeat_customers: Number(r.repeat_customers ?? 0),
+      repeat_rate: Number(r.repeat_rate ?? 0),
+    };
+  }
+
+  async getCustomerLifetimeValue() {
+    const supabase = this.supabaseService.getAdminClient();
+    const { data, error } = await supabase.rpc('get_analytics_customer_lifetime_value');
+    if (error) throw new Error(error.message);
+    const r = (data ?? {}) as Record<string, unknown>;
+    return {
+      average_order_value: Number(r.average_order_value ?? 0),
+      average_orders_per_customer: Number(r.average_orders_per_customer ?? 0),
+      clv: Number(r.clv ?? 0),
+    };
+  }
+
+  async getTopCustomers(limit = 20, sortBy: 'revenue' | 'orders' = 'revenue') {
+    const supabase = this.supabaseService.getAdminClient();
+    const { data, error } = await supabase.rpc('get_analytics_top_customers', {
+      p_limit: limit,
+      p_sort_by: sortBy,
+    });
+    if (error) throw new Error(error.message);
+    const list = Array.isArray(data) ? data : [];
+    return list.map((row: any) => ({
+      user_id: row.user_id ?? null,
+      name: row.name ?? row.email ?? '—',
+      email: row.email ?? '',
+      total_orders: Number(row.total_orders ?? 0),
+      total_spent: Number(row.total_spent ?? 0),
+      last_order_date: row.last_order_date ?? null,
+    }));
+  }
+
+  async getRetention(days: number) {
+    const supabase = this.supabaseService.getAdminClient();
+    const { data, error } = await supabase.rpc('get_analytics_retention', { p_days: days });
+    if (error) throw new Error(error.message);
+    const r = (data ?? {}) as Record<string, unknown>;
+    return {
+      period_days: Number(r.period_days ?? days),
+      cohort_size: Number(r.cohort_size ?? 0),
+      returned_customers: Number(r.returned_customers ?? 0),
+      retention_rate: Number(r.retention_rate ?? 0),
+    };
+  }
+
+  async getAbandonedCheckout() {
+    const supabase = this.supabaseService.getAdminClient();
+    const { data, error } = await supabase.rpc('get_analytics_abandoned_checkout');
+    if (error) throw new Error(error.message);
+    const r = (data ?? {}) as Record<string, unknown>;
+    return {
+      total_checkouts: Number(r.total_checkouts ?? 0),
+      abandoned: Number(r.abandoned ?? 0),
+      abandonment_rate: Number(r.abandonment_rate ?? 0),
+    };
+  }
+
+  /** Track start-checkout (public). user_id optional for guests. */
+  async trackStartCheckout(userId: string | null, cartValue: number) {
+    const supabase = this.supabaseService.getAdminClient();
+    const { error } = await supabase.from('checkout_events').insert({
+      user_id: userId || null,
+      cart_value: cartValue,
+      converted: false,
+    });
+    if (error) console.error('Error tracking start-checkout:', error);
+  }
+
+  /** Mark latest unconverted checkout event for this customer (by email) as converted. Call when order is created. */
+  async markCheckoutConverted(customerEmail: string) {
+    const supabase = this.supabaseService.getAdminClient();
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('email', customerEmail)
+      .maybeSingle();
+    const userId = profile?.id ?? null;
+    if (!userId) return;
+    const { data: events } = await supabase
+      .from('checkout_events')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('converted', false)
+      .order('created_at', { ascending: false })
+      .limit(1);
+    if (events?.length) {
+      await supabase.from('checkout_events').update({ converted: true }).eq('id', events[0].id);
+    }
+  }
 }

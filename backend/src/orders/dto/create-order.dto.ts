@@ -69,6 +69,11 @@ export class CreateOrderDto {
   @IsOptional()
   discount_amount_egp?: number;
 
+  /** Payment method: 'card' | 'apple_pay' | 'instapay' | 'cod'. Optional; defaults to 'card' for Paymob flow. */
+  @IsString()
+  @IsOptional()
+  payment_method?: string;
+
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => OrderItemDto)

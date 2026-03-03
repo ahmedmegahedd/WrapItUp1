@@ -2,6 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import api from '@/lib/api'
+import AdminPageHeader from '../_components/AdminPageHeader'
+import Toggle from '../_components/Toggle'
+import StatusBadge from '../_components/StatusBadge'
+import ConfirmModal from '../_components/ConfirmModal'
+import Toast, { useToast } from '../_components/Toast'
+import SkeletonRows from '../_components/SkeletonRows'
 
 type Destination = {
   id: string
@@ -11,15 +17,18 @@ type Destination = {
   is_active: boolean
 }
 
+const emptyForm = { name: '', fee_egp: '', display_order: '0', is_active: true }
+
 export default function AdminDeliveryDestinationsPage() {
   const [list, setList] = useState<Destination[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ name: '', fee_egp: '', display_order: '0', is_active: true })
+  const [form, setForm] = useState(emptyForm)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editForm, setEditForm] = useState({ name: '', fee_egp: '', display_order: 0, is_active: true })
   const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
+  const { toasts, showToast, dismissToast } = useToast()
 
   useEffect(() => {
     load()
@@ -31,7 +40,7 @@ export default function AdminDeliveryDestinationsPage() {
       setList(res.data || [])
     } catch (e) {
       console.error(e)
-      setMessage({ type: 'error', text: 'Failed to load destinations' })
+      showToast('error', 'Failed to load destinations')
     } finally {
       setLoading(false)
     }
@@ -40,7 +49,6 @@ export default function AdminDeliveryDestinationsPage() {
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
-    setMessage(null)
     try {
       await api.post('/admin/delivery-destinations', {
         name: form.name.trim(),
@@ -48,12 +56,12 @@ export default function AdminDeliveryDestinationsPage() {
         display_order: parseInt(form.display_order, 10) || 0,
         is_active: form.is_active,
       })
-      setMessage({ type: 'success', text: 'Destination created' })
+      showToast('success', 'Destination created')
       setShowForm(false)
-      setForm({ name: '', fee_egp: '', display_order: '0', is_active: true })
+      setForm(emptyForm)
       load()
     } catch (err: any) {
-      setMessage({ type: 'error', text: err.response?.data?.message || 'Failed to create' })
+      showToast('error', err.response?.data?.message || 'Failed to create')
     } finally {
       setSaving(false)
     }
@@ -73,7 +81,6 @@ export default function AdminDeliveryDestinationsPage() {
     e.preventDefault()
     if (!editingId) return
     setSaving(true)
-    setMessage(null)
     try {
       await api.patch(`/admin/delivery-destinations/${editingId}`, {
         name: editForm.name.trim(),
@@ -81,198 +88,275 @@ export default function AdminDeliveryDestinationsPage() {
         display_order: editForm.display_order,
         is_active: editForm.is_active,
       })
-      setMessage({ type: 'success', text: 'Destination updated' })
+      showToast('success', 'Destination updated')
       setEditingId(null)
       load()
     } catch (err: any) {
-      setMessage({ type: 'error', text: err.response?.data?.message || 'Failed to update' })
+      showToast('error', err.response?.data?.message || 'Failed to update')
     } finally {
       setSaving(false)
     }
   }
 
-  async function remove(id: string) {
-    if (!confirm('Delete this destination? Orders already placed will keep the stored fee.')) return
+  async function handleDelete() {
+    if (!deleteTarget) return
     try {
-      await api.delete(`/admin/delivery-destinations/${id}`)
-      setMessage({ type: 'success', text: 'Destination deleted' })
+      await api.delete(`/admin/delivery-destinations/${deleteTarget.id}`)
+      showToast('success', 'Destination deleted')
       load()
     } catch (err: any) {
-      setMessage({ type: 'error', text: err.response?.data?.message || 'Failed to delete' })
+      showToast('error', err.response?.data?.message || 'Failed to delete')
+    } finally {
+      setDeleteTarget(null)
     }
   }
 
-  if (loading) {
-    return (
-      <div>
-        <h1 className="text-2xl font-bold mb-6">Delivery Destinations</h1>
-        <p className="text-gray-500">Loading...</p>
-      </div>
-    )
+  const labelStyle: React.CSSProperties = {
+    display: 'block',
+    fontSize: 13,
+    fontWeight: 600,
+    color: 'var(--admin-text-2)',
+    marginBottom: 6,
   }
 
   return (
-    <div className="max-w-3xl">
-      <h1 className="text-2xl font-bold mb-6">Delivery Destinations</h1>
-      <p className="text-gray-600 text-sm mb-6">
+    <div>
+      <Toast toasts={toasts} onDismiss={dismissToast} />
+      <ConfirmModal
+        open={!!deleteTarget}
+        title="Delete Destination"
+        message={`Delete "${deleteTarget?.name}"? Orders already placed will keep the stored fee.`}
+        confirmLabel="Delete"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+        danger
+      />
+
+      <AdminPageHeader
+        title="Delivery Destinations"
+        action={{
+          label: showForm ? 'Cancel' : '+ Add Destination',
+          onClick: () => {
+            setShowForm(!showForm)
+            setForm(emptyForm)
+          },
+        }}
+      />
+
+      <p style={{ fontSize: 14, color: 'var(--admin-text-2)', marginBottom: 20 }}>
         Configure delivery destinations and fees (EGP). Customers choose one at checkout; the fee is saved with the order.
       </p>
-      {message && (
-        <div
-          className={`mb-4 px-4 py-2 rounded ${
-            message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-          }`}
-        >
-          {message.text}
+
+      {/* Create Form */}
+      {showForm && (
+        <div className="admin-card" style={{ marginBottom: 20 }}>
+          <p className="admin-section-header">New Destination</p>
+          <form onSubmit={handleCreate}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 140px 100px',
+                gap: 12,
+                marginBottom: 16,
+              }}
+            >
+              <div>
+                <label style={labelStyle}>Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={form.name}
+                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                  className="admin-input"
+                  placeholder="e.g., Cairo"
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>Fee (EGP) *</label>
+                <input
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  required
+                  value={form.fee_egp}
+                  onChange={(e) => setForm((f) => ({ ...f, fee_egp: e.target.value }))}
+                  className="admin-input"
+                  placeholder="160"
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>Order</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={form.display_order}
+                  onChange={(e) => setForm((f) => ({ ...f, display_order: e.target.value }))}
+                  className="admin-input"
+                />
+              </div>
+            </div>
+
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: 12,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <Toggle
+                  checked={form.is_active}
+                  onChange={(v) => setForm((f) => ({ ...f, is_active: v }))}
+                />
+                <span style={{ fontSize: 14, color: 'var(--admin-text)' }}>Active</span>
+              </div>
+              <button type="submit" disabled={saving} className="admin-btn-primary">
+                {saving ? 'Saving...' : 'Create Destination'}
+              </button>
+            </div>
+          </form>
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={() => setShowForm(!showForm)}
-        className="mb-6 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
-      >
-        {showForm ? 'Cancel' : '+ Add destination'}
-      </button>
-
-      {showForm && (
-        <form onSubmit={handleCreate} className="bg-white border rounded-xl p-6 mb-8 space-y-4">
-          <h2 className="font-semibold text-lg">New destination</h2>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
-            <input
-              type="text"
-              required
-              value={form.name}
-              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              className="w-full px-3 py-2 border rounded"
-              placeholder="e.g. Cairo"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Delivery fee (EGP) *</label>
-            <input
-              type="number"
-              min={0}
-              step={0.01}
-              required
-              value={form.fee_egp}
-              onChange={(e) => setForm((f) => ({ ...f, fee_egp: e.target.value }))}
-              className="w-full px-3 py-2 border rounded"
-              placeholder="e.g. 160"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Display order</label>
-            <input
-              type="number"
-              min={0}
-              value={form.display_order}
-              onChange={(e) => setForm((f) => ({ ...f, display_order: e.target.value }))}
-              className="w-full px-3 py-2 border rounded"
-            />
-          </div>
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={form.is_active}
-              onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))}
-            />
-            <span className="text-sm">Active</span>
-          </label>
-          <button type="submit" disabled={saving} className="px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 disabled:opacity-50">
-            {saving ? 'Saving...' : 'Create'}
-          </button>
-        </form>
-      )}
-
-      <div className="bg-white rounded-xl border overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50 border-b">
+      {/* Table */}
+      <div className="admin-table-wrapper">
+        <table className="admin-table">
+          <thead>
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fee (EGP)</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+              <th>Name</th>
+              <th>Fee (EGP)</th>
+              <th>Order</th>
+              <th>Status</th>
+              <th style={{ textAlign: 'right' }}>Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y">
-            {list.length === 0 ? (
+          <tbody>
+            {loading ? (
+              <SkeletonRows cols={5} rows={4} />
+            ) : list.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                  No destinations. Add one so customers can select delivery destination at checkout.
+                <td
+                  colSpan={5}
+                  style={{ textAlign: 'center', color: 'var(--admin-text-3)', padding: '40px 0' }}
+                >
+                  No destinations yet. Add one so customers can select delivery destination at checkout.
                 </td>
               </tr>
             ) : (
               list.map((d) =>
                 editingId === d.id ? (
                   <tr key={d.id}>
-                    <td colSpan={5} className="px-4 py-3">
-                      <form onSubmit={handleUpdate} className="flex flex-wrap items-end gap-4">
-                        <div>
-                          <label className="block text-xs text-gray-500 mb-1">Name</label>
-                          <input
-                            type="text"
-                            required
-                            value={editForm.name}
-                            onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
-                            className="px-3 py-2 border rounded"
-                          />
+                    <td colSpan={5} style={{ padding: '12px 16px' }}>
+                      <form onSubmit={handleUpdate}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'flex-end',
+                            gap: 10,
+                            flexWrap: 'wrap',
+                          }}
+                        >
+                          <div>
+                            <label
+                              style={{ display: 'block', fontSize: 12, color: 'var(--admin-text-3)', marginBottom: 4 }}
+                            >
+                              Name
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              value={editForm.name}
+                              onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))}
+                              className="admin-input"
+                              style={{ width: 160 }}
+                            />
+                          </div>
+                          <div>
+                            <label
+                              style={{ display: 'block', fontSize: 12, color: 'var(--admin-text-3)', marginBottom: 4 }}
+                            >
+                              Fee (EGP)
+                            </label>
+                            <input
+                              type="number"
+                              min={0}
+                              step={0.01}
+                              value={editForm.fee_egp}
+                              onChange={(e) => setEditForm((f) => ({ ...f, fee_egp: e.target.value }))}
+                              className="admin-input"
+                              style={{ width: 100 }}
+                            />
+                          </div>
+                          <div>
+                            <label
+                              style={{ display: 'block', fontSize: 12, color: 'var(--admin-text-3)', marginBottom: 4 }}
+                            >
+                              Order
+                            </label>
+                            <input
+                              type="number"
+                              min={0}
+                              value={editForm.display_order}
+                              onChange={(e) =>
+                                setEditForm((f) => ({
+                                  ...f,
+                                  display_order: parseInt(e.target.value, 10) || 0,
+                                }))
+                              }
+                              className="admin-input"
+                              style={{ width: 80 }}
+                            />
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingBottom: 2 }}>
+                            <Toggle
+                              checked={editForm.is_active}
+                              onChange={(v) => setEditForm((f) => ({ ...f, is_active: v }))}
+                            />
+                            <span style={{ fontSize: 13, color: 'var(--admin-text-2)' }}>Active</span>
+                          </div>
+                          <button type="submit" disabled={saving} className="admin-btn-primary">
+                            {saving ? '...' : 'Save'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditingId(null)}
+                            className="admin-btn-ghost"
+                          >
+                            Cancel
+                          </button>
                         </div>
-                        <div>
-                          <label className="block text-xs text-gray-500 mb-1">Fee (EGP)</label>
-                          <input
-                            type="number"
-                            min={0}
-                            step={0.01}
-                            value={editForm.fee_egp}
-                            onChange={(e) => setEditForm((f) => ({ ...f, fee_egp: e.target.value }))}
-                            className="px-3 py-2 border rounded w-24"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs text-gray-500 mb-1">Order</label>
-                          <input
-                            type="number"
-                            min={0}
-                            value={editForm.display_order}
-                            onChange={(e) => setEditForm((f) => ({ ...f, display_order: parseInt(e.target.value, 10) || 0 }))}
-                            className="px-3 py-2 border rounded w-20"
-                          />
-                        </div>
-                        <label className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            checked={editForm.is_active}
-                            onChange={(e) => setEditForm((f) => ({ ...f, is_active: e.target.checked }))}
-                          />
-                          <span className="text-sm">Active</span>
-                        </label>
-                        <button type="submit" disabled={saving} className="px-3 py-2 bg-pink-500 text-white rounded hover:bg-pink-600">
-                          Save
-                        </button>
-                        <button type="button" onClick={() => setEditingId(null)} className="px-3 py-2 border rounded hover:bg-gray-50">
-                          Cancel
-                        </button>
                       </form>
                     </td>
                   </tr>
                 ) : (
                   <tr key={d.id}>
-                    <td className="px-4 py-3 font-medium">{d.name}</td>
-                    <td className="px-4 py-3">E£ {Number(d.fee_egp).toFixed(2)}</td>
-                    <td className="px-4 py-3 text-gray-600">{d.display_order}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded text-xs ${d.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
-                        {d.is_active ? 'Active' : 'Inactive'}
-                      </span>
+                    <td style={{ fontWeight: 600 }}>{d.name}</td>
+                    <td>E£ {Number(d.fee_egp).toFixed(2)}</td>
+                    <td style={{ color: 'var(--admin-text-2)' }}>{d.display_order}</td>
+                    <td>
+                      <StatusBadge status={d.is_active ? 'active' : 'inactive'} type="product" />
                     </td>
-                    <td className="px-4 py-3">
-                      <button type="button" onClick={() => startEdit(d)} className="text-sm text-pink-600 hover:underline mr-3">
+                    <td style={{ textAlign: 'right' }}>
+                      <button
+                        type="button"
+                        onClick={() => startEdit(d)}
+                        style={{
+                          fontSize: 13,
+                          color: 'var(--admin-accent)',
+                          background: 'none',
+                          border: 'none',
+                          marginRight: 12,
+                        }}
+                      >
                         Edit
                       </button>
-                      <button type="button" onClick={() => remove(d.id)} className="text-sm text-red-600 hover:underline">
+                      <button
+                        type="button"
+                        onClick={() => setDeleteTarget({ id: d.id, name: d.name })}
+                        style={{ fontSize: 13, color: 'var(--admin-danger)', background: 'none', border: 'none' }}
+                      >
                         Delete
                       </button>
                     </td>

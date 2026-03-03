@@ -9,7 +9,7 @@ import { PointsBalanceProvider } from '@/contexts/PointsBalanceContext';
 import { AddressesProvider } from '@/contexts/AddressesContext';
 import { PendingDeliveryProvider } from '@/contexts/PendingDeliveryContext';
 import { SavedProductsProvider } from '@/contexts/SavedProductsContext';
-import { StripeProvider } from '@stripe/stripe-react-native';
+import { CheckoutPaymentProvider } from '@/contexts/CheckoutPaymentContext';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { SplashGate } from '@/components/SplashGate';
@@ -38,6 +38,9 @@ function AppContent() {
         <Stack.Screen name="collection/[slug]" options={{ headerShown: true, title: t(language, 'collections') }} />
         <Stack.Screen name="product/[slug]" options={{ headerShown: true }} />
         <Stack.Screen name="checkout" options={{ headerShown: true, title: t(language, 'checkout') }} />
+        <Stack.Screen name="select-payment-method" options={{ headerShown: true, title: t(language, 'selectPaymentMethod') }} />
+        <Stack.Screen name="paymob-webview" options={{ headerShown: true }} />
+        <Stack.Screen name="payment-failed" options={{ headerShown: true }} />
         <Stack.Screen name="delivery-address-map" options={{ headerShown: true }} />
         <Stack.Screen name="order-confirmation" options={{ headerShown: true, title: t(language, 'orderConfirmed') }} />
         <Stack.Screen name="(account)" options={{ headerShown: false }} />
@@ -50,27 +53,25 @@ function AppContent() {
   );
 }
 
-const stripePublishableKey = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? '';
-
 export default function RootLayout() {
   return (
-    <StripeProvider publishableKey={stripePublishableKey}>
-      <AuthProvider>
-        <LanguageProvider>
-          <PointsBalanceProvider>
-            <AddressesProvider>
-              <PendingDeliveryProvider>
-              <SavedProductsProvider>
-              <CartProvider>
-              <StatusBar style="dark" />
-              <AppContent />
-              </CartProvider>
-              </SavedProductsProvider>
-              </PendingDeliveryProvider>
-            </AddressesProvider>
-          </PointsBalanceProvider>
-        </LanguageProvider>
-      </AuthProvider>
-    </StripeProvider>
+    <AuthProvider>
+      <LanguageProvider>
+        <PointsBalanceProvider>
+          <AddressesProvider>
+            <PendingDeliveryProvider>
+            <SavedProductsProvider>
+            <CheckoutPaymentProvider>
+            <CartProvider>
+            <StatusBar style="dark" />
+            <AppContent />
+            </CartProvider>
+            </CheckoutPaymentProvider>
+            </SavedProductsProvider>
+            </PendingDeliveryProvider>
+          </AddressesProvider>
+        </PointsBalanceProvider>
+      </LanguageProvider>
+    </AuthProvider>
   );
 }

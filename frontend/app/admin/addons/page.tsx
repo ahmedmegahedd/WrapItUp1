@@ -2,120 +2,138 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import api from '@/lib/api'
+import StatusBadge from '../_components/StatusBadge'
+import SkeletonRows from '../_components/SkeletonRows'
+import ConfirmModal from '../_components/ConfirmModal'
+import Toast, { useToast } from '../_components/Toast'
+import AdminPageHeader from '../_components/AdminPageHeader'
 
 export default function AdminAddonsPage() {
-  const router = useRouter()
   const [addons, setAddons] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
+  const { toasts, showToast, dismissToast } = useToast()
 
   useEffect(() => {
     loadAddons()
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function loadAddons() {
     try {
       const response = await api.get('/addons?includeInactive=true')
       setAddons(response.data || [])
-    } catch (error) {
-      console.error('Error loading add-ons:', error)
+    } catch {
+      showToast('error', 'Failed to load add-ons')
     } finally {
       setLoading(false)
     }
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm('Are you sure you want to delete this add-on?')) return
-
+  async function handleDelete() {
+    if (!deleteTarget) return
     try {
-      await api.delete(`/addons/${id}`)
-      loadAddons()
-    } catch (error) {
-      console.error('Error deleting add-on:', error)
-      alert('Failed to delete add-on')
+      await api.delete(`/addons/${deleteTarget.id}`)
+      setAddons((prev) => prev.filter((a) => a.id !== deleteTarget.id))
+      showToast('success', `"${deleteTarget.name}" deleted`)
+    } catch {
+      showToast('error', 'Failed to delete add-on')
+    } finally {
+      setDeleteTarget(null)
     }
   }
 
-  if (loading) {
-    return <div>Loading...</div>
-  }
-
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Add-ons</h1>
-        <Link
-          href="/admin/addons/new"
-          className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
-        >
-          New Add-on
-        </Link>
-      </div>
+    <div style={{ padding: '24px 24px 40px', maxWidth: 900, margin: '0 auto' }}>
+      <AdminPageHeader
+        title="Add-ons"
+        subtitle={loading ? undefined : `${addons.length} add-ons`}
+        action={{ label: '+ New Add-on', href: '/admin/addons/new' }}
+      />
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50">
+      <div className="admin-table-wrapper">
+        <table className="admin-table">
+          <thead>
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Name
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Price
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Status
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Actions
-              </th>
+              <th>Name</th>
+              <th>Price</th>
+              <th>Status</th>
+              <th>Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
-            {addons.length > 0 ? (
+          <tbody>
+            {loading ? (
+              <SkeletonRows cols={4} rows={4} />
+            ) : addons.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={4}
+                  style={{
+                    textAlign: 'center',
+                    padding: '48px 20px',
+                    color: 'var(--admin-text-3)',
+                    fontSize: 14,
+                  }}
+                >
+                  No add-ons yet. Create your first add-on to get started.
+                </td>
+              </tr>
+            ) : (
               addons.map((addon) => (
                 <tr key={addon.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-900">{addon.name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-900">
-                    ${parseFloat(addon.price || 0).toFixed(2)}
+                  <td style={{ fontWeight: 500 }}>{addon.name}</td>
+                  <td style={{ fontWeight: 600 }}>
+                    E£{parseFloat(addon.price || 0).toFixed(2)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-2 py-1 text-xs rounded-full ${
-                        addon.is_active
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}
-                    >
-                      {addon.is_active ? 'Active' : 'Inactive'}
-                    </span>
+                  <td>
+                    <StatusBadge
+                      status={addon.is_active ? 'active' : 'inactive'}
+                      type="product"
+                    />
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <Link
-                      href={`/admin/addons/${addon.id}`}
-                      className="text-gray-900 hover:text-gray-700 mr-4"
-                    >
-                      Edit
-                    </Link>
-                    <button
-                      onClick={() => handleDelete(addon.id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      Delete
-                    </button>
+                  <td>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <Link
+                        href={`/admin/addons/${addon.id}`}
+                        className="admin-btn-ghost"
+                        style={{ fontSize: 12, padding: '5px 12px' }}
+                      >
+                        Edit
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => setDeleteTarget({ id: addon.id, name: addon.name })}
+                        style={{
+                          fontSize: 12,
+                          padding: '5px 12px',
+                          background: 'none',
+                          border: '1px solid var(--admin-border)',
+                          borderRadius: 'var(--admin-radius-sm)',
+                          color: 'var(--admin-danger)',
+                          fontFamily: 'inherit',
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
-            ) : (
-              <tr>
-                <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
-                  No add-ons found. Create your first add-on to get started.
-                </td>
-              </tr>
             )}
           </tbody>
         </table>
       </div>
+
+      <ConfirmModal
+        open={!!deleteTarget}
+        title="Delete add-on?"
+        message={`"${deleteTarget?.name}" will be permanently deleted. This cannot be undone.`}
+        confirmLabel="Delete"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
+
+      <Toast toasts={toasts} onDismiss={dismissToast} />
     </div>
   )
 }

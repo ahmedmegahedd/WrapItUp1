@@ -3,36 +3,44 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import api from '@/lib/api'
+import StatusBadge from '../_components/StatusBadge'
+import SkeletonRows from '../_components/SkeletonRows'
+import ConfirmModal from '../_components/ConfirmModal'
+import Toast, { useToast } from '../_components/Toast'
+import AdminPageHeader from '../_components/AdminPageHeader'
 
 export default function AdminCollectionsPage() {
   const [collections, setCollections] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
+  const { toasts, showToast, dismissToast } = useToast()
 
   useEffect(() => {
     loadCollections()
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function loadCollections() {
     try {
       const response = await api.get('/admin/collections')
       setCollections(response.data || [])
-    } catch (error) {
-      console.error('Error loading collections:', error)
+    } catch {
+      showToast('error', 'Failed to load collections')
     } finally {
       setLoading(false)
     }
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm('Are you sure you want to delete this collection?')) return
-
+  async function handleDelete() {
+    if (!deleteTarget) return
     try {
-      await api.delete(`/admin/collections/${id}`)
-      loadCollections()
-    } catch (error) {
-      console.error('Error deleting collection:', error)
-      alert('Failed to delete collection')
+      await api.delete(`/admin/collections/${deleteTarget.id}`)
+      setCollections((prev) => prev.filter((c) => c.id !== deleteTarget.id))
+      showToast('success', `"${deleteTarget.name}" deleted`)
+    } catch {
+      showToast('error', 'Failed to delete collection')
+    } finally {
+      setDeleteTarget(null)
     }
   }
 
@@ -41,84 +49,132 @@ export default function AdminCollectionsPage() {
     ? collections.filter(
         (c) =>
           (c.name || '').toLowerCase().includes(searchLower) ||
-          (c.slug || '').toLowerCase().includes(searchLower)
+          (c.slug || '').toLowerCase().includes(searchLower),
       )
     : collections
 
-  if (loading) {
-    return <div>Loading...</div>
-  }
-
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Collections</h1>
-        <Link
-          href="/admin/collections/new"
-          className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800"
-        >
-          Add Collection
-        </Link>
-      </div>
+    <div style={{ padding: '24px 24px 40px', maxWidth: 1000, margin: '0 auto' }}>
+      <AdminPageHeader
+        title="Collections"
+        subtitle={loading ? undefined : `${collections.length} collections`}
+        action={{ label: '+ Add Collection', href: '/admin/collections/new' }}
+      />
 
-      <div className="mb-4">
+      <div style={{ marginBottom: 16 }}>
         <input
           type="search"
-          placeholder="Search collections by name or slug..."
+          placeholder="Search by name or slug…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+          className="admin-input"
+          style={{ maxWidth: 360 }}
         />
-        {search && (
-          <p className="mt-1 text-sm text-gray-500">
-            Showing {filteredCollections.length} of {collections.length} collections
+        {search && !loading && (
+          <p style={{ fontSize: 12, color: 'var(--admin-text-3)', marginTop: 6 }}>
+            {filteredCollections.length} of {collections.length} shown
           </p>
         )}
       </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50">
+      <div className="admin-table-wrapper">
+        <table className="admin-table">
+          <thead>
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Slug</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Products</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+              <th>Name</th>
+              <th>Slug</th>
+              <th>Products</th>
+              <th>Status</th>
+              <th>Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
-            {filteredCollections.map((collection) => (
-              <tr key={collection.id}>
-                <td className="px-6 py-4 whitespace-nowrap">{collection.name}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{collection.slug}</td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  {collection.collection_products?.length || 0}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 py-1 rounded text-sm ${collection.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                    {collection.is_active ? 'Active' : 'Inactive'}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <Link
-                    href={`/admin/collections/${collection.id}`}
-                    className="text-blue-600 hover:underline mr-4"
-                  >
-                    Edit
-                  </Link>
-                  <button
-                    onClick={() => handleDelete(collection.id)}
-                    className="text-red-600 hover:underline"
-                  >
-                    Delete
-                  </button>
+          <tbody>
+            {loading ? (
+              <SkeletonRows cols={5} rows={4} />
+            ) : filteredCollections.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={5}
+                  style={{
+                    textAlign: 'center',
+                    padding: '48px 20px',
+                    color: 'var(--admin-text-3)',
+                    fontSize: 14,
+                  }}
+                >
+                  {search ? 'No collections match your search' : 'No collections yet'}
                 </td>
               </tr>
-            ))}
+            ) : (
+              filteredCollections.map((collection) => (
+                <tr key={collection.id}>
+                  <td style={{ fontWeight: 500 }}>{collection.name}</td>
+                  <td style={{ color: 'var(--admin-text-3)', fontSize: 13 }}>{collection.slug}</td>
+                  <td>
+                    <span
+                      style={{
+                        background: 'var(--admin-surface-2)',
+                        color: 'var(--admin-text-2)',
+                        fontSize: 12,
+                        fontWeight: 600,
+                        padding: '2px 8px',
+                        borderRadius: 100,
+                      }}
+                    >
+                      {collection.collection_products?.length || 0}
+                    </span>
+                  </td>
+                  <td>
+                    <StatusBadge
+                      status={collection.is_active ? 'active' : 'inactive'}
+                      type="product"
+                    />
+                  </td>
+                  <td>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <Link
+                        href={`/admin/collections/${collection.id}`}
+                        className="admin-btn-ghost"
+                        style={{ fontSize: 12, padding: '5px 12px' }}
+                      >
+                        Edit
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setDeleteTarget({ id: collection.id, name: collection.name })
+                        }
+                        style={{
+                          fontSize: 12,
+                          padding: '5px 12px',
+                          background: 'none',
+                          border: '1px solid var(--admin-border)',
+                          borderRadius: 'var(--admin-radius-sm)',
+                          color: 'var(--admin-danger)',
+                          fontFamily: 'inherit',
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
+
+      <ConfirmModal
+        open={!!deleteTarget}
+        title="Delete collection?"
+        message={`"${deleteTarget?.name}" will be permanently deleted. Products will not be deleted.`}
+        confirmLabel="Delete"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
+
+      <Toast toasts={toasts} onDismiss={dismissToast} />
     </div>
   )
 }

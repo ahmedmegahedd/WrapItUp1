@@ -105,8 +105,8 @@ export default function OrdersScreen() {
               {new Date(item.delivery_date).toLocaleDateString()} · {item.delivery_time_slot}
             </Text>
             <View style={styles.statusRow}>
-              <Text style={[styles.badge, item.payment_status === 'paid' ? styles.badgePaid : styles.badgePending]}>
-                {item.payment_status === 'paid' ? t(language, 'paid') : t(language, 'pending')}
+              <Text style={[styles.badge, item.payment_status === 'paid' ? styles.badgePaid : item.payment_status === 'PENDING_CASH' ? styles.badgePendingCash : styles.badgePending]}>
+                {item.payment_status === 'paid' ? t(language, 'paid') : item.payment_status === 'PENDING_CASH' ? t(language, 'pendingCash') : t(language, 'pending')}
               </Text>
               <Text style={styles.status}>{item.order_status.replace('_', ' ')}</Text>
             </View>
@@ -142,5 +142,6 @@ const styles = StyleSheet.create({
   badge: { fontSize: 11, fontWeight: '600', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
   badgePaid: { backgroundColor: '#d1fae5', color: '#065f46' },
   badgePending: { backgroundColor: '#fef3c7', color: '#92400e' },
+  badgePendingCash: { backgroundColor: '#e0e7ff', color: '#3730a3' },
   status: { fontSize: 12, color: colors.textMuted },
 });

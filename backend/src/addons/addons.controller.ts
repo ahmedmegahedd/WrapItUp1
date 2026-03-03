@@ -3,6 +3,9 @@ import { AddonsService } from './addons.service';
 import { CreateAddonDto } from './dto/create-addon.dto';
 import { UpdateAddonDto } from './dto/update-addon.dto';
 import { AdminGuard } from '../admin/guards/admin.guard';
+import { PermissionGuard } from '../admin/guards/permission.guard';
+import { RequirePermission } from '../admin/decorators/require-permission.decorator';
+import { ADMIN_PERMISSIONS } from '../admin/admin-permissions.const';
 
 @Controller('addons')
 export class AddonsController {
@@ -24,19 +27,22 @@ export class AddonsController {
   }
 
   @Post()
-  @UseGuards(AdminGuard)
+  @UseGuards(AdminGuard, PermissionGuard)
+  @RequirePermission(ADMIN_PERMISSIONS.ADDONS_VIEW)
   create(@Body() createAddonDto: CreateAddonDto) {
     return this.addonsService.create(createAddonDto);
   }
 
   @Patch(':id')
-  @UseGuards(AdminGuard)
+  @UseGuards(AdminGuard, PermissionGuard)
+  @RequirePermission(ADMIN_PERMISSIONS.ADDONS_VIEW)
   update(@Param('id') id: string, @Body() updateAddonDto: UpdateAddonDto) {
     return this.addonsService.update(id, updateAddonDto);
   }
 
   @Delete(':id')
-  @UseGuards(AdminGuard)
+  @UseGuards(AdminGuard, PermissionGuard)
+  @RequirePermission(ADMIN_PERMISSIONS.ADDONS_VIEW)
   remove(@Param('id') id: string) {
     return this.addonsService.remove(id);
   }

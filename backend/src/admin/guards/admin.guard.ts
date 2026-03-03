@@ -32,7 +32,13 @@ export class AdminGuard implements CanActivate {
       throw new UnauthorizedException('User is not an admin');
     }
 
-    request.user = user;
+    const roleInfo = await this.adminService.getAdminRoleAndPermissions(user.id);
+    request.user = {
+      id: user.id,
+      email: user.email,
+      ...roleInfo,
+      permissionsSet: new Set(roleInfo.permissions),
+    };
     return true;
   }
 }

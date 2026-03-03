@@ -3,6 +3,11 @@
 import { useEffect, useState, useCallback } from 'react'
 import { format, addDays, startOfToday, parseISO, isBefore } from 'date-fns'
 import api from '@/lib/api'
+import AdminPageHeader from '../_components/AdminPageHeader'
+import Toggle from '../_components/Toggle'
+import SkeletonRows from '../_components/SkeletonRows'
+import Toast, { useToast } from '../_components/Toast'
+import ConfirmModal from '../_components/ConfirmModal'
 
 type DeliveryDayStatus = 'available' | 'fully_booked' | 'unavailable'
 
@@ -28,14 +33,23 @@ export default function AdminDeliverySettingsPage() {
   const [activeTab, setActiveTab] = useState<'days' | 'slots'>('days')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  
+  const { toasts, showToast, dismissToast } = useToast()
+
+  // Confirm modal state
+  const [confirmModal, setConfirmModal] = useState<{
+    open: boolean
+    title: string
+    message: string
+    onConfirm: () => void
+  } | null>(null)
+
   // Delivery Days
   const [deliveryDays, setDeliveryDays] = useState<DeliveryDay[]>([])
   const [selectedDateRange, setSelectedDateRange] = useState({
     start: format(startOfToday(), 'yyyy-MM-dd'),
     end: format(addDays(startOfToday(), 60), 'yyyy-MM-dd'),
   })
-  
+
   // Time Slots
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([])
   const [editingSlot, setEditingSlot] = useState<TimeSlot | null>(null)
@@ -78,27 +92,24 @@ export default function AdminDeliverySettingsPage() {
       await api.put(`/delivery/admin/delivery-days/date/${date}`, { status })
       await loadDeliveryDays()
     } catch (error: any) {
-      console.error('Error updating day:', error)
-      alert(error?.response?.data?.message || 'Failed to update day')
+      showToast('error', error?.response?.data?.message || 'Failed to update day')
     } finally {
       setSaving(false)
     }
   }
 
   async function bulkMarkUnavailable(dates: string[]) {
-    if (!confirm(`Mark ${dates.length} days as unavailable?`)) return
-
     setSaving(true)
     try {
-      const days = dates.map(date => ({
+      const days = dates.map((date) => ({
         date,
         status: 'unavailable' as DeliveryDayStatus,
       }))
       await api.post('/delivery/admin/delivery-days/bulk', { days })
       await loadDeliveryDays()
+      showToast('success', `${dates.length} days marked unavailable`)
     } catch (error: any) {
-      console.error('Error bulk updating:', error)
-      alert(error?.response?.data?.message || 'Failed to update days')
+      showToast('error', error?.response?.data?.message || 'Failed to update days')
     } finally {
       setSaving(false)
     }
@@ -110,8 +121,7 @@ export default function AdminDeliverySettingsPage() {
       await api.put(`/delivery/admin/delivery-days/date/${date}`, { capacity })
       await loadDeliveryDays()
     } catch (error: any) {
-      console.error('Error updating capacity:', error)
-      alert(error?.response?.data?.message || 'Failed to update capacity')
+      showToast('error', error?.response?.data?.message || 'Failed to update capacity')
     } finally {
       setSaving(false)
     }
@@ -130,24 +140,22 @@ export default function AdminDeliverySettingsPage() {
       await loadTimeSlots()
       setEditingSlot(null)
       setShowSlotForm(false)
+      showToast('success', editingSlot ? 'Time slot updated' : 'Time slot created')
     } catch (error: any) {
-      console.error('Error saving time slot:', error)
-      alert(error?.response?.data?.message || 'Failed to save time slot')
+      showToast('error', error?.response?.data?.message || 'Failed to save time slot')
     } finally {
       setSaving(false)
     }
   }
 
   async function deleteTimeSlot(id: string) {
-    if (!confirm('Are you sure you want to delete this time slot?')) return
-
     setSaving(true)
     try {
       await api.delete(`/delivery/admin/time-slots/${id}`)
       await loadTimeSlots()
+      showToast('success', 'Time slot deleted')
     } catch (error: any) {
-      console.error('Error deleting time slot:', error)
-      alert(error?.response?.data?.message || 'Failed to delete time slot')
+      showToast('error', error?.response?.data?.message || 'Failed to delete time slot')
     } finally {
       setSaving(false)
     }
@@ -159,23 +167,7 @@ export default function AdminDeliverySettingsPage() {
       await api.put(`/delivery/admin/time-slots/${id}`, { is_active: !isActive })
       await loadTimeSlots()
     } catch (error: any) {
-      console.error('Error toggling time slot:', error)
-      alert(error?.response?.data?.message || 'Failed to update time slot')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  async function reorderTimeSlots(newOrder: TimeSlot[]) {
-    setSaving(true)
-    try {
-      await api.post('/delivery/admin/time-slots/reorder', {
-        slotIds: newOrder.map(slot => slot.id),
-      })
-      await loadTimeSlots()
-    } catch (error: any) {
-      console.error('Error reordering:', error)
-      alert(error?.response?.data?.message || 'Failed to reorder time slots')
+      showToast('error', error?.response?.data?.message || 'Failed to update time slot')
     } finally {
       setSaving(false)
     }
@@ -183,25 +175,37 @@ export default function AdminDeliverySettingsPage() {
 
   // ========== RENDER HELPERS ==========
 
-  function getStatusColor(status: DeliveryDayStatus) {
+  function getStatusStyle(status: DeliveryDayStatus): React.CSSProperties {
     switch (status) {
       case 'available':
-        return 'bg-green-100 text-green-800 border-green-300'
+        return {
+          background: 'var(--admin-success-light)',
+          color: 'var(--admin-success)',
+          border: '1px solid #B8DEC8',
+        }
       case 'fully_booked':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-300'
+        return {
+          background: 'var(--admin-warning-light)',
+          color: 'var(--admin-warning)',
+          border: '1px solid #E0C040',
+        }
       case 'unavailable':
-        return 'bg-red-100 text-red-800 border-red-300'
+        return {
+          background: 'var(--admin-danger-light)',
+          color: 'var(--admin-danger)',
+          border: '1px solid #F1BCBA',
+        }
     }
   }
 
   function getStatusLabel(status: DeliveryDayStatus) {
     switch (status) {
       case 'available':
-        return 'Available'
+        return 'On'
       case 'fully_booked':
-        return 'Fully Booked'
+        return 'Full'
       case 'unavailable':
-        return 'Unavailable'
+        return 'Off'
     }
   }
 
@@ -215,57 +219,80 @@ export default function AdminDeliverySettingsPage() {
     current = addDays(current, 1)
   }
 
-  // Create date map for quick lookup
-  const daysMap = new Map(deliveryDays.map(day => [day.date, day]))
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-lg">Loading...</div>
-      </div>
-    )
-  }
+  const daysMap = new Map(deliveryDays.map((day) => [day.date, day]))
+  const today = format(startOfToday(), 'yyyy-MM-dd')
+  const startDayOfWeek = start.getDay()
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Delivery Settings</h1>
-      </div>
+      <Toast toasts={toasts} onDismiss={dismissToast} />
+      {confirmModal && (
+        <ConfirmModal
+          open={confirmModal.open}
+          title={confirmModal.title}
+          message={confirmModal.message}
+          confirmLabel="Confirm"
+          onConfirm={() => {
+            confirmModal.onConfirm()
+            setConfirmModal(null)
+          }}
+          onCancel={() => setConfirmModal(null)}
+          danger
+        />
+      )}
+
+      <AdminPageHeader title="Delivery Settings" />
 
       {/* Tabs */}
-      <div className="border-b border-gray-200 mb-6">
-        <nav className="flex gap-4">
+      <div
+        style={{
+          borderBottom: '1px solid var(--admin-border)',
+          marginBottom: 24,
+          display: 'flex',
+          gap: 4,
+        }}
+      >
+        {(['days', 'slots'] as const).map((tab) => (
           <button
-            onClick={() => setActiveTab('days')}
-            className={`pb-3 px-4 font-medium ${
-              activeTab === 'days'
-                ? 'border-b-2 border-gray-900 text-gray-900'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            style={{
+              padding: '10px 20px',
+              fontSize: 14,
+              fontWeight: 600,
+              background: 'none',
+              border: 'none',
+              borderBottom:
+                activeTab === tab
+                  ? '2px solid var(--admin-accent)'
+                  : '2px solid transparent',
+              color: activeTab === tab ? 'var(--admin-accent)' : 'var(--admin-text-2)',
+              marginBottom: -1,
+              transition: 'color 0.15s ease, border-color 0.15s ease',
+            }}
           >
-            Delivery Days
+            {tab === 'days' ? 'Delivery Days' : 'Time Slots'}
           </button>
-          <button
-            onClick={() => setActiveTab('slots')}
-            className={`pb-3 px-4 font-medium ${
-              activeTab === 'slots'
-                ? 'border-b-2 border-gray-900 text-gray-900'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Time Slots
-          </button>
-        </nav>
+        ))}
       </div>
 
-      {/* Delivery Days Tab */}
+      {/* ===== DELIVERY DAYS TAB ===== */}
       {activeTab === 'days' && (
-        <div className="space-y-6">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {/* Date Range Selector */}
-          <div className="bg-white p-4 rounded-lg border border-gray-200">
-            <div className="flex gap-4 items-end">
+          <div className="admin-card">
+            <p className="admin-section-header">Date Range</p>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end', flexWrap: 'wrap' }}>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: 'var(--admin-text-2)',
+                    marginBottom: 6,
+                  }}
+                >
                   Start Date
                 </label>
                 <input
@@ -274,11 +301,20 @@ export default function AdminDeliverySettingsPage() {
                   onChange={(e) =>
                     setSelectedDateRange({ ...selectedDateRange, start: e.target.value })
                   }
-                  className="px-3 py-2 border rounded-lg"
+                  className="admin-input"
+                  style={{ width: 160 }}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: 'var(--admin-text-2)',
+                    marginBottom: 6,
+                  }}
+                >
                   End Date
                 </label>
                 <input
@@ -287,131 +323,254 @@ export default function AdminDeliverySettingsPage() {
                   onChange={(e) =>
                     setSelectedDateRange({ ...selectedDateRange, end: e.target.value })
                   }
-                  className="px-3 py-2 border rounded-lg"
+                  className="admin-input"
+                  style={{ width: 160 }}
                 />
               </div>
-              <button
-                onClick={loadDeliveryDays}
-                className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
-              >
+              <button onClick={loadDeliveryDays} className="admin-btn-ghost">
                 Load Dates
               </button>
             </div>
           </div>
 
           {/* Calendar Grid */}
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <div className="grid grid-cols-7 gap-px bg-gray-200">
+          <div className="admin-card" style={{ padding: 0, overflow: 'hidden' }}>
+            {/* Day headers */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(7, 1fr)',
+                background: 'var(--admin-surface-2)',
+                borderBottom: '1px solid var(--admin-border)',
+              }}
+            >
               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                <div key={day} className="bg-gray-50 p-2 text-center text-sm font-medium text-gray-700">
+                <div
+                  key={day}
+                  style={{
+                    padding: '10px 8px',
+                    textAlign: 'center',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: 'var(--admin-text-2)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                  }}
+                >
                   {day}
                 </div>
               ))}
-              {calendarDates.map((dateStr) => {
-                const day = daysMap.get(dateStr)
-                const date = parseISO(dateStr)
-                const isPast = isBefore(date, startOfToday())
-                const isToday = format(date, 'yyyy-MM-dd') === format(startOfToday(), 'yyyy-MM-dd')
+            </div>
 
-                return (
+            {loading ? (
+              <div
+                style={{
+                  padding: 40,
+                  textAlign: 'center',
+                  color: 'var(--admin-text-3)',
+                  fontSize: 14,
+                }}
+              >
+                Loading calendar...
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
+                {/* Empty cells for day-of-week offset */}
+                {Array.from({ length: startDayOfWeek }).map((_, i) => (
                   <div
-                    key={dateStr}
-                    className={`bg-white p-2 border-r border-b border-gray-100 min-h-[80px] ${
-                      isPast ? 'opacity-50' : ''
-                    } ${isToday ? 'ring-2 ring-blue-500' : ''}`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className={`text-sm font-medium ${isToday ? 'text-blue-600' : 'text-gray-900'}`}>
-                        {format(date, 'd')}
-                      </span>
-                      {day && (
+                    key={`empty-${i}`}
+                    style={{
+                      minHeight: 90,
+                      background: 'var(--admin-surface-2)',
+                      borderRight: '1px solid var(--admin-border)',
+                      borderBottom: '1px solid var(--admin-border)',
+                    }}
+                  />
+                ))}
+
+                {calendarDates.map((dateStr) => {
+                  const day = daysMap.get(dateStr)
+                  const date = parseISO(dateStr)
+                  const isPast = isBefore(date, startOfToday())
+                  const isToday = dateStr === today
+
+                  return (
+                    <div
+                      key={dateStr}
+                      style={{
+                        background: isToday
+                          ? 'var(--admin-accent-light)'
+                          : isPast
+                          ? 'var(--admin-surface-2)'
+                          : 'var(--admin-surface)',
+                        borderRight: '1px solid var(--admin-border)',
+                        borderBottom: '1px solid var(--admin-border)',
+                        padding: 8,
+                        minHeight: 90,
+                        opacity: isPast && !isToday ? 0.55 : 1,
+                        outline: isToday ? '2px solid var(--admin-accent)' : 'none',
+                        outlineOffset: -2,
+                      }}
+                    >
+                      {/* Date number + status badge */}
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'flex-start',
+                          marginBottom: 4,
+                        }}
+                      >
                         <span
-                          className={`text-xs px-2 py-0.5 rounded border ${getStatusColor(day.status)}`}
+                          style={{
+                            fontSize: 13,
+                            fontWeight: isToday ? 700 : 600,
+                            color: isToday ? 'var(--admin-accent)' : 'var(--admin-text)',
+                          }}
                         >
-                          {getStatusLabel(day.status)}
+                          {format(date, 'd')}
                         </span>
+                        {day && (
+                          <span
+                            style={{
+                              fontSize: 10,
+                              padding: '1px 5px',
+                              borderRadius: 4,
+                              fontWeight: 600,
+                              ...getStatusStyle(day.status),
+                            }}
+                          >
+                            {getStatusLabel(day.status)}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Capacity info */}
+                      {day?.capacity && (
+                        <div style={{ fontSize: 11, color: 'var(--admin-text-3)', marginBottom: 4 }}>
+                          {day.current_orders || 0}/{day.capacity}
+                        </div>
+                      )}
+
+                      {/* Controls for future dates */}
+                      {!isPast && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                          <select
+                            value={day?.status || 'available'}
+                            onChange={(e) =>
+                              updateDayStatus(dateStr, e.target.value as DeliveryDayStatus)
+                            }
+                            disabled={saving}
+                            style={{
+                              width: '100%',
+                              fontSize: 10,
+                              padding: '2px 4px',
+                              border: '1px solid var(--admin-border)',
+                              borderRadius: 4,
+                              background: 'var(--admin-surface)',
+                              color: 'var(--admin-text)',
+                              fontFamily: 'inherit',
+                            }}
+                          >
+                            <option value="available">Available</option>
+                            <option value="fully_booked">Fully Booked</option>
+                            <option value="unavailable">Unavailable</option>
+                          </select>
+                          <input
+                            type="number"
+                            placeholder="Cap."
+                            value={day?.capacity || ''}
+                            onChange={(e) =>
+                              updateDayCapacity(
+                                dateStr,
+                                e.target.value ? parseInt(e.target.value) : null
+                              )
+                            }
+                            disabled={saving}
+                            style={{
+                              width: '100%',
+                              fontSize: 10,
+                              padding: '2px 4px',
+                              border: '1px solid var(--admin-border)',
+                              borderRadius: 4,
+                              background: 'var(--admin-surface)',
+                              color: 'var(--admin-text)',
+                            }}
+                            min="1"
+                          />
+                        </div>
                       )}
                     </div>
-                    {day && day.capacity && (
-                      <div className="text-xs text-gray-500 mb-1">
-                        {day.current_orders || 0} / {day.capacity}
-                      </div>
-                    )}
-                    {!isPast && (
-                      <div className="mt-1 space-y-1">
-                        <select
-                          value={day?.status || 'available'}
-                          onChange={(e) => updateDayStatus(dateStr, e.target.value as DeliveryDayStatus)}
-                          disabled={saving}
-                          className="w-full text-xs px-1 py-0.5 border rounded"
-                        >
-                          <option value="available">Available</option>
-                          <option value="fully_booked">Fully Booked</option>
-                          <option value="unavailable">Unavailable</option>
-                        </select>
-                        <input
-                          type="number"
-                          placeholder="Capacity"
-                          value={day?.capacity || ''}
-                          onChange={(e) =>
-                            updateDayCapacity(dateStr, e.target.value ? parseInt(e.target.value) : null)
-                          }
-                          disabled={saving}
-                          className="w-full text-xs px-1 py-0.5 border rounded"
-                          min="1"
-                        />
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
 
           {/* Quick Actions */}
-          <div className="bg-white p-4 rounded-lg border border-gray-200">
-            <h3 className="font-semibold mb-3">Quick Actions</h3>
-            <div className="flex gap-2 flex-wrap">
+          <div className="admin-card">
+            <p className="admin-section-header">Quick Actions</p>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               <button
                 onClick={() => {
                   const nextWeek = calendarDates.slice(0, 7)
-                  bulkMarkUnavailable(nextWeek)
+                  setConfirmModal({
+                    open: true,
+                    title: 'Mark Unavailable',
+                    message: `Mark the next ${nextWeek.length} days as unavailable?`,
+                    onConfirm: () => bulkMarkUnavailable(nextWeek),
+                  })
                 }}
                 disabled={saving}
-                className="px-4 py-2 bg-red-50 text-red-700 border border-red-200 rounded-lg hover:bg-red-100 disabled:opacity-50"
+                className="admin-btn-ghost"
+                style={{ color: 'var(--admin-danger)', borderColor: 'var(--admin-danger)' }}
               >
                 Mark Next 7 Days Unavailable
               </button>
               <button
                 onClick={() => {
-                  const weekends = calendarDates.filter(
-                    (d) => [0, 6].includes(parseISO(d).getDay())
+                  const weekends = calendarDates.filter((d) =>
+                    [0, 6].includes(parseISO(d).getDay())
                   )
-                  bulkMarkUnavailable(weekends)
+                  setConfirmModal({
+                    open: true,
+                    title: 'Mark Weekends Unavailable',
+                    message: `Mark all ${weekends.length} weekends in this range as unavailable?`,
+                    onConfirm: () => bulkMarkUnavailable(weekends),
+                  })
                 }}
                 disabled={saving}
-                className="px-4 py-2 bg-red-50 text-red-700 border border-red-200 rounded-lg hover:bg-red-100 disabled:opacity-50"
+                className="admin-btn-ghost"
+                style={{ color: 'var(--admin-danger)', borderColor: 'var(--admin-danger)' }}
               >
                 Mark All Weekends Unavailable
               </button>
               <button
-                onClick={async () => {
-                  if (!confirm('Are you sure you want to reset all delivery days? This will remove all availability settings and make all dates available by default.')) return
-                  
-                  setSaving(true)
-                  try {
-                    await api.post('/delivery/admin/delivery-days/reset')
-                    await loadDeliveryDays()
-                    alert('All delivery days have been reset to default')
-                  } catch (error: any) {
-                    console.error('Error resetting delivery days:', error)
-                    alert(error?.response?.data?.message || 'Failed to reset delivery days')
-                  } finally {
-                    setSaving(false)
-                  }
+                onClick={() => {
+                  setConfirmModal({
+                    open: true,
+                    title: 'Reset All Delivery Days',
+                    message:
+                      'Reset all delivery days? This will remove all availability settings and make all dates available by default.',
+                    onConfirm: async () => {
+                      setSaving(true)
+                      try {
+                        await api.post('/delivery/admin/delivery-days/reset')
+                        await loadDeliveryDays()
+                        showToast('success', 'All delivery days reset to default')
+                      } catch (error: any) {
+                        showToast(
+                          'error',
+                          error?.response?.data?.message || 'Failed to reset delivery days'
+                        )
+                      } finally {
+                        setSaving(false)
+                      }
+                    },
+                  })
                 }}
                 disabled={saving}
-                className="px-4 py-2 bg-gray-900 text-white border border-gray-900 rounded-lg hover:bg-gray-800 disabled:opacity-50"
+                className="admin-btn-primary"
               >
                 Reset All to Default
               </button>
@@ -420,17 +579,21 @@ export default function AdminDeliverySettingsPage() {
         </div>
       )}
 
-      {/* Time Slots Tab */}
+      {/* ===== TIME SLOTS TAB ===== */}
       {activeTab === 'slots' && (
-        <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">Delivery Time Slots</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h2
+              style={{ fontSize: 18, fontWeight: 700, color: 'var(--admin-text)', margin: 0 }}
+            >
+              Delivery Time Slots
+            </h2>
             <button
               onClick={() => {
                 setEditingSlot(null)
                 setShowSlotForm(true)
               }}
-              className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+              className="admin-btn-primary"
             >
               + Add Time Slot
             </button>
@@ -438,10 +601,10 @@ export default function AdminDeliverySettingsPage() {
 
           {/* Time Slot Form */}
           {showSlotForm && (
-            <div className="bg-white p-6 rounded-lg border border-gray-200">
-              <h3 className="font-semibold mb-4">
+            <div className="admin-card">
+              <p className="admin-section-header">
                 {editingSlot ? 'Edit Time Slot' : 'New Time Slot'}
-              </h3>
+              </p>
               <TimeSlotForm
                 slot={editingSlot}
                 onSave={saveTimeSlot}
@@ -454,66 +617,98 @@ export default function AdminDeliverySettingsPage() {
             </div>
           )}
 
-          {/* Time Slots List */}
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-gray-50">
+          {/* Time Slots Table */}
+          <div className="admin-table-wrapper">
+            <table className="admin-table">
+              <thead>
                 <tr>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Order</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Label</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Time Range</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Status</th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-gray-700">Actions</th>
+                  <th>Order</th>
+                  <th>Label</th>
+                  <th>Time Range</th>
+                  <th>Active</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
-                {timeSlots.map((slot) => (
-                  <tr key={slot.id} className={!slot.is_active ? 'opacity-50' : ''}>
-                    <td className="px-4 py-3 text-sm text-gray-900">{slot.display_order}</td>
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900">{slot.label}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
-                      {slot.start_time} - {slot.end_time}
+              <tbody>
+                {loading ? (
+                  <SkeletonRows cols={5} rows={3} />
+                ) : timeSlots.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      style={{
+                        textAlign: 'center',
+                        color: 'var(--admin-text-3)',
+                        padding: '40px 0',
+                      }}
+                    >
+                      No time slots configured
                     </td>
-                    <td className="px-4 py-3">
-                      <button
-                        onClick={() => toggleTimeSlotActive(slot.id, slot.is_active)}
-                        disabled={saving}
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          slot.is_active
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}
+                  </tr>
+                ) : (
+                  timeSlots.map((slot) => (
+                    <tr key={slot.id} style={{ opacity: !slot.is_active ? 0.5 : 1 }}>
+                      <td style={{ color: 'var(--admin-text-2)', fontWeight: 500 }}>
+                        {slot.display_order}
+                      </td>
+                      <td style={{ fontWeight: 600 }}>{slot.label}</td>
+                      <td
+                        style={{
+                          color: 'var(--admin-text-2)',
+                          fontFamily: 'monospace',
+                          fontSize: 13,
+                        }}
                       >
-                        {slot.is_active ? 'Active' : 'Inactive'}
-                      </button>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex justify-end gap-2">
+                        {slot.start_time} – {slot.end_time}
+                      </td>
+                      <td>
+                        <Toggle
+                          checked={slot.is_active}
+                          onChange={() => toggleTimeSlotActive(slot.id, slot.is_active)}
+                          disabled={saving}
+                        />
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
                         <button
                           onClick={() => {
                             setEditingSlot(slot)
                             setShowSlotForm(true)
                           }}
-                          className="text-blue-600 hover:text-blue-800 text-sm"
+                          style={{
+                            fontSize: 13,
+                            color: 'var(--admin-accent)',
+                            background: 'none',
+                            border: 'none',
+                            marginRight: 12,
+                          }}
                         >
                           Edit
                         </button>
                         <button
-                          onClick={() => deleteTimeSlot(slot.id)}
+                          onClick={() => {
+                            setConfirmModal({
+                              open: true,
+                              title: 'Delete Time Slot',
+                              message: `Delete "${slot.label}"?`,
+                              onConfirm: () => deleteTimeSlot(slot.id),
+                            })
+                          }}
                           disabled={saving}
-                          className="text-red-600 hover:text-red-800 text-sm disabled:opacity-50"
+                          style={{
+                            fontSize: 13,
+                            color: 'var(--admin-danger)',
+                            background: 'none',
+                            border: 'none',
+                          }}
                         >
                           Delete
                         </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
-            {timeSlots.length === 0 && (
-              <div className="p-8 text-center text-gray-500">No time slots configured</div>
-            )}
           </div>
         </div>
       )}
@@ -521,7 +716,7 @@ export default function AdminDeliverySettingsPage() {
   )
 }
 
-// Time Slot Form Component
+// ======= Time Slot Form Sub-Component =======
 function TimeSlotForm({
   slot,
   onSave,
@@ -541,81 +736,93 @@ function TimeSlotForm({
     display_order: slot?.display_order || 0,
   })
 
+  const labelStyle: React.CSSProperties = {
+    display: 'block',
+    fontSize: 13,
+    fontWeight: 600,
+    color: 'var(--admin-text-2)',
+    marginBottom: 6,
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     onSave(formData)
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Label</label>
+        <label style={labelStyle}>Label *</label>
         <input
           type="text"
           required
           value={formData.label}
           onChange={(e) => setFormData({ ...formData, label: e.target.value })}
           placeholder="e.g., 8:00 AM - 10:00 AM"
-          className="w-full px-3 py-2 border rounded-lg"
+          className="admin-input"
+          style={{ maxWidth: 320 }}
         />
       </div>
-      <div className="grid grid-cols-2 gap-4">
+
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: 16,
+          maxWidth: 320,
+        }}
+      >
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+          <label style={labelStyle}>Start Time *</label>
           <input
             type="time"
             required
             value={formData.start_time}
             onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
-            className="w-full px-3 py-2 border rounded-lg"
+            className="admin-input"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+          <label style={labelStyle}>End Time *</label>
           <input
             type="time"
             required
             value={formData.end_time}
             onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
-            className="w-full px-3 py-2 border rounded-lg"
+            className="admin-input"
           />
         </div>
       </div>
+
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Display Order</label>
+        <label style={labelStyle}>Display Order</label>
         <input
           type="number"
           value={formData.display_order}
-          onChange={(e) => setFormData({ ...formData, display_order: parseInt(e.target.value) || 0 })}
-          className="w-full px-3 py-2 border rounded-lg"
+          onChange={(e) =>
+            setFormData({ ...formData, display_order: parseInt(e.target.value) || 0 })
+          }
+          className="admin-input"
+          style={{ maxWidth: 120 }}
           min="0"
         />
       </div>
-      <div className="flex items-center gap-2">
-        <input
-          type="checkbox"
-          id="is_active"
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <Toggle
           checked={formData.is_active}
-          onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-          className="rounded"
+          onChange={(v) => setFormData({ ...formData, is_active: v })}
         />
-        <label htmlFor="is_active" className="text-sm text-gray-700">
+        <span style={{ fontSize: 14, color: 'var(--admin-text)' }}>
           Active (visible to customers)
-        </label>
+        </span>
       </div>
-      <div className="flex gap-2">
-        <button
-          type="submit"
-          disabled={saving}
-          className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50"
-        >
+
+      <div style={{ display: 'flex', gap: 10 }}>
+        <button type="submit" disabled={saving} className="admin-btn-primary">
           {saving ? 'Saving...' : 'Save'}
         </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-        >
+        <button type="button" onClick={onCancel} className="admin-btn-ghost">
           Cancel
         </button>
       </div>

@@ -6,6 +6,9 @@ import Image from 'next/image'
 import api from '@/lib/api'
 import { supabase } from '@/lib/supabase'
 import ImagePreviewCrop from '@/components/ImagePreviewCrop'
+import AdminPageHeader from '../../_components/AdminPageHeader'
+import Toggle from '../../_components/Toggle'
+import Toast, { useToast } from '../../_components/Toast'
 
 export default function AdminAddonEditPage() {
   const params = useParams()
@@ -26,6 +29,7 @@ export default function AdminAddonEditPage() {
     image_urls: [] as string[],
     product_ids: [] as string[],
   })
+  const { toasts, showToast, dismissToast } = useToast()
 
   const loadProducts = useCallback(async () => {
     try {
@@ -46,11 +50,13 @@ export default function AdminAddonEditPage() {
         price: addon.price?.toString() || '',
         is_active: addon.is_active ?? true,
         image_urls: addon.addon_images?.map((img: any) => img.image_url) || [],
-        product_ids: [], // Will need to fetch separately
+        product_ids: [],
       })
     } catch (error) {
       console.error('Error loading add-on:', error)
+      showToast('error', 'Failed to load add-on')
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [addonId])
 
   useEffect(() => {
@@ -63,7 +69,6 @@ export default function AdminAddonEditPage() {
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-
     const reader = new FileReader()
     reader.onload = (e) => {
       const url = e.target?.result as string
@@ -76,37 +81,28 @@ export default function AdminAddonEditPage() {
 
   async function handleCropComplete(croppedImageUrl: string) {
     setShowImagePreview(false)
-
     if (!supabase) {
-      alert('Supabase is not configured.')
+      showToast('error', 'Supabase is not configured.')
       return
     }
-
     setUploading(true)
     try {
       const response = await fetch(croppedImageUrl)
       const blob = await response.blob()
-
       const fileExt = 'png'
       const fileName = `${Math.random()}.${fileExt}`
       const filePath = `addons/${fileName}`
-
-      const { error: uploadError } = await supabase.storage
-        .from('product-images')
-        .upload(filePath, blob)
-
+      const { error: uploadError } = await supabase.storage.from('product-images').upload(filePath, blob)
       if (uploadError) throw uploadError
-
       const { data } = supabase.storage.from('product-images').getPublicUrl(filePath)
       setFormData((prev) => ({
         ...prev,
         image_urls: [...prev.image_urls, data.publicUrl],
       }))
-
       URL.revokeObjectURL(croppedImageUrl)
     } catch (error) {
       console.error('Error uploading image:', error)
-      alert('Failed to upload image')
+      showToast('error', 'Failed to upload image')
     } finally {
       setUploading(false)
     }
@@ -130,7 +126,6 @@ export default function AdminAddonEditPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
-
     try {
       const payload: any = {
         name: formData.name,
@@ -140,17 +135,15 @@ export default function AdminAddonEditPage() {
         image_urls: formData.image_urls,
         product_ids: formData.product_ids,
       }
-
       if (isNew) {
         await api.post('/addons', payload)
       } else {
         await api.patch(`/addons/${addonId}`, payload)
       }
-
       router.push('/admin/addons')
     } catch (error: any) {
       console.error('Error saving add-on:', error)
-      alert(error?.response?.data?.message || 'Failed to save add-on')
+      showToast('error', error?.response?.data?.message || 'Failed to save add-on')
     } finally {
       setLoading(false)
     }
@@ -165,8 +158,17 @@ export default function AdminAddonEditPage() {
     }))
   }
 
+  const labelStyle: React.CSSProperties = {
+    display: 'block',
+    fontSize: 13,
+    fontWeight: 600,
+    color: 'var(--admin-text-2)',
+    marginBottom: 6,
+  }
+
   return (
     <div>
+      <Toast toasts={toasts} onDismiss={dismissToast} />
       {showImagePreview && (
         <ImagePreviewCrop
           imageUrl={previewImageUrl}
@@ -175,116 +177,209 @@ export default function AdminAddonEditPage() {
           aspectRatio={1}
         />
       )}
-      <h1 className="text-3xl font-bold mb-6">{isNew ? 'New Add-on' : 'Edit Add-on'}</h1>
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-6">
-        <div>
-          <label className="block font-semibold mb-2">Name *</label>
-          <input
-            type="text"
-            required
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className="w-full px-4 py-2 border rounded"
-          />
-        </div>
 
-        <div>
-          <label className="block font-semibold mb-2">Description</label>
-          <textarea
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            rows={3}
-            className="w-full px-4 py-2 border rounded"
-          />
-        </div>
+      <AdminPageHeader
+        title={isNew ? 'New Add-on' : 'Edit Add-on'}
+        breadcrumbs={[
+          { label: 'Add-ons', href: '/admin/addons' },
+          { label: isNew ? 'New' : 'Edit' },
+        ]}
+      />
 
-        <div>
-          <label className="block font-semibold mb-2">Price *</label>
-          <input
-            type="number"
-            step="0.01"
-            required
-            value={formData.price}
-            onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-            className="w-full px-4 py-2 border rounded"
-          />
-        </div>
+      <form onSubmit={handleSubmit} style={{ maxWidth: 860 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Basic Info */}
+          <div className="admin-card">
+            <p className="admin-section-header">Basic Information</p>
 
-        <div>
-          <label className="block font-semibold mb-2">Images</label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleImageUpload}
-            disabled={uploading}
-            className="mb-4"
-          />
-          {uploading && <div className="text-gray-600">Uploading...</div>}
-          <div className="grid grid-cols-4 gap-4">
-            {formData.image_urls.map((url, index) => (
-              <div key={index} className="relative aspect-square">
-                <Image
-                  src={url}
-                  alt={`Add-on ${index + 1}`}
-                  fill
-                  sizes="(max-width: 768px) 50vw, 25vw"
-                  className="object-cover rounded"
-                />
-                <button
-                  type="button"
-                  onClick={() => removeImage(index)}
-                  className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center z-10"
-                >
-                  ×
-                </button>
+            <div style={{ marginBottom: 16 }}>
+              <label style={labelStyle}>Name *</label>
+              <input
+                type="text"
+                required
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="admin-input"
+                placeholder="e.g., Extra Ribbon"
+              />
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={labelStyle}>Description</label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                rows={3}
+                className="admin-input"
+                style={{ resize: 'vertical' }}
+                placeholder="Describe the add-on..."
+              />
+            </div>
+
+            <div style={{ marginBottom: 20 }}>
+              <label style={labelStyle}>Price (EGP) *</label>
+              <input
+                type="number"
+                step="0.01"
+                required
+                value={formData.price}
+                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                className="admin-input"
+                style={{ maxWidth: 160 }}
+                placeholder="e.g., 25.00"
+              />
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Toggle
+                checked={formData.is_active}
+                onChange={(v) => setFormData({ ...formData, is_active: v })}
+              />
+              <span style={{ fontSize: 14, color: 'var(--admin-text)' }}>Active (available to customers)</span>
+            </div>
+          </div>
+
+          {/* Images */}
+          <div className="admin-card">
+            <p className="admin-section-header">Images</p>
+
+            <label
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: '2px dashed var(--admin-border)',
+                borderRadius: 'var(--admin-radius)',
+                padding: '24px',
+                cursor: 'pointer',
+                textAlign: 'center',
+                marginBottom: formData.image_urls.length > 0 ? 16 : 0,
+              }}
+            >
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                disabled={uploading}
+                style={{ display: 'none' }}
+              />
+              <span style={{ fontSize: 28, marginBottom: 8 }}>🖼️</span>
+              <span style={{ fontSize: 14, color: 'var(--admin-text-2)' }}>
+                {uploading ? 'Uploading...' : 'Click to upload image'}
+              </span>
+              <span style={{ fontSize: 12, color: 'var(--admin-text-3)', marginTop: 4 }}>
+                PNG, JPG, WEBP — square recommended
+              </span>
+            </label>
+
+            {formData.image_urls.length > 0 && (
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
+                  gap: 12,
+                }}
+              >
+                {formData.image_urls.map((url, index) => (
+                  <div
+                    key={index}
+                    style={{
+                      position: 'relative',
+                      aspectRatio: '1',
+                      borderRadius: 'var(--admin-radius-sm)',
+                      overflow: 'hidden',
+                      border: '1px solid var(--admin-border)',
+                    }}
+                  >
+                    <Image
+                      src={url}
+                      alt={`Add-on ${index + 1}`}
+                      fill
+                      sizes="100px"
+                      className="object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeImage(index)}
+                      style={{
+                        position: 'absolute',
+                        top: 4,
+                        right: 4,
+                        background: 'var(--admin-danger)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: 22,
+                        height: 22,
+                        fontSize: 14,
+                        lineHeight: '22px',
+                        textAlign: 'center',
+                        zIndex: 10,
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
-        </div>
 
-        <div>
-          <label className="block font-semibold mb-2">Assign to Products</label>
-          <div className="max-h-64 overflow-y-auto border rounded p-4 space-y-2">
-            {products.map((product) => (
-              <label key={product.id} className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={formData.product_ids.includes(product.id)}
-                  onChange={() => toggleProduct(product.id)}
-                  className="rounded"
-                />
-                <span className="text-gray-900">{product.title}</span>
-              </label>
-            ))}
+          {/* Assign to Products */}
+          <div className="admin-card">
+            <p className="admin-section-header">Assign to Products</p>
+            <p style={{ fontSize: 13, color: 'var(--admin-text-2)', marginBottom: 12 }}>
+              Select which products this add-on is available for.
+            </p>
+            <div
+              style={{
+                maxHeight: 260,
+                overflowY: 'auto',
+                border: '1px solid var(--admin-border)',
+                borderRadius: 'var(--admin-radius-sm)',
+                padding: 12,
+              }}
+            >
+              {products.length === 0 ? (
+                <p style={{ fontSize: 14, color: 'var(--admin-text-3)', textAlign: 'center', padding: '20px 0' }}>
+                  No products found
+                </p>
+              ) : (
+                products.map((product) => (
+                  <label
+                    key={product.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      padding: '6px 0',
+                      cursor: 'pointer',
+                      borderBottom: '1px solid var(--admin-border)',
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={formData.product_ids.includes(product.id)}
+                      onChange={() => toggleProduct(product.id)}
+                      style={{ width: 16, height: 16, accentColor: 'var(--admin-accent)' }}
+                    />
+                    <span style={{ fontSize: 14, color: 'var(--admin-text)' }}>{product.title}</span>
+                  </label>
+                ))
+              )}
+            </div>
           </div>
-        </div>
 
-        <div>
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={formData.is_active}
-              onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-            />
-            <span className="text-gray-900">Active</span>
-          </label>
-        </div>
-
-        <div className="flex gap-4">
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50"
-          >
-            {loading ? 'Saving...' : 'Save'}
-          </button>
-          <button
-            type="button"
-            onClick={() => router.push('/admin/addons')}
-            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-900 hover:bg-gray-50"
-          >
-            Cancel
-          </button>
+          {/* Actions */}
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+            <button type="button" onClick={() => router.push('/admin/addons')} className="admin-btn-ghost">
+              Cancel
+            </button>
+            <button type="submit" disabled={loading} className="admin-btn-primary">
+              {loading ? 'Saving...' : 'Save Add-on'}
+            </button>
+          </div>
         </div>
       </form>
     </div>

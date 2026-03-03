@@ -7,6 +7,9 @@ import { DeliveryDestinationsService } from '../delivery-destinations/delivery-d
 import { PromoCodesService } from '../promo-codes/promo-codes.service';
 import { MailService } from '../mail/mail.service';
 import { LoyaltyService } from '../loyalty/loyalty.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { AnalyticsService } from '../analytics/analytics.service';
+import { InventoryService } from '../inventory/inventory.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 
@@ -22,6 +25,9 @@ export class OrdersService {
     private promoCodesService: PromoCodesService,
     private mailService: MailService,
     private loyaltyService: LoyaltyService,
+    private notificationsService: NotificationsService,
+    private analyticsService: AnalyticsService,
+    private inventoryService: InventoryService,
   ) {}
 
   async create(createOrderDto: CreateOrderDto) {
@@ -152,31 +158,36 @@ export class OrdersService {
       throw new BadRequestException('Delivery time slot is required');
     }
 
+    const paymentMethod = createOrderDto.payment_method || 'card';
+    const isCod = paymentMethod === 'cod';
+
     // Create order
+    const insertPayload: Record<string, unknown> = {
+      order_number: orderNumber,
+      customer_name: createOrderDto.customer_name,
+      payment_method: paymentMethod,
+      customer_email: createOrderDto.customer_email,
+      customer_phone: createOrderDto.customer_phone,
+      delivery_date: createOrderDto.delivery_date,
+      delivery_time_slot: deliveryTimeSlotText,
+      delivery_time_slot_id: createOrderDto.delivery_time_slot_id || null,
+      card_message: createOrderDto.card_message,
+      delivery_destination_id: createOrderDto.delivery_destination_id || null,
+      delivery_destination_name: deliveryDestinationName,
+      delivery_fee_egp: deliveryFeeEgp,
+      delivery_address: createOrderDto.delivery_address || null,
+      delivery_maps_link: createOrderDto.delivery_maps_link || null,
+      promo_code_id: createOrderDto.promo_code_id || null,
+      discount_amount_egp: discountAmountEgp,
+      subtotal,
+      total,
+      points_earned: pointsEarned,
+      payment_status: isCod ? 'PENDING_CASH' : 'pending',
+      order_status: 'pending',
+    };
     const { data: order, error: orderError } = await supabase
       .from('orders')
-      .insert({
-        order_number: orderNumber,
-        customer_name: createOrderDto.customer_name,
-        customer_email: createOrderDto.customer_email,
-        customer_phone: createOrderDto.customer_phone,
-        delivery_date: createOrderDto.delivery_date,
-        delivery_time_slot: deliveryTimeSlotText,
-        delivery_time_slot_id: createOrderDto.delivery_time_slot_id || null,
-        card_message: createOrderDto.card_message,
-        delivery_destination_id: createOrderDto.delivery_destination_id || null,
-        delivery_destination_name: deliveryDestinationName,
-        delivery_fee_egp: deliveryFeeEgp,
-        delivery_address: createOrderDto.delivery_address || null,
-        delivery_maps_link: createOrderDto.delivery_maps_link || null,
-        promo_code_id: createOrderDto.promo_code_id || null,
-        discount_amount_egp: discountAmountEgp,
-        subtotal,
-        total,
-        points_earned: pointsEarned,
-        payment_status: 'pending',
-        order_status: 'pending',
-      })
+      .insert(insertPayload)
       .select()
       .single();
 
@@ -194,10 +205,34 @@ export class OrdersService {
     const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
     if (itemsError) throw new BadRequestException(itemsError.message);
 
+    try {
+      const orderItemsForInventory = orderItemsData.map((item) => ({
+        productId: item.product_id,
+        quantity: item.quantity,
+      }));
+      await this.inventoryService.deductInventoryForOrder(order.id, orderItemsForInventory);
+    } catch (e) {
+      console.warn('[Orders] deductInventoryForOrder failed (non-blocking):', e);
+    }
+
+    if (isCod) {
+      try {
+        await this.onPaymentSuccess(order.id);
+      } catch (e) {
+        console.error('[Orders] COD onPaymentSuccess failed:', e);
+      }
+    }
+
+    try {
+      await this.analyticsService.markCheckoutConverted(createOrderDto.customer_email);
+    } catch (e) {
+      console.warn('[Orders] markCheckoutConverted failed:', e);
+    }
+
     return this.findOne(order.id);
   }
 
-  /** Called after Stripe payment_intent.succeeded: decrease stock, send email, increment promo usage. */
+  /** Called after Paymob webhook confirms payment: decrease stock, send email, increment promo usage. */
   async onPaymentSuccess(orderId: string): Promise<void> {
     const order = await this.findOne(orderId);
     const items = order.order_items || [];
@@ -255,6 +290,15 @@ export class OrdersService {
       delivery_fee_egp: order.delivery_fee_egp != null ? parseFloat(order.delivery_fee_egp) : undefined,
       total_egp: parseFloat(order.total),
     });
+
+    try {
+      await this.notificationsService.sendOrderConfirmationPush(
+        order.customer_email,
+        order.order_number,
+      );
+    } catch (e) {
+      console.warn('[Orders] Push notification failed:', e);
+    }
   }
 
   async findAll(filters?: {
@@ -318,6 +362,46 @@ export class OrdersService {
     return data;
   }
 
+  /** Order with admin notes (for admin panel). Notes are internal only. */
+  async findOneWithAdminNotes(id: string) {
+    const order = await this.findOne(id);
+    const supabase = this.supabaseService.getAdminClient();
+    const [notesRes, profileRes] = await Promise.all([
+      supabase
+        .from('order_admin_notes')
+        .select('id, admin_id, admin_name, note, created_at')
+        .eq('order_id', id)
+        .order('created_at', { ascending: true }),
+      order.customer_email
+        ? supabase.from('profiles').select('id').eq('email', order.customer_email).maybeSingle()
+        : Promise.resolve({ data: null }),
+    ]);
+    const admin_notes = notesRes.data ?? [];
+    const customer_user_id = profileRes.data?.id ?? null;
+    return { ...order, admin_notes, customer_user_id };
+  }
+
+  /** Add an internal admin note to an order. Admin-only. */
+  async addAdminNote(
+    orderId: string,
+    payload: { admin_id: string; admin_name: string; note: string },
+  ) {
+    const supabase = this.supabaseService.getAdminClient();
+    await this.findOne(orderId);
+    const { data, error } = await supabase
+      .from('order_admin_notes')
+      .insert({
+        order_id: orderId,
+        admin_id: payload.admin_id,
+        admin_name: payload.admin_name || null,
+        note: payload.note.trim(),
+      })
+      .select()
+      .single();
+    if (error) throw new BadRequestException(error.message);
+    return data;
+  }
+
   async findByOrderNumber(orderNumber: string) {
     const supabase = this.supabaseService.getAdminClient();
     const { data, error } = await supabase
@@ -340,6 +424,14 @@ export class OrdersService {
     const supabase = this.supabaseService.getAdminClient();
 
     await this.findOne(id);
+
+    if (updateOrderStatusDto.order_status === 'cancelled') {
+      try {
+        await this.inventoryService.refundInventoryForOrder(id);
+      } catch (e) {
+        console.warn('[Orders] refundInventoryForOrder failed (non-blocking):', e);
+      }
+    }
 
     const { error } = await supabase
       .from('orders')

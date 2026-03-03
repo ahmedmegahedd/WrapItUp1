@@ -1,0 +1,25 @@
+-- ============================================================================
+-- Create the Super Admin user (admin@wrapitup.com)
+-- Run AFTER: admin-rbac-schema.sql, admin-rbac-seed.sql
+--
+-- Option A – Supabase Dashboard (recommended)
+-- 1. Authentication > Users > Add user > Create new user
+-- 2. Email: admin@wrapitup.com
+-- 3. Password: Admin123!@#
+-- 4. Auto Confirm User: ON
+-- 5. Create user, then copy the new user's UUID
+-- 6. Run the INSERT below with that UUID
+--
+-- Option B – Supabase Auth API (from backend or script)
+-- Use supabase.auth.admin.createUser({ email, password, email_confirm: true })
+-- then insert into admins with the returned user id and role_id below.
+-- ============================================================================
+
+-- Replace YOUR_SUPER_ADMIN_USER_UUID with the UUID from step 5 above.
+-- INSERT INTO admins (id, email, role_id)
+-- VALUES (
+--   'YOUR_SUPER_ADMIN_USER_UUID',
+--   'admin@wrapitup.com',
+--   '00000000-0000-0000-0000-000000000001'
+-- )
+-- ON CONFLICT (id) DO UPDATE SET role_id = EXCLUDED.role_id;

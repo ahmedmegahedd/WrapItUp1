@@ -4,118 +4,189 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import api from '@/lib/api'
+import StatusBadge from '../_components/StatusBadge'
+import SkeletonRows from '../_components/SkeletonRows'
+import ConfirmModal from '../_components/ConfirmModal'
+import Toast, { useToast } from '../_components/Toast'
+import AdminPageHeader from '../_components/AdminPageHeader'
 
 export default function AdminRewardsPage() {
   const [rewards, setRewards] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null)
+  const { toasts, showToast, dismissToast } = useToast()
 
   useEffect(() => {
     loadRewards()
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function loadRewards() {
     try {
       const response = await api.get('/admin/rewards')
       setRewards(response.data || [])
-    } catch (error) {
-      console.error('Error loading rewards:', error)
+    } catch {
+      showToast('error', 'Failed to load rewards')
     } finally {
       setLoading(false)
     }
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm('Are you sure you want to delete this reward?')) return
+  async function handleDelete() {
+    if (!deleteTarget) return
     try {
-      await api.delete(`/admin/rewards/${id}`)
-      loadRewards()
-    } catch (error) {
-      console.error('Error deleting reward:', error)
-      alert('Failed to delete reward')
+      await api.delete(`/admin/rewards/${deleteTarget.id}`)
+      setRewards((prev) => prev.filter((r) => r.id !== deleteTarget.id))
+      showToast('success', `"${deleteTarget.title}" deleted`)
+    } catch {
+      showToast('error', 'Failed to delete reward')
+    } finally {
+      setDeleteTarget(null)
     }
   }
 
-  if (loading) {
-    return <div>Loading...</div>
-  }
-
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Points &amp; Rewards</h1>
-        <Link
-          href="/admin/rewards/new"
-          className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
-        >
-          New Reward
-        </Link>
-      </div>
+    <div style={{ padding: '24px 24px 40px', maxWidth: 900, margin: '0 auto' }}>
+      <AdminPageHeader
+        title="Points &amp; Rewards"
+        subtitle={loading ? undefined : `${rewards.length} rewards`}
+        action={{ label: '+ New Reward', href: '/admin/rewards/new' }}
+      />
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50">
+      <div className="admin-table-wrapper">
+        <table className="admin-table">
+          <thead>
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Image</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Points required</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+              <th style={{ width: 60 }} />
+              <th>Title</th>
+              <th>Points required</th>
+              <th>Status</th>
+              <th>Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
-            {rewards.length > 0 ? (
+          <tbody>
+            {loading ? (
+              <SkeletonRows cols={5} rows={4} />
+            ) : rewards.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={5}
+                  style={{
+                    textAlign: 'center',
+                    padding: '48px 20px',
+                    color: 'var(--admin-text-3)',
+                    fontSize: 14,
+                  }}
+                >
+                  No rewards yet. Create one to let customers redeem points.
+                </td>
+              </tr>
+            ) : (
               rewards.map((reward) => (
                 <tr key={reward.id}>
-                  <td className="px-6 py-4">
+                  <td>
                     {reward.image_url ? (
-                      <div className="relative w-12 h-12 rounded overflow-hidden bg-gray-100">
+                      <div
+                        style={{
+                          position: 'relative',
+                          width: 40,
+                          height: 40,
+                          borderRadius: 6,
+                          overflow: 'hidden',
+                          border: '1px solid var(--admin-border)',
+                          flexShrink: 0,
+                        }}
+                      >
                         <Image
                           src={reward.image_url}
                           alt=""
                           fill
-                          className="object-cover"
-                          sizes="48px"
+                          sizes="40px"
+                          style={{ objectFit: 'cover' }}
                         />
                       </div>
                     ) : (
-                      <div className="w-12 h-12 rounded bg-gray-200 flex items-center justify-center text-gray-400 text-xs">—</div>
+                      <div
+                        style={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: 6,
+                          background: 'var(--admin-surface-2)',
+                          border: '1px solid var(--admin-border)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: 16,
+                        }}
+                      >
+                        🎁
+                      </div>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-gray-900">{reward.title}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-900">{reward.points_required} pts</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td style={{ fontWeight: 500 }}>{reward.title}</td>
+                  <td>
                     <span
-                      className={`px-2 py-1 text-xs rounded-full ${
-                        reward.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                      }`}
+                      style={{
+                        fontWeight: 700,
+                        color: 'var(--admin-accent)',
+                      }}
                     >
-                      {reward.is_active ? 'Active' : 'Inactive'}
+                      {reward.points_required}
+                    </span>
+                    <span style={{ fontSize: 12, color: 'var(--admin-text-3)', marginLeft: 4 }}>
+                      pts
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <Link href={`/admin/rewards/${reward.id}`} className="text-gray-900 hover:text-gray-700 mr-4">
-                      Edit
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(reward.id)}
-                      className="text-red-600 hover:text-red-800"
-                    >
-                      Delete
-                    </button>
+                  <td>
+                    <StatusBadge
+                      status={reward.is_active ? 'active' : 'inactive'}
+                      type="product"
+                    />
+                  </td>
+                  <td>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <Link
+                        href={`/admin/rewards/${reward.id}`}
+                        className="admin-btn-ghost"
+                        style={{ fontSize: 12, padding: '5px 12px' }}
+                      >
+                        Edit
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setDeleteTarget({ id: reward.id, title: reward.title })
+                        }
+                        style={{
+                          fontSize: 12,
+                          padding: '5px 12px',
+                          background: 'none',
+                          border: '1px solid var(--admin-border)',
+                          borderRadius: 'var(--admin-radius-sm)',
+                          color: 'var(--admin-danger)',
+                          fontFamily: 'inherit',
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
-            ) : (
-              <tr>
-                <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
-                  No rewards yet. Create one to let customers redeem points.
-                </td>
-              </tr>
             )}
           </tbody>
         </table>
       </div>
+
+      <ConfirmModal
+        open={!!deleteTarget}
+        title="Delete reward?"
+        message={`"${deleteTarget?.title}" will be permanently deleted.`}
+        confirmLabel="Delete"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
+
+      <Toast toasts={toasts} onDismiss={dismissToast} />
     </div>
   )
 }

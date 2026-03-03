@@ -4,12 +4,44 @@ import { useEffect, useState } from 'react'
 import api from '@/lib/api'
 import { supabase } from '@/lib/supabase'
 import ImagePreviewCrop from '@/components/ImagePreviewCrop'
+import Toggle from '../_components/Toggle'
+import Toast, { useToast } from '../_components/Toast'
+import AdminPageHeader from '../_components/AdminPageHeader'
 
 type HeroImage = {
   id: string
   image_url: string
   is_active: boolean
   created_at: string
+}
+
+type AppSettings = {
+  home_section_order: string[]
+  promotion_visible: boolean
+  promotion_title: string
+  promotion_message: string
+  final_cta_headline: string
+  final_cta_subtext: string
+  final_cta_button: string
+  featured_products_limit: number
+}
+
+const defaultSectionOrder = [
+  'hero',
+  'featured_collections',
+  'featured_products',
+  'promotion',
+  'value_proposition',
+  'final_cta',
+]
+
+const sectionLabels: Record<string, string> = {
+  hero: 'Hero',
+  featured_collections: 'Featured collections',
+  featured_products: 'Featured products',
+  promotion: 'Promotion banner',
+  value_proposition: 'Why choose us',
+  final_cta: 'Final CTA',
 }
 
 export default function AdminHomepagePage() {
@@ -26,33 +58,6 @@ export default function AdminHomepagePage() {
     button_label: 'Explore Collections',
   })
   const [heroTextSaving, setHeroTextSaving] = useState(false)
-
-  type AppSettings = {
-    home_section_order: string[]
-    promotion_visible: boolean
-    promotion_title: string
-    promotion_message: string
-    final_cta_headline: string
-    final_cta_subtext: string
-    final_cta_button: string
-    featured_products_limit: number
-  }
-  const defaultSectionOrder = [
-    'hero',
-    'featured_collections',
-    'featured_products',
-    'promotion',
-    'value_proposition',
-    'final_cta',
-  ]
-  const sectionLabels: Record<string, string> = {
-    hero: 'Hero',
-    featured_collections: 'Featured collections',
-    featured_products: 'Featured products',
-    promotion: 'Promotion banner',
-    value_proposition: 'Why choose us',
-    final_cta: 'Final CTA',
-  }
   const [appSettings, setAppSettings] = useState<AppSettings>({
     home_section_order: defaultSectionOrder,
     promotion_visible: true,
@@ -64,13 +69,13 @@ export default function AdminHomepagePage() {
     featured_products_limit: 8,
   })
   const [appSettingsSaving, setAppSettingsSaving] = useState(false)
+  const { toasts, showToast, dismissToast } = useToast()
 
   async function loadImages() {
     try {
       const res = await api.get('/admin/homepage/hero-images')
       setImages(res.data || [])
-    } catch (e) {
-      console.error(e)
+    } catch {
       setImages([])
     } finally {
       setLoading(false)
@@ -90,8 +95,8 @@ export default function AdminHomepagePage() {
           button_label: d.button_label ?? 'Explore Collections',
         })
       }
-    } catch (e) {
-      console.error(e)
+    } catch {
+      // silent
     }
   }
 
@@ -99,9 +104,9 @@ export default function AdminHomepagePage() {
     setHeroTextSaving(true)
     try {
       await api.patch('/admin/homepage/hero-text', heroText)
-      alert('Hero text saved.')
+      showToast('success', 'Hero text saved')
     } catch (err: any) {
-      alert(err?.response?.data?.message || 'Failed to save')
+      showToast('error', err?.response?.data?.message || 'Failed to save hero text')
     } finally {
       setHeroTextSaving(false)
     }
@@ -113,18 +118,21 @@ export default function AdminHomepagePage() {
       const d = res.data
       if (d) {
         setAppSettings({
-          home_section_order: Array.isArray(d.home_section_order) ? d.home_section_order : defaultSectionOrder,
+          home_section_order: Array.isArray(d.home_section_order)
+            ? d.home_section_order
+            : defaultSectionOrder,
           promotion_visible: d.promotion_visible !== false,
           promotion_title: d.promotion_title ?? 'Special offer',
           promotion_message: d.promotion_message ?? 'Free delivery on orders over 250 EGP',
           final_cta_headline: d.final_cta_headline ?? 'Ready to surprise someone?',
           final_cta_subtext: d.final_cta_subtext ?? 'Browse our collections and order in minutes.',
           final_cta_button: d.final_cta_button ?? 'Browse all collections',
-          featured_products_limit: typeof d.featured_products_limit === 'number' ? d.featured_products_limit : 8,
+          featured_products_limit:
+            typeof d.featured_products_limit === 'number' ? d.featured_products_limit : 8,
         })
       }
-    } catch (e) {
-      console.error(e)
+    } catch {
+      // silent
     }
   }
 
@@ -132,9 +140,9 @@ export default function AdminHomepagePage() {
     setAppSettingsSaving(true)
     try {
       await api.patch('/admin/homepage/app-settings', appSettings)
-      alert('App settings saved.')
+      showToast('success', 'App settings saved')
     } catch (err: any) {
-      alert(err?.response?.data?.message || 'Failed to save')
+      showToast('error', err?.response?.data?.message || 'Failed to save settings')
     } finally {
       setAppSettingsSaving(false)
     }
@@ -187,7 +195,7 @@ export default function AdminHomepagePage() {
   async function handleCropComplete(croppedImageUrl: string) {
     setShowImagePreview(false)
     if (!supabase) {
-      alert('Supabase is not configured.')
+      showToast('error', 'Supabase is not configured.')
       return
     }
     setUploading(true)
@@ -200,17 +208,15 @@ export default function AdminHomepagePage() {
         .upload(filePath, blob)
       if (uploadError) throw uploadError
       const { data } = supabase.storage.from('product-images').getPublicUrl(filePath)
-      const publicUrl = data.publicUrl
-
       await api.post('/admin/homepage/hero-images', {
-        image_url: publicUrl,
+        image_url: data.publicUrl,
         set_as_active: setAsActiveOnAdd,
       })
       await loadImages()
       URL.revokeObjectURL(croppedImageUrl)
+      showToast('success', 'Hero image uploaded')
     } catch (err: any) {
-      console.error(err)
-      alert(err?.response?.data?.message || 'Upload failed')
+      showToast('error', err?.response?.data?.message || 'Upload failed')
     } finally {
       setUploading(false)
     }
@@ -228,23 +234,41 @@ export default function AdminHomepagePage() {
     try {
       await api.patch(`/admin/homepage/hero-images/${id}/set-active`)
       await loadImages()
+      showToast('success', 'Active hero image updated')
     } catch (err: any) {
-      alert(err?.response?.data?.message || 'Failed to set active')
+      showToast('error', err?.response?.data?.message || 'Failed to set active')
     }
   }
 
   async function remove(id: string) {
-    if (!confirm('Remove this hero image? It will no longer appear in the list.')) return
     try {
       await api.delete(`/admin/homepage/hero-images/${id}`)
       await loadImages()
+      showToast('success', 'Image removed')
     } catch (err: any) {
-      alert(err?.response?.data?.message || 'Failed to delete')
+      showToast('error', err?.response?.data?.message || 'Failed to remove image')
     }
   }
 
+  const sectionCardStyle: React.CSSProperties = {
+    background: 'var(--admin-surface)',
+    border: '1px solid var(--admin-border)',
+    borderRadius: 'var(--admin-radius)',
+    boxShadow: 'var(--admin-shadow)',
+    padding: 20,
+    marginBottom: 16,
+  }
+
+  const labelStyle: React.CSSProperties = {
+    display: 'block',
+    fontSize: 13,
+    fontWeight: 600,
+    color: 'var(--admin-text-2)',
+    marginBottom: 6,
+  }
+
   return (
-    <div>
+    <div style={{ padding: '24px 24px 40px', maxWidth: 780, margin: '0 auto' }}>
       {showImagePreview && (
         <ImagePreviewCrop
           imageUrl={previewImageUrl}
@@ -253,269 +277,266 @@ export default function AdminHomepagePage() {
           aspectRatio={16 / 9}
         />
       )}
-      <h1 className="text-3xl font-bold mb-6">App hero</h1>
-      <p className="text-gray-600 mb-8">
-        Hero image and text shown on the mobile app home screen. Only one image can be active at a time.
-      </p>
+
+      <AdminPageHeader
+        title="App Hero"
+        subtitle="Hero image and text shown on the mobile app home screen"
+      />
 
       {/* Hero text */}
-      <div className="bg-white rounded-lg shadow p-6 mb-8">
-        <h2 className="text-lg font-semibold mb-4">Hero text</h2>
-        <p className="text-sm text-gray-500 mb-4">
-          Edit the headline, subtext, and button label shown on the app home hero. Use a new line in the headline for a line break.
+      <div style={sectionCardStyle}>
+        <div className="admin-section-header">Hero Text</div>
+        <p style={{ fontSize: 13, color: 'var(--admin-text-3)', marginBottom: 16 }}>
+          Edit the headline, subtext, and button label shown on the app home hero. Use a new line for a line break.
         </p>
-        <div className="space-y-4 max-w-2xl">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 600 }}>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Headline (1)</label>
+            <label style={labelStyle}>Headline (1)</label>
             <textarea
               value={heroText.headline}
               onChange={(e) => setHeroText((t) => ({ ...t, headline: e.target.value }))}
               rows={2}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+              className="admin-input"
               placeholder="Luxury breakfast gifts for unforgettable mornings"
+              style={{ resize: 'vertical' }}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Subtext (2)</label>
+            <label style={labelStyle}>Subtext (2)</label>
             <textarea
               value={heroText.subtext}
               onChange={(e) => setHeroText((t) => ({ ...t, subtext: e.target.value }))}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
-              placeholder="Thoughtfully curated breakfast trays..."
+              className="admin-input"
+              placeholder="Thoughtfully curated breakfast trays…"
+              style={{ resize: 'vertical' }}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Button label (3)</label>
+            <label style={labelStyle}>Button label (3)</label>
             <input
               type="text"
               value={heroText.button_label}
               onChange={(e) => setHeroText((t) => ({ ...t, button_label: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-pink-500"
+              className="admin-input"
               placeholder="Explore Collections"
             />
           </div>
-          <button
-            type="button"
-            onClick={saveHeroText}
-            disabled={heroTextSaving}
-            className="px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-800 disabled:opacity-50"
-          >
-            {heroTextSaving ? 'Saving…' : 'Save hero text'}
-          </button>
+          <div>
+            <button
+              type="button"
+              onClick={saveHeroText}
+              disabled={heroTextSaving}
+              className="admin-btn-primary"
+            >
+              {heroTextSaving ? 'Saving…' : 'Save Hero Text'}
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Upload */}
-      <div className="bg-white rounded-lg shadow p-6 mb-8">
-        <h2 className="text-lg font-semibold mb-4">Upload new app hero image</h2>
-        <div className="flex flex-wrap items-center gap-4">
-          <label className="flex items-center gap-2 cursor-pointer">
+      {/* Upload hero image */}
+      <div style={sectionCardStyle}>
+        <div className="admin-section-header">Upload Hero Image</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+          <label
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '9px 18px',
+              borderRadius: 'var(--admin-radius-sm)',
+              background: uploading ? 'var(--admin-surface-2)' : 'var(--admin-accent)',
+              color: uploading ? 'var(--admin-text-3)' : 'white',
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: uploading ? 'not-allowed' : 'pointer',
+              border: 'none',
+            }}
+          >
+            {uploading ? '⏳ Uploading…' : '🖼️ Choose image'}
             <input
               type="file"
               accept="image/*"
               disabled={uploading}
               onChange={handleFileSelect}
-              className="sr-only"
+              style={{ display: 'none' }}
             />
-            <span
-              className={`px-4 py-2 rounded-lg border transition-colors ${
-                uploading ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : 'bg-black text-white hover:bg-gray-800'
-              }`}
-            >
-              {uploading ? 'Uploading…' : 'Choose image'}
-            </span>
           </label>
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={setAsActiveOnAdd}
-              onChange={(e) => setSetAsActiveOnAdd(e.target.checked)}
-            />
-            <span className="text-sm text-gray-700">Set as active when adding</span>
-          </label>
+          <Toggle
+            checked={setAsActiveOnAdd}
+            onChange={setSetAsActiveOnAdd}
+            label="Set as active when adding"
+          />
         </div>
       </div>
 
       {/* App home screen settings */}
-      <div className="bg-white rounded-lg shadow p-6 mb-8">
-        <h2 className="text-lg font-semibold mb-4">App home screen</h2>
-        <p className="text-sm text-gray-500 mb-6">
-          Control which sections appear on the app home screen and their copy. Section order and visibility, promotion banner, final CTA, and featured products count.
+      <div style={sectionCardStyle}>
+        <div className="admin-section-header">App Home Screen</div>
+        <p style={{ fontSize: 13, color: 'var(--admin-text-3)', marginBottom: 20 }}>
+          Control which sections appear on the app home screen, their order, and copy.
         </p>
 
-        <div className="space-y-6 max-w-2xl">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 560 }}>
+          {/* Section order */}
           <div>
-            <h3 className="font-medium text-gray-800 mb-2">Section order & visibility</h3>
-            <p className="text-sm text-gray-500 mb-2">Reorder or hide sections. Only checked sections are shown, in the order below.</p>
-            <ul className="space-y-1 border rounded-lg p-2 bg-gray-50">
-              {defaultSectionOrder.map((id) => {
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--admin-text-2)', marginBottom: 10 }}>
+              Section Order &amp; Visibility
+            </div>
+            <p style={{ fontSize: 12, color: 'var(--admin-text-3)', marginBottom: 10 }}>
+              Only checked sections are shown, in the listed order.
+            </p>
+            <div style={{ border: '1px solid var(--admin-border)', borderRadius: 'var(--admin-radius-sm)', overflow: 'hidden' }}>
+              {defaultSectionOrder.map((id, i) => {
                 const included = appSettings.home_section_order.includes(id)
                 const idx = appSettings.home_section_order.indexOf(id)
                 return (
-                  <li key={id} className="flex items-center gap-2 py-1">
+                  <div
+                    key={id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 12,
+                      padding: '10px 14px',
+                      borderBottom: i < defaultSectionOrder.length - 1 ? '1px solid var(--admin-border)' : 'none',
+                      background: included ? 'var(--admin-surface)' : 'var(--admin-surface-2)',
+                    }}
+                  >
                     <input
                       type="checkbox"
                       checked={included}
                       onChange={() => toggleSection(id)}
-                      className="rounded"
+                      style={{ flexShrink: 0 }}
                     />
-                    <span className="flex-1">{sectionLabels[id] ?? id}</span>
+                    <span style={{ flex: 1, fontSize: 13, fontWeight: 500, color: included ? 'var(--admin-text)' : 'var(--admin-text-3)' }}>
+                      {sectionLabels[id] ?? id}
+                    </span>
                     {included && (
-                      <span className="flex gap-1">
+                      <div style={{ display: 'flex', gap: 4 }}>
                         <button
                           type="button"
                           onClick={() => moveSection(id, 'up')}
                           disabled={idx === 0}
-                          className="px-2 py-0.5 text-xs border rounded disabled:opacity-40"
-                        >
-                          Up
-                        </button>
+                          style={{ padding: '3px 8px', fontSize: 12, background: 'var(--admin-surface)', border: '1px solid var(--admin-border)', borderRadius: 4, fontFamily: 'inherit', opacity: idx === 0 ? 0.3 : 1 }}
+                        >↑</button>
                         <button
                           type="button"
                           onClick={() => moveSection(id, 'down')}
                           disabled={idx === appSettings.home_section_order.length - 1}
-                          className="px-2 py-0.5 text-xs border rounded disabled:opacity-40"
-                        >
-                          Down
-                        </button>
-                      </span>
+                          style={{ padding: '3px 8px', fontSize: 12, background: 'var(--admin-surface)', border: '1px solid var(--admin-border)', borderRadius: 4, fontFamily: 'inherit', opacity: idx === appSettings.home_section_order.length - 1 ? 0.3 : 1 }}
+                        >↓</button>
+                      </div>
                     )}
-                  </li>
+                  </div>
                 )
               })}
-            </ul>
+            </div>
+          </div>
+
+          {/* Featured products limit */}
+          <div>
+            <label style={labelStyle}>Featured Products Limit</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <input
+                type="number"
+                min={1}
+                max={20}
+                value={appSettings.featured_products_limit}
+                onChange={(e) =>
+                  setAppSettings((s) => ({ ...s, featured_products_limit: Math.max(1, Math.min(20, parseInt(e.target.value, 10) || 8)) }))
+                }
+                className="admin-input"
+                style={{ width: 80 }}
+              />
+              <span style={{ fontSize: 13, color: 'var(--admin-text-3)' }}>products in &quot;Best sellers&quot;</span>
+            </div>
+          </div>
+
+          {/* Promotion banner */}
+          <div style={{ borderTop: '1px solid var(--admin-border)', paddingTop: 20 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--admin-text-2)', marginBottom: 12 }}>Promotion Banner</div>
+            <div style={{ marginBottom: 12 }}>
+              <Toggle
+                checked={appSettings.promotion_visible}
+                onChange={(v) => setAppSettings((s) => ({ ...s, promotion_visible: v }))}
+                label="Show promotion banner on home"
+              />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <input type="text" value={appSettings.promotion_title} onChange={(e) => setAppSettings((s) => ({ ...s, promotion_title: e.target.value }))} className="admin-input" placeholder="e.g. Special offer" />
+              <input type="text" value={appSettings.promotion_message} onChange={(e) => setAppSettings((s) => ({ ...s, promotion_message: e.target.value }))} className="admin-input" placeholder="e.g. Free delivery on orders over 250 EGP" />
+            </div>
+          </div>
+
+          {/* Final CTA */}
+          <div style={{ borderTop: '1px solid var(--admin-border)', paddingTop: 20 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--admin-text-2)', marginBottom: 12 }}>Final CTA Block</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <input type="text" value={appSettings.final_cta_headline} onChange={(e) => setAppSettings((s) => ({ ...s, final_cta_headline: e.target.value }))} className="admin-input" placeholder="Headline" />
+              <input type="text" value={appSettings.final_cta_subtext} onChange={(e) => setAppSettings((s) => ({ ...s, final_cta_subtext: e.target.value }))} className="admin-input" placeholder="Subtext" />
+              <input type="text" value={appSettings.final_cta_button} onChange={(e) => setAppSettings((s) => ({ ...s, final_cta_button: e.target.value }))} className="admin-input" placeholder="Button label" />
+            </div>
           </div>
 
           <div>
-            <label className="block font-medium text-gray-800 mb-1">Featured products limit</label>
-            <input
-              type="number"
-              min={1}
-              max={20}
-              value={appSettings.featured_products_limit}
-              onChange={(e) =>
-                setAppSettings((s) => ({
-                  ...s,
-                  featured_products_limit: Math.max(1, Math.min(20, parseInt(e.target.value, 10) || 8)),
-                }))
-              }
-              className="w-24 px-3 py-2 border border-gray-300 rounded-lg"
-            />
-            <span className="ml-2 text-sm text-gray-500">products shown in “Best sellers”</span>
+            <button type="button" onClick={saveAppSettings} disabled={appSettingsSaving} className="admin-btn-primary">
+              {appSettingsSaving ? 'Saving…' : 'Save App Settings'}
+            </button>
           </div>
-
-          <div className="border-t pt-6">
-            <h3 className="font-medium text-gray-800 mb-3">Promotion banner</h3>
-            <label className="flex items-center gap-2 mb-3">
-              <input
-                type="checkbox"
-                checked={appSettings.promotion_visible}
-                onChange={(e) => setAppSettings((s) => ({ ...s, promotion_visible: e.target.checked }))}
-                className="rounded"
-              />
-              <span className="text-sm">Show promotion banner on home</span>
-            </label>
-            <div className="space-y-2">
-              <input
-                type="text"
-                value={appSettings.promotion_title}
-                onChange={(e) => setAppSettings((s) => ({ ...s, promotion_title: e.target.value }))}
-                placeholder="e.g. Special offer"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-              />
-              <input
-                type="text"
-                value={appSettings.promotion_message}
-                onChange={(e) => setAppSettings((s) => ({ ...s, promotion_message: e.target.value }))}
-                placeholder="e.g. Free delivery on orders over 250 EGP"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-              />
-            </div>
-          </div>
-
-          <div className="border-t pt-6">
-            <h3 className="font-medium text-gray-800 mb-3">Final CTA block</h3>
-            <div className="space-y-2">
-              <input
-                type="text"
-                value={appSettings.final_cta_headline}
-                onChange={(e) => setAppSettings((s) => ({ ...s, final_cta_headline: e.target.value }))}
-                placeholder="Headline"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-              />
-              <input
-                type="text"
-                value={appSettings.final_cta_subtext}
-                onChange={(e) => setAppSettings((s) => ({ ...s, final_cta_subtext: e.target.value }))}
-                placeholder="Subtext"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-              />
-              <input
-                type="text"
-                value={appSettings.final_cta_button}
-                onChange={(e) => setAppSettings((s) => ({ ...s, final_cta_button: e.target.value }))}
-                placeholder="Button label"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-              />
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={saveAppSettings}
-            disabled={appSettingsSaving}
-            className="px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-800 disabled:opacity-50"
-          >
-            {appSettingsSaving ? 'Saving…' : 'Save app settings'}
-          </button>
         </div>
       </div>
 
-      {/* List */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <h2 className="text-lg font-semibold p-4 border-b">App hero images</h2>
+      {/* Hero images list */}
+      <div style={{ background: 'var(--admin-surface)', border: '1px solid var(--admin-border)', borderRadius: 'var(--admin-radius)', boxShadow: 'var(--admin-shadow)', overflow: 'hidden' }}>
+        <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--admin-border)', fontWeight: 600, fontSize: 14 }}>
+          App Hero Images
+        </div>
         {loading ? (
-          <div className="p-8 text-center text-gray-500">Loading…</div>
+          <div style={{ padding: 20 }}>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="admin-skeleton" style={{ height: 64, marginBottom: 10, borderRadius: 8 }} />
+            ))}
+          </div>
         ) : images.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">No hero images yet. Upload one above.</div>
+          <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--admin-text-3)', fontSize: 14 }}>
+            No hero images yet. Upload one above.
+          </div>
         ) : (
-          <ul className="divide-y">
-            {images.map((img) => (
-              <li key={img.id} className="flex items-center gap-4 p-4">
-                <div className="relative w-24 h-16 rounded overflow-hidden bg-gray-100 flex-shrink-0">
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+            {images.map((img, i) => (
+              <li
+                key={img.id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 14,
+                  padding: '12px 20px',
+                  borderBottom: i < images.length - 1 ? '1px solid var(--admin-border)' : 'none',
+                  background: img.is_active ? 'var(--admin-success-light)' : 'transparent',
+                }}
+              >
+                <div style={{ width: 96, height: 54, borderRadius: 6, overflow: 'hidden', flexShrink: 0, border: '1px solid var(--admin-border)', background: 'var(--admin-surface-2)' }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={img.image_url}
-                    alt="Hero"
-                    className="w-full h-full object-cover"
-                  />
+                  <img src={img.image_url} alt="Hero" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <span className="text-sm text-gray-500">
-                    {new Date(img.created_at).toLocaleDateString()}
-                  </span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, color: 'var(--admin-text-2)' }}>
+                    {new Date(img.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </div>
                   {img.is_active && (
-                    <span className="ml-3 px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                    <div style={{ display: 'inline-block', fontSize: 11, fontWeight: 700, background: 'var(--admin-success-light)', color: 'var(--admin-success)', padding: '2px 8px', borderRadius: 100, marginTop: 3 }}>
                       Active
-                    </span>
+                    </div>
                   )}
                 </div>
-                <div className="flex gap-2 flex-shrink-0">
+                <div style={{ display: 'flex', gap: 8 }}>
                   {!img.is_active && (
-                    <button
-                      type="button"
-                      onClick={() => setActive(img.id)}
-                      className="px-3 py-1.5 rounded border border-gray-300 hover:bg-gray-50 text-sm"
-                    >
+                    <button type="button" onClick={() => setActive(img.id)} className="admin-btn-ghost" style={{ fontSize: 12, padding: '5px 12px' }}>
                       Set as active
                     </button>
                   )}
-                  <button
-                    type="button"
-                    onClick={() => remove(img.id)}
-                    className="px-3 py-1.5 rounded border border-red-200 text-red-700 hover:bg-red-50 text-sm"
-                  >
+                  <button type="button" onClick={() => remove(img.id)} style={{ fontSize: 12, padding: '5px 12px', background: 'none', border: '1px solid var(--admin-border)', borderRadius: 'var(--admin-radius-sm)', color: 'var(--admin-danger)', fontFamily: 'inherit' }}>
                     Remove
                   </button>
                 </div>
@@ -524,6 +545,8 @@ export default function AdminHomepagePage() {
           </ul>
         )}
       </div>
+
+      <Toast toasts={toasts} onDismiss={dismissToast} />
     </div>
   )
 }

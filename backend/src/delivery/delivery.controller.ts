@@ -1,6 +1,9 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { DeliveryService } from './delivery.service';
 import { AdminGuard } from '../admin/guards/admin.guard';
+import { PermissionGuard } from '../admin/guards/permission.guard';
+import { RequirePermission } from '../admin/decorators/require-permission.decorator';
+import { ADMIN_PERMISSIONS } from '../admin/admin-permissions.const';
 import { CreateDeliveryDayDto } from './dto/create-delivery-day.dto';
 import { UpdateDeliveryDayDto } from './dto/update-delivery-day.dto';
 import { CreateTimeSlotDto } from './dto/create-time-slot.dto';
@@ -35,7 +38,8 @@ export class DeliveryController {
   // ========== ADMIN ENDPOINTS - DELIVERY DAYS ==========
 
   @Get('admin/delivery-days')
-  @UseGuards(AdminGuard)
+  @UseGuards(AdminGuard, PermissionGuard)
+  @RequirePermission(ADMIN_PERMISSIONS.DELIVERY_VIEW)
   getAllDeliveryDays(
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
@@ -44,43 +48,50 @@ export class DeliveryController {
   }
 
   @Get('admin/delivery-days/:id')
-  @UseGuards(AdminGuard)
+  @UseGuards(AdminGuard, PermissionGuard)
+  @RequirePermission(ADMIN_PERMISSIONS.DELIVERY_VIEW)
   getDeliveryDay(@Param('id') id: string) {
     return this.deliveryService.getDeliveryDay(id);
   }
 
   @Post('admin/delivery-days')
-  @UseGuards(AdminGuard)
+  @UseGuards(AdminGuard, PermissionGuard)
+  @RequirePermission(ADMIN_PERMISSIONS.DELIVERY_VIEW)
   createDeliveryDay(@Body() dto: CreateDeliveryDayDto) {
     return this.deliveryService.createDeliveryDay(dto);
   }
 
   @Put('admin/delivery-days/:id')
-  @UseGuards(AdminGuard)
+  @UseGuards(AdminGuard, PermissionGuard)
+  @RequirePermission(ADMIN_PERMISSIONS.DELIVERY_VIEW)
   updateDeliveryDay(@Param('id') id: string, @Body() dto: UpdateDeliveryDayDto) {
     return this.deliveryService.updateDeliveryDay(id, dto);
   }
 
   @Put('admin/delivery-days/date/:date')
-  @UseGuards(AdminGuard)
+  @UseGuards(AdminGuard, PermissionGuard)
+  @RequirePermission(ADMIN_PERMISSIONS.DELIVERY_VIEW)
   updateDeliveryDayByDate(@Param('date') date: string, @Body() dto: UpdateDeliveryDayDto) {
     return this.deliveryService.updateDeliveryDayByDate(date, dto);
   }
 
   @Post('admin/delivery-days/bulk')
-  @UseGuards(AdminGuard)
+  @UseGuards(AdminGuard, PermissionGuard)
+  @RequirePermission(ADMIN_PERMISSIONS.DELIVERY_VIEW)
   bulkUpdateDeliveryDays(@Body() dto: BulkUpdateDeliveryDaysDto) {
     return this.deliveryService.bulkUpdateDeliveryDays(dto);
   }
 
   @Delete('admin/delivery-days/:id')
-  @UseGuards(AdminGuard)
+  @UseGuards(AdminGuard, PermissionGuard)
+  @RequirePermission(ADMIN_PERMISSIONS.DELIVERY_VIEW)
   deleteDeliveryDay(@Param('id') id: string) {
     return this.deliveryService.deleteDeliveryDay(id);
   }
 
   @Post('admin/delivery-days/reset')
-  @UseGuards(AdminGuard)
+  @UseGuards(AdminGuard, PermissionGuard)
+  @RequirePermission(ADMIN_PERMISSIONS.DELIVERY_VIEW)
   resetAllDeliveryDays() {
     return this.deliveryService.resetAllDeliveryDays();
   }
@@ -88,37 +99,43 @@ export class DeliveryController {
   // ========== ADMIN ENDPOINTS - TIME SLOTS ==========
 
   @Get('admin/time-slots')
-  @UseGuards(AdminGuard)
+  @UseGuards(AdminGuard, PermissionGuard)
+  @RequirePermission(ADMIN_PERMISSIONS.DELIVERY_VIEW)
   getAllTimeSlots() {
     return this.deliveryService.getAllTimeSlots();
   }
 
   @Get('admin/time-slots/:id')
-  @UseGuards(AdminGuard)
+  @UseGuards(AdminGuard, PermissionGuard)
+  @RequirePermission(ADMIN_PERMISSIONS.DELIVERY_VIEW)
   getTimeSlot(@Param('id') id: string) {
     return this.deliveryService.getTimeSlot(id);
   }
 
   @Post('admin/time-slots')
-  @UseGuards(AdminGuard)
+  @UseGuards(AdminGuard, PermissionGuard)
+  @RequirePermission(ADMIN_PERMISSIONS.DELIVERY_VIEW)
   createTimeSlot(@Body() dto: CreateTimeSlotDto) {
     return this.deliveryService.createTimeSlot(dto);
   }
 
   @Put('admin/time-slots/:id')
-  @UseGuards(AdminGuard)
+  @UseGuards(AdminGuard, PermissionGuard)
+  @RequirePermission(ADMIN_PERMISSIONS.DELIVERY_VIEW)
   updateTimeSlot(@Param('id') id: string, @Body() dto: UpdateTimeSlotDto) {
     return this.deliveryService.updateTimeSlot(id, dto);
   }
 
   @Delete('admin/time-slots/:id')
-  @UseGuards(AdminGuard)
+  @UseGuards(AdminGuard, PermissionGuard)
+  @RequirePermission(ADMIN_PERMISSIONS.DELIVERY_VIEW)
   deleteTimeSlot(@Param('id') id: string) {
     return this.deliveryService.deleteTimeSlot(id);
   }
 
   @Post('admin/time-slots/reorder')
-  @UseGuards(AdminGuard)
+  @UseGuards(AdminGuard, PermissionGuard)
+  @RequirePermission(ADMIN_PERMISSIONS.DELIVERY_VIEW)
   reorderTimeSlots(@Body() body: { slotIds: string[] }) {
     return this.deliveryService.reorderTimeSlots(body.slotIds);
   }

@@ -8,6 +8,9 @@ import { DeliveryDestinationsModule } from '../delivery-destinations/delivery-de
 import { PromoCodesModule } from '../promo-codes/promo-codes.module';
 import { SupabaseModule } from '../supabase/supabase.module';
 import { LoyaltyModule } from '../loyalty/loyalty.module';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { AnalyticsModule } from '../analytics/analytics.module';
+import { InventoryModule } from '../inventory/inventory.module';
 
 @Module({
   imports: [
@@ -18,6 +21,9 @@ import { LoyaltyModule } from '../loyalty/loyalty.module';
     DeliveryDestinationsModule,
     PromoCodesModule,
     LoyaltyModule,
+    NotificationsModule,
+    AnalyticsModule,
+    InventoryModule,
   ],
   controllers: [OrdersController],
   providers: [OrdersService],

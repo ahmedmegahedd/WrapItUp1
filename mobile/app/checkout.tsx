@@ -20,15 +20,14 @@ import { useCart } from '@/contexts/CartContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAddresses } from '@/contexts/AddressesContext';
 import { usePendingDelivery } from '@/contexts/PendingDeliveryContext';
+import { useCheckoutPayment } from '@/contexts/CheckoutPaymentContext';
 import { buildMapsLink } from '@/lib/geocoding';
-import { useStripe } from '@stripe/stripe-react-native';
 import {
   getTimeSlots,
   getAvailableDates,
   getDeliveryDestinations,
   validatePromoCode,
-  createOrder,
-  createPaymentIntent,
+  trackStartCheckout,
 } from '@/lib/api';
 import { hapticPrimary, hapticSuccess } from '@/lib/haptics';
 import { t } from '@/lib/i18n';
@@ -49,9 +48,9 @@ export default function CheckoutScreen() {
   const { language } = useLanguage();
   const { addresses } = useAddresses();
   const { takePending } = usePendingDelivery();
-  const { items, getTotal, getPointsEarned, clearCart } = useCart();
+  const { items, getTotal, getPointsEarned } = useCart();
   const pointsEarned = getPointsEarned();
-  const { initPaymentSheet, presentPaymentSheet } = useStripe();
+  const { setPayload } = useCheckoutPayment();
 
   const [customerName, setCustomerName] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
@@ -104,7 +103,11 @@ export default function CheckoutScreen() {
         setDeliveryMapsLink(pending.deliveryMapsLink);
         setSelectedSavedAddressId(null);
       }
-    }, [takePending])
+      const cartValue = items.reduce((s, i) => s + i.calculated_price, 0);
+      if (cartValue > 0) {
+        trackStartCheckout({ cart_value: cartValue });
+      }
+    }, [takePending, items])
   );
 
   const subtotal = items.reduce((s, i) => s + i.calculated_price, 0);
@@ -126,7 +129,7 @@ export default function CheckoutScreen() {
     }
   };
 
-  const handlePay = async () => {
+  const handlePay = () => {
     if (!customerName.trim()) {
       Alert.alert(t(language, 'error'), t(language, 'pleaseEnterName'));
       return;
@@ -156,61 +159,31 @@ export default function CheckoutScreen() {
       return;
     }
 
-    setSubmitting(true);
-    try {
-      const orderPayload = {
-        customer_name: customerName.trim(),
-        customer_email: customerEmail.trim(),
-        customer_phone: customerPhone.trim() || undefined,
-        delivery_date: deliveryDate,
-        delivery_time_slot: deliveryTimeSlotLabel,
-        delivery_time_slot_id: deliveryTimeSlotId,
-        delivery_destination_id: deliveryDestinationId || undefined,
-        delivery_fee_egp: deliveryFee,
-        delivery_address: deliveryAddress.trim(),
-        delivery_maps_link: deliveryMapsLink.trim(),
-        promo_code_id: promoCodeId || undefined,
-        discount_amount_egp: promoDiscount,
-        card_message: cardMessage.trim() || undefined,
-        items: items.map((i) => ({
-          product_id: i.product_id,
-          quantity: i.quantity,
-          selected_variations: i.selected_variations,
-          selected_addons: i.selected_addons,
-        })),
-      };
+    const orderPayload = {
+      customer_name: customerName.trim(),
+      customer_email: customerEmail.trim(),
+      customer_phone: customerPhone.trim() || undefined,
+      delivery_date: deliveryDate,
+      delivery_time_slot: deliveryTimeSlotLabel,
+      delivery_time_slot_id: deliveryTimeSlotId,
+      delivery_destination_id: deliveryDestinationId || undefined,
+      delivery_fee_egp: deliveryFee,
+      delivery_address: deliveryAddress.trim(),
+      delivery_maps_link: deliveryMapsLink.trim(),
+      promo_code_id: promoCodeId || undefined,
+      discount_amount_egp: promoDiscount,
+      card_message: cardMessage.trim() || undefined,
+      items: items.map((i) => ({
+        product_id: i.product_id,
+        quantity: i.quantity,
+        selected_variations: i.selected_variations,
+        selected_addons: i.selected_addons,
+      })),
+    };
 
-      const order = await createOrder(orderPayload);
-      const { clientSecret } = await createPaymentIntent(order.id, total);
-
-      const { error: initError } = await initPaymentSheet({
-        paymentIntentClientSecret: clientSecret,
-        merchantDisplayName: 'Wrap It Up',
-      });
-
-      if (initError) {
-        Alert.alert(t(language, 'error'), initError.message);
-        setSubmitting(false);
-        return;
-      }
-
-      const { error: presentError } = await presentPaymentSheet();
-
-      if (presentError) {
-        Alert.alert(t(language, 'error'), presentError.message);
-        setSubmitting(false);
-        return;
-      }
-
-      clearCart();
-      setSubmitting(false);
-      hapticSuccess();
-      router.replace({ pathname: '/order-confirmation', params: { orderNumber: order.order_number } });
-    } catch (e: any) {
-      setSubmitting(false);
-      const msg = e.response?.data?.message || e.message || 'Something went wrong';
-      Alert.alert(t(language, 'error'), msg);
-    }
+    setPayload({ orderPayload, total });
+    hapticPrimary();
+    router.push('/select-payment-method');
   };
 
   const rawAvailable = availableDays || [];
@@ -284,7 +257,7 @@ export default function CheckoutScreen() {
               style={styles.dateScroll}
               contentContainerStyle={styles.dateScrollContent}
             >
-              {displayDays.slice(0, 5).map((d: any) => {
+              {displayDays.slice(0, 6).map((d: any) => {
                 const dateStr = typeof d.date === 'string' ? d.date.split('T')[0] : '';
                 if (!dateStr) return null;
                 return (
@@ -487,15 +460,10 @@ export default function CheckoutScreen() {
           </View>
 
           <TouchableOpacity
-            style={[styles.payBtn, submitting && styles.payBtnDisabled]}
+            style={styles.payBtn}
             onPress={() => { hapticPrimary(); handlePay(); }}
-            disabled={submitting}
           >
-            {submitting ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.payBtnText}>{t(language, 'pay')} {formatPrice(total)}</Text>
-            )}
+            <Text style={styles.payBtnText}>{t(language, 'pay')} {formatPrice(total)}</Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>

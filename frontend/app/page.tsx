@@ -1,28 +1,14 @@
-import { createMetadata, generateBreadcrumbSchema } from '@/lib/seo'
+import { createMetadata } from '@/lib/seo'
 import type { Metadata } from 'next'
-import HomePageContent from '@/components/home/HomePageContent'
+import LandingPage from '@/components/landing/LandingPage'
 
 export const metadata: Metadata = createMetadata({
-  title: 'Luxury Breakfast Gifts - Unforgettable Mornings | Wrap It Up',
+  title: 'Wrap It Up App – Order Breakfast & Gifts',
   description:
-    'Thoughtfully curated breakfast trays and gift boxes that turn ordinary mornings into extraordinary moments of love and connection. Shop luxury breakfast gifts.',
+    'Order breakfast trays and gift boxes from your phone. Choose delivery date and time, earn loyalty points, and use the app in Arabic or English. Download the Wrap It Up app.',
   path: '/',
 })
 
 export default function Home() {
-  const breadcrumbSchema = generateBreadcrumbSchema([
-    { name: 'Home', url: 'https://wrap-itup.com/' },
-  ])
-
-  return (
-    <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
-      />
-      <div className="pb-24 md:pb-0">
-        <HomePageContent />
-      </div>
-    </>
-  )
+  return <LandingPage />
 }

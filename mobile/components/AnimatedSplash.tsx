@@ -1,10 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, Image } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSequence,
   withTiming,
+  withDelay,
   runOnJS,
   Easing,
 } from 'react-native-reanimated';
@@ -14,17 +16,17 @@ import { colors } from '@/constants/theme';
 const logoSource = require('@/assets/wrapitup.avif');
 
 /** Delay before logo appears: pink screen only. */
-const INTRO_DELAY_MS = 200;
+const INTRO_DELAY_MS = 500;
 /** Logo opacity 0 → 1 duration. */
-const LOGO_OPACITY_MS = 650;
+const LOGO_OPACITY_MS = 1200;
 /** Logo scale 0.6 → 1.08 duration. */
-const LOGO_SCALE_UP_MS = 500;
+const LOGO_SCALE_UP_MS = 900;
 /** Logo scale 1.08 → 1.0 settle duration. */
-const LOGO_SCALE_SETTLE_MS = 200;
+const LOGO_SCALE_SETTLE_MS = 400;
 /** Pause after logo settled before starting exit. */
-const SETTLE_PAUSE_MS = 200;
+const SETTLE_PAUSE_MS = 800;
 /** Overlay fade-out duration. */
-const EXIT_ANIM_MS = 400;
+const EXIT_ANIM_MS = 500;
 /** Logo scale at exit (subtle). */
 const EXIT_LOGO_SCALE = 0.96;
 
@@ -75,13 +77,20 @@ export function AnimatedSplash({ onFinish }: AnimatedSplashProps) {
     if (reduceMotion !== false) return;
 
     const startLogoAnimation = () => {
-      opacity.value = withTiming(1, {
-        duration: LOGO_OPACITY_MS,
-        easing: EASE_OUT_EXPO,
-      });
-      scale.value = withSequence(
-        withTiming(1.08, { duration: LOGO_SCALE_UP_MS, easing: EASE_OUT_EXPO }),
-        withTiming(1, { duration: LOGO_SCALE_SETTLE_MS, easing: EASE_OUT_EXPO })
+      // Slight delay so the logo view is mounted and visible before we animate
+      opacity.value = withDelay(
+        50,
+        withTiming(1, {
+          duration: LOGO_OPACITY_MS,
+          easing: EASE_OUT_EXPO,
+        })
+      );
+      scale.value = withDelay(
+        50,
+        withSequence(
+          withTiming(1.08, { duration: LOGO_SCALE_UP_MS, easing: EASE_OUT_EXPO }),
+          withTiming(1, { duration: LOGO_SCALE_SETTLE_MS, easing: EASE_OUT_EXPO })
+        )
       );
     };
 
@@ -100,7 +109,9 @@ export function AnimatedSplash({ onFinish }: AnimatedSplashProps) {
     };
 
     const introTimer = setTimeout(startLogoAnimation, INTRO_DELAY_MS);
-    const exitStart = INTRO_DELAY_MS + LOGO_SCALE_UP_MS + LOGO_SCALE_SETTLE_MS + SETTLE_PAUSE_MS;
+    const logoStartDelay = 50;
+    const logoEntranceMs = logoStartDelay + Math.max(LOGO_OPACITY_MS, LOGO_SCALE_UP_MS + LOGO_SCALE_SETTLE_MS);
+    const exitStart = INTRO_DELAY_MS + logoEntranceMs + SETTLE_PAUSE_MS;
     const exitTimer = setTimeout(startExitAnimation, exitStart);
 
     return () => {
@@ -121,7 +132,7 @@ export function AnimatedSplash({ onFinish }: AnimatedSplashProps) {
           <Image
             source={logoSource}
             style={styles.logo}
-            resizeMode="contain"
+            contentFit="contain"
             accessibilityLabel="Wrap It Up"
           />
         </Animated.View>

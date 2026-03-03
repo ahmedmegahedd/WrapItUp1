@@ -1,0 +1,308 @@
+/* Admin Panel Design Tokens */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
+
+:root {
+  --admin-bg: #F9F7F4;
+  --admin-surface: #FFFFFF;
+  --admin-surface-2: #F3F0EB;
+  --admin-border: #E8E2D9;
+  --admin-border-strong: #D4C9B8;
+  --admin-text: #1C1410;
+  --admin-text-2: #6B5E52;
+  --admin-text-3: #A0948A;
+  --admin-accent: #C4724A;
+  --admin-accent-hover: #A85D38;
+  --admin-accent-light: #FBF0EA;
+  --admin-success: #4A7C5C;
+  --admin-success-light: #EBF5EF;
+  --admin-warning: #B8860B;
+  --admin-warning-light: #FEF9E7;
+  --admin-danger: #C0392B;
+  --admin-danger-light: #FDEDEC;
+  --admin-radius: 10px;
+  --admin-radius-sm: 6px;
+  --admin-radius-lg: 16px;
+  --admin-shadow: 0 1px 3px rgba(28,20,16,0.08), 0 1px 2px rgba(28,20,16,0.04);
+  --admin-shadow-md: 0 4px 6px rgba(28,20,16,0.07), 0 2px 4px rgba(28,20,16,0.04);
+}
+
+/* Apply DM Sans + warm background to admin */
+.admin-root {
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--admin-bg);
+  color: var(--admin-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Override croissant cursor for admin panel */
+.admin-root,
+.admin-root *,
+.admin-root button,
+.admin-root a {
+  cursor: default !important;
+}
+.admin-root button,
+.admin-root a,
+.admin-root [role="button"],
+.admin-root select,
+.admin-root label {
+  cursor: pointer !important;
+}
+.admin-root input:not([type="submit"]):not([type="button"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+.admin-root textarea {
+  cursor: text !important;
+}
+
+/* Admin form inputs */
+.admin-input {
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-sm);
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  background: var(--admin-surface);
+  color: var(--admin-text);
+  width: 100%;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  outline: none;
+}
+.admin-input:focus {
+  border-color: var(--admin-accent);
+  box-shadow: 0 0 0 3px var(--admin-accent-light);
+}
+.admin-input::placeholder {
+  color: var(--admin-text-3);
+}
+
+/* Admin table */
+.admin-table-wrapper {
+  background: var(--admin-surface);
+  border-radius: var(--admin-radius);
+  border: 1px solid var(--admin-border);
+  box-shadow: var(--admin-shadow);
+  overflow: hidden;
+}
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.admin-table thead tr {
+  background: var(--admin-surface-2);
+  border-bottom: 1px solid var(--admin-border);
+}
+.admin-table th {
+  padding: 10px 16px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--admin-text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.admin-table tbody tr {
+  border-bottom: 1px solid var(--admin-border);
+  transition: background 0.1s ease;
+}
+.admin-table tbody tr:last-child {
+  border-bottom: none;
+}
+.admin-table tbody tr:hover {
+  background: var(--admin-surface-2);
+}
+.admin-table td {
+  padding: 12px 16px;
+  font-size: 14px;
+  color: var(--admin-text);
+}
+
+/* Skeleton shimmer */
+@keyframes admin-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.admin-skeleton {
+  background: linear-gradient(90deg, var(--admin-surface-2) 25%, #EDE8E0 50%, var(--admin-surface-2) 75%);
+  background-size: 200% 100%;
+  animation: admin-shimmer 1.4s ease infinite;
+  border-radius: var(--admin-radius-sm);
+}
+
+/* Sidebar nav item */
+.admin-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: var(--admin-radius-sm);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--admin-text-2);
+  transition: background 0.15s ease, color 0.15s ease;
+  text-decoration: none;
+  position: relative;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.admin-nav-item:hover {
+  background: var(--admin-surface-2);
+  color: var(--admin-text);
+}
+.admin-nav-item.active {
+  background: var(--admin-accent-light);
+  color: var(--admin-accent);
+  font-weight: 600;
+}
+.admin-nav-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--admin-accent);
+  border-radius: 0 2px 2px 0;
+}
+
+/* Accent button */
+.admin-btn-primary {
+  background: var(--admin-accent);
+  color: white;
+  border: none;
+  border-radius: var(--admin-radius-sm);
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  transition: background 0.15s ease, transform 0.1s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.admin-btn-primary:hover {
+  background: var(--admin-accent-hover);
+}
+.admin-btn-primary:active {
+  transform: scale(0.98);
+}
+.admin-btn-primary:disabled {
+  opacity: 0.6;
+}
+
+.admin-btn-ghost {
+  background: transparent;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-sm);
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--admin-text-2);
+  font-family: inherit;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.admin-btn-ghost:hover {
+  background: var(--admin-surface-2);
+  color: var(--admin-text);
+}
+
+/* Card */
+.admin-card {
+  background: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  box-shadow: var(--admin-shadow);
+  padding: 20px;
+}
+
+/* Section header inside card */
+.admin-section-header {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--admin-text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding-bottom: 12px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+/* Toggle switch */
+.admin-toggle {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+.admin-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+.admin-toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: var(--admin-border-strong);
+  border-radius: 24px;
+  transition: background 0.2s ease;
+}
+.admin-toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  left: 3px;
+  top: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.admin-toggle input:checked + .admin-toggle-slider {
+  background: var(--admin-accent);
+}
+.admin-toggle input:checked + .admin-toggle-slider::before {
+  transform: translateX(20px);
+}
+
+/* Toast */
+.admin-toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+.admin-toast {
+  padding: 12px 16px;
+  border-radius: var(--admin-radius-sm);
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: var(--admin-shadow-md);
+  pointer-events: all;
+  animation: admin-toast-in 0.25s ease;
+  max-width: 360px;
+}
+@keyframes admin-toast-in {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.admin-toast.success {
+  background: var(--admin-success-light);
+  color: var(--admin-success);
+  border: 1px solid #B8DEC8;
+}
+.admin-toast.error {
+  background: var(--admin-danger-light);
+  color: var(--admin-danger);
+  border: 1px solid #F1BCBA;
+}

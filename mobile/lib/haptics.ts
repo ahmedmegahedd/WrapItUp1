@@ -46,3 +46,14 @@ export async function hapticSuccess(): Promise<void> {
     await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
   } catch (_) {}
 }
+
+/**
+ * Error notification for payment failure, validation errors. Skips if reduce motion is enabled.
+ */
+export async function hapticError(): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    if (await isReduceMotionEnabled()) return;
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+  } catch (_) {}
+}

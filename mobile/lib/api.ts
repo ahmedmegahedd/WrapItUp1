@@ -183,14 +183,28 @@ export async function createOrder(payload: any): Promise<any> {
   return data;
 }
 
-export async function createPaymentIntent(orderId: string, amount: number): Promise<{ clientSecret: string; id?: string }> {
-  const { data } = await api.post('/payments/create-intent', { orderId, amount });
+/** Paymob: initiate card payment; returns payment key token and Paymob order id for WebView. */
+export async function initiatePaymobPayment(
+  amountEGP: number,
+  orderId: string,
+  customerInfo: { firstName: string; lastName: string; email: string; phone: string },
+): Promise<{ paymentKeyToken: string; paymobOrderId: string }> {
+  const { data } = await api.post('/payments/initiate', {
+    amountEGP,
+    orderId,
+    customerInfo,
+  });
   return data;
 }
 
 export async function getOrderByNumber(orderNumber: string): Promise<any> {
   const { data } = await api.get(`/orders/number/${orderNumber}`);
   return data;
+}
+
+/** Register Expo push token for order confirmation notifications (optional). */
+export async function registerPushToken(email: string, token: string): Promise<void> {
+  await api.post('/notifications/push-token', { email: email.trim(), token: token.trim() });
 }
 
 /** Loyalty: get points balance by customer email. */
@@ -242,4 +256,19 @@ export async function getOnboardingConfig(): Promise<OnboardingConfig> {
     }
   } catch (_) {}
   return DEFAULT_ONBOARDING;
+}
+
+/** Track that the user started checkout (for abandoned-checkout analytics). Call when checkout screen is opened. */
+export async function trackStartCheckout(payload: {
+  user_id?: string | null;
+  cart_value: number;
+}): Promise<void> {
+  try {
+    await api.post('/analytics/track/start-checkout', {
+      user_id: payload.user_id ?? undefined,
+      cart_value: payload.cart_value,
+    });
+  } catch (_) {
+    // Non-blocking; analytics failures should not affect checkout
+  }
 }

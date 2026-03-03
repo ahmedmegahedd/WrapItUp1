@@ -6,6 +6,9 @@ import Image from 'next/image'
 import api from '@/lib/api'
 import { supabase } from '@/lib/supabase'
 import ImagePreviewCrop from '@/components/ImagePreviewCrop'
+import AdminPageHeader from '../../_components/AdminPageHeader'
+import Toggle from '../../_components/Toggle'
+import Toast, { useToast } from '../../_components/Toast'
 
 export default function AdminRewardEditPage() {
   const params = useParams()
@@ -24,9 +27,11 @@ export default function AdminRewardEditPage() {
     image_url: '',
     is_active: true,
   })
+  const { toasts, showToast, dismissToast } = useToast()
 
   useEffect(() => {
     if (!isNew) loadReward()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rewardId])
 
   async function loadReward() {
@@ -42,6 +47,7 @@ export default function AdminRewardEditPage() {
       })
     } catch (error) {
       console.error('Error loading reward:', error)
+      showToast('error', 'Failed to load reward')
     }
   }
 
@@ -60,7 +66,7 @@ export default function AdminRewardEditPage() {
   async function handleCropComplete(croppedImageUrl: string) {
     setShowImagePreview(false)
     if (!supabase) {
-      alert('Supabase is not configured.')
+      showToast('error', 'Supabase is not configured.')
       return
     }
     setUploading(true)
@@ -75,7 +81,7 @@ export default function AdminRewardEditPage() {
       URL.revokeObjectURL(croppedImageUrl)
     } catch (error) {
       console.error('Error uploading image:', error)
-      alert('Failed to upload image')
+      showToast('error', 'Failed to upload image')
     } finally {
       setUploading(false)
     }
@@ -106,14 +112,23 @@ export default function AdminRewardEditPage() {
       router.push('/admin/rewards')
     } catch (error: any) {
       console.error('Error saving reward:', error)
-      alert(error?.response?.data?.message || 'Failed to save reward')
+      showToast('error', error?.response?.data?.message || 'Failed to save reward')
     } finally {
       setLoading(false)
     }
   }
 
+  const labelStyle: React.CSSProperties = {
+    display: 'block',
+    fontSize: 13,
+    fontWeight: 600,
+    color: 'var(--admin-text-2)',
+    marginBottom: 6,
+  }
+
   return (
     <div>
+      <Toast toasts={toasts} onDismiss={dismissToast} />
       {showImagePreview && (
         <ImagePreviewCrop
           imageUrl={previewImageUrl}
@@ -122,77 +137,134 @@ export default function AdminRewardEditPage() {
           aspectRatio={1}
         />
       )}
-      <h1 className="text-3xl font-bold mb-6">{isNew ? 'New Reward' : 'Edit Reward'}</h1>
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-6 max-w-xl">
-        <div>
-          <label className="block font-semibold mb-2">Title *</label>
-          <input
-            type="text"
-            required
-            value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            className="w-full px-4 py-2 border rounded"
-          />
+
+      <AdminPageHeader
+        title={isNew ? 'New Reward' : 'Edit Reward'}
+        breadcrumbs={[
+          { label: 'Rewards', href: '/admin/rewards' },
+          { label: isNew ? 'New' : 'Edit' },
+        ]}
+      />
+
+      <form onSubmit={handleSubmit} style={{ maxWidth: 600 }}>
+        {/* Details Card */}
+        <div className="admin-card" style={{ marginBottom: 16 }}>
+          <p className="admin-section-header">Reward Details</p>
+
+          <div style={{ marginBottom: 16 }}>
+            <label style={labelStyle}>Title *</label>
+            <input
+              type="text"
+              required
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              className="admin-input"
+              placeholder="e.g., Free Delivery"
+            />
+          </div>
+
+          <div style={{ marginBottom: 16 }}>
+            <label style={labelStyle}>Description</label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="admin-input"
+              rows={3}
+              style={{ resize: 'vertical' }}
+              placeholder="Describe what the customer gets when they redeem this reward"
+            />
+          </div>
+
+          <div style={{ marginBottom: 20 }}>
+            <label style={labelStyle}>Points Required *</label>
+            <input
+              type="number"
+              min="1"
+              required
+              value={formData.points_required}
+              onChange={(e) => setFormData({ ...formData, points_required: e.target.value })}
+              className="admin-input"
+              style={{ maxWidth: 160 }}
+              placeholder="e.g., 500"
+            />
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Toggle
+              checked={formData.is_active}
+              onChange={(v) => setFormData({ ...formData, is_active: v })}
+            />
+            <span style={{ fontSize: 14, color: 'var(--admin-text)' }}>Active (visible to customers)</span>
+          </div>
         </div>
-        <div>
-          <label className="block font-semibold mb-2">Description</label>
-          <textarea
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            className="w-full px-4 py-2 border rounded"
-            rows={3}
-          />
-        </div>
-        <div>
-          <label className="block font-semibold mb-2">Points required to redeem *</label>
-          <input
-            type="number"
-            min="1"
-            required
-            value={formData.points_required}
-            onChange={(e) => setFormData({ ...formData, points_required: e.target.value })}
-            className="w-full px-4 py-2 border rounded"
-          />
-        </div>
-        <div>
-          <label className="block font-semibold mb-2">Image</label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleImageUpload}
-            disabled={uploading}
-            className="mb-2"
-          />
+
+        {/* Image Card */}
+        <div className="admin-card" style={{ marginBottom: 20 }}>
+          <p className="admin-section-header">Reward Image</p>
+
+          <label
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: '2px dashed var(--admin-border)',
+              borderRadius: 'var(--admin-radius)',
+              padding: '24px',
+              cursor: 'pointer',
+              textAlign: 'center',
+              marginBottom: formData.image_url ? 16 : 0,
+            }}
+          >
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              disabled={uploading}
+              style={{ display: 'none' }}
+            />
+            <span style={{ fontSize: 28, marginBottom: 8 }}>🎁</span>
+            <span style={{ fontSize: 14, color: 'var(--admin-text-2)' }}>
+              {uploading ? 'Uploading...' : 'Click to upload reward image'}
+            </span>
+            <span style={{ fontSize: 12, color: 'var(--admin-text-3)', marginTop: 4 }}>
+              PNG, JPG, WEBP — square recommended
+            </span>
+          </label>
+
           {formData.image_url && (
-            <div className="relative w-24 h-24 rounded overflow-hidden bg-gray-100 mt-2">
-              <Image src={formData.image_url} alt="" fill className="object-cover" sizes="96px" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div
+                style={{
+                  position: 'relative',
+                  width: 80,
+                  height: 80,
+                  borderRadius: 'var(--admin-radius-sm)',
+                  overflow: 'hidden',
+                  border: '1px solid var(--admin-border)',
+                }}
+              >
+                <Image src={formData.image_url} alt="" fill className="object-cover" sizes="80px" />
+              </div>
+              <button
+                type="button"
+                onClick={() => setFormData((prev) => ({ ...prev, image_url: '' }))}
+                className="admin-btn-ghost"
+                style={{ color: 'var(--admin-danger)', borderColor: 'var(--admin-danger)' }}
+              >
+                Remove
+              </button>
             </div>
           )}
         </div>
-        <div>
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={formData.is_active}
-              onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-            />
-            <span>Active (visible to customers)</span>
-          </label>
-        </div>
-        <div className="flex gap-3">
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50"
-          >
-            {loading ? 'Saving...' : 'Save'}
-          </button>
-          <button
-            type="button"
-            onClick={() => router.push('/admin/rewards')}
-            className="px-4 py-2 border rounded-lg hover:bg-gray-50"
-          >
+
+        {/* Actions */}
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+          <button type="button" onClick={() => router.push('/admin/rewards')} className="admin-btn-ghost">
             Cancel
+          </button>
+          <button type="submit" disabled={loading} className="admin-btn-primary">
+            {loading ? 'Saving...' : 'Save Reward'}
           </button>
         </div>
       </form>
