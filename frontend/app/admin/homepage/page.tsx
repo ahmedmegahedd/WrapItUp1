@@ -24,6 +24,12 @@ type AppSettings = {
   final_cta_subtext: string
   final_cta_button: string
   featured_products_limit: number
+  active_layout: string
+  marquee_text: string
+  marquee_active: boolean
+  todays_pick_product_id: string | null
+  todays_pick_active: boolean
+  todays_pick_label: string
 }
 
 const defaultSectionOrder = [
@@ -67,6 +73,12 @@ export default function AdminHomepagePage() {
     final_cta_subtext: 'Browse our collections and order in minutes.',
     final_cta_button: 'Browse all collections',
     featured_products_limit: 8,
+    active_layout: 'cinematic',
+    marquee_text: 'Free delivery on orders above 250 EGP · Fresh every morning · Order by midnight',
+    marquee_active: true,
+    todays_pick_product_id: null,
+    todays_pick_active: false,
+    todays_pick_label: "Today's Pick",
   })
   const [appSettingsSaving, setAppSettingsSaving] = useState(false)
   const { toasts, showToast, dismissToast } = useToast()
@@ -129,6 +141,12 @@ export default function AdminHomepagePage() {
           final_cta_button: d.final_cta_button ?? 'Browse all collections',
           featured_products_limit:
             typeof d.featured_products_limit === 'number' ? d.featured_products_limit : 8,
+          active_layout: d.active_layout ?? 'cinematic',
+          marquee_text: d.marquee_text ?? 'Free delivery on orders above 250 EGP · Fresh every morning · Order by midnight',
+          marquee_active: d.marquee_active !== false,
+          todays_pick_product_id: d.todays_pick_product_id ?? null,
+          todays_pick_active: d.todays_pick_active === true,
+          todays_pick_label: d.todays_pick_label ?? "Today's Pick",
         })
       }
     } catch {
@@ -379,8 +397,99 @@ export default function AdminHomepagePage() {
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 560 }}>
-          {/* Section order */}
+          {/* Home layout switcher */}
           <div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--admin-text-2)', marginBottom: 10 }}>
+              Home Layout
+            </div>
+            <p style={{ fontSize: 12, color: 'var(--admin-text-3)', marginBottom: 12 }}>
+              Choose the visual style for the products section on the mobile home screen.
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+              {(['cinematic', 'story', 'editorial'] as const).map((layout) => {
+                const meta: Record<string, { label: string; desc: string }> = {
+                  cinematic: { label: 'Cinematic', desc: 'Parallax hero + snap cards' },
+                  story: { label: 'Story', desc: 'Full-screen paging cards' },
+                  editorial: { label: 'Editorial', desc: 'Asymmetric grid layout' },
+                }
+                const active = appSettings.active_layout === layout
+                return (
+                  <button
+                    key={layout}
+                    type="button"
+                    onClick={() => setAppSettings((s) => ({ ...s, active_layout: layout }))}
+                    style={{
+                      padding: '12px 10px',
+                      borderRadius: 'var(--admin-radius-sm)',
+                      border: active ? '2px solid var(--admin-accent)' : '1px solid var(--admin-border)',
+                      background: active ? 'var(--admin-accent-light, #fdf2f8)' : 'var(--admin-surface)',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      fontFamily: 'inherit',
+                    }}
+                  >
+                    <div style={{ fontSize: 13, fontWeight: 700, color: active ? 'var(--admin-accent)' : 'var(--admin-text)', marginBottom: 3 }}>
+                      {meta[layout].label}
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--admin-text-3)' }}>{meta[layout].desc}</div>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Marquee banner */}
+          <div style={{ borderTop: '1px solid var(--admin-border)', paddingTop: 20 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--admin-text-2)', marginBottom: 12 }}>Marquee Banner</div>
+            <div style={{ marginBottom: 10 }}>
+              <Toggle
+                checked={appSettings.marquee_active}
+                onChange={(v) => setAppSettings((s) => ({ ...s, marquee_active: v }))}
+                label="Show scrolling marquee banner"
+              />
+            </div>
+            <input
+              type="text"
+              value={appSettings.marquee_text}
+              onChange={(e) => setAppSettings((s) => ({ ...s, marquee_text: e.target.value }))}
+              className="admin-input"
+              placeholder="Free delivery on orders above 250 EGP · Fresh every morning · Order by midnight"
+            />
+            <p style={{ fontSize: 11, color: 'var(--admin-text-3)', marginTop: 6 }}>
+              Use &nbsp;·&nbsp; to separate items. The text scrolls infinitely.
+            </p>
+          </div>
+
+          {/* Today's Pick */}
+          <div style={{ borderTop: '1px solid var(--admin-border)', paddingTop: 20 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--admin-text-2)', marginBottom: 12 }}>Today&#39;s Pick</div>
+            <div style={{ marginBottom: 10 }}>
+              <Toggle
+                checked={appSettings.todays_pick_active}
+                onChange={(v) => setAppSettings((s) => ({ ...s, todays_pick_active: v }))}
+                label="Show spotlight product section"
+              />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <input
+                type="text"
+                value={appSettings.todays_pick_label}
+                onChange={(e) => setAppSettings((s) => ({ ...s, todays_pick_label: e.target.value }))}
+                className="admin-input"
+                placeholder="Today's Pick"
+              />
+              <input
+                type="text"
+                value={appSettings.todays_pick_product_id ?? ''}
+                onChange={(e) => setAppSettings((s) => ({ ...s, todays_pick_product_id: e.target.value || null }))}
+                className="admin-input"
+                placeholder="Product ID (UUID from products list)"
+              />
+            </div>
+          </div>
+
+          {/* Section order */}
+          <div style={{ borderTop: '1px solid var(--admin-border)', paddingTop: 20 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--admin-text-2)', marginBottom: 10 }}>
               Section Order &amp; Visibility
             </div>

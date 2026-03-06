@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator } from 'react-native';
 import { useAppSettings } from '@/hooks/useAppSettings';
 import { useHomeData } from '@/hooks/useHomeData';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -13,6 +13,11 @@ import {
   ValuePropositionSection,
   FinalCTASection,
 } from '@/components/home';
+import { MarqueeBanner } from '@/components/home/MarqueeBanner';
+import { TodaysPickSection } from '@/components/home/TodaysPickSection';
+import { CinematicLayout } from '@/components/home/layouts/CinematicLayout';
+import { StoryLayout } from '@/components/home/layouts/StoryLayout';
+import { EditorialLayout } from '@/components/home/layouts/EditorialLayout';
 import { SkeletonHome } from '@/components/skeletons';
 
 const DEFAULT_SECTION_ORDER = [
@@ -44,6 +49,20 @@ export default function HomeScreen() {
     return <SkeletonHome />;
   }
 
+  const activeLayout = appSettings?.active_layout ?? 'cinematic';
+
+  const renderFeaturedProducts = () => {
+    if (!featuredProducts.length) return null;
+    switch (activeLayout) {
+      case 'story':
+        return <StoryLayout key="featured_products" products={featuredProducts} collections={featuredCollections} />;
+      case 'editorial':
+        return <EditorialLayout key="featured_products" products={featuredProducts} collections={featuredCollections} />;
+      default:
+        return <CinematicLayout key="featured_products" products={featuredProducts} collections={featuredCollections} />;
+    }
+  };
+
   const renderSection = (id: string) => {
     switch (id) {
       case 'hero':
@@ -51,7 +70,7 @@ export default function HomeScreen() {
       case 'featured_collections':
         return <FeaturedCollectionsSection key="featured_collections" collections={featuredCollections} />;
       case 'featured_products':
-        return <FeaturedProductsSection key="featured_products" products={featuredProducts} />;
+        return renderFeaturedProducts();
       case 'promotion':
         return (
           <PromotionSection
@@ -91,7 +110,23 @@ export default function HomeScreen() {
         />
       }
     >
+      {appSettings?.marquee_active && appSettings.marquee_text ? (
+        <MarqueeBanner text={appSettings.marquee_text} />
+      ) : null}
+
       {sectionOrder.map(renderSection)}
+
+      {appSettings?.todays_pick_active && appSettings.todays_pick_product_id ? (
+        <TodaysPickSection
+          productId={appSettings.todays_pick_product_id}
+          label={appSettings.todays_pick_label}
+        />
+      ) : null}
+
+      {loading && (featuredProducts.length > 0 || featuredCollections.length > 0) ? (
+        <ActivityIndicator color={colors.primary} style={styles.refreshIndicator} />
+      ) : null}
+
       {error ? (
         <View style={styles.errorBanner}>
           <Text style={styles.errorText}>{t(language, 'loadCollectionsError')}</Text>
@@ -109,11 +144,8 @@ const styles = StyleSheet.create({
   content: {
     paddingBottom: spacing.xl,
   },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.backgroundMuted,
+  refreshIndicator: {
+    marginVertical: spacing.md,
   },
   errorBanner: {
     marginHorizontal: spacing.lg,

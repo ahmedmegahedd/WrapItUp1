@@ -130,6 +130,24 @@ export class AdminService {
     };
   }
 
+  /**
+   * Get collaborator by admin id (for RBAC / scoping). Returns null if not a collaborator.
+   */
+  async getCollaboratorByAdminId(adminId: string): Promise<{ id: string; brand_name: string; commission_rate: number } | null> {
+    const supabase = this.supabaseService.getAdminClient();
+    const { data, error } = await supabase
+      .from('collaborators')
+      .select('id, brand_name, commission_rate, is_active')
+      .eq('admin_id', adminId)
+      .maybeSingle();
+    if (error || !data || !data.is_active) return null;
+    return {
+      id: data.id,
+      brand_name: data.brand_name,
+      commission_rate: parseFloat(String(data.commission_rate ?? 0)),
+    };
+  }
+
   /** Get admin display name (from profiles) for order notes. */
   async getAdminDisplayName(userId: string): Promise<string> {
     const supabase = this.supabaseService.getAdminClient();

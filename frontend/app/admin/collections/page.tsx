@@ -77,7 +77,7 @@ export default function AdminCollectionsPage() {
         )}
       </div>
 
-      <div className="admin-table-wrapper">
+      <div className="admin-table-wrapper admin-desktop-only">
         <table className="admin-table">
           <thead>
             <tr>
@@ -164,6 +164,98 @@ export default function AdminCollectionsPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Mobile card list */}
+      <div className="admin-mobile-only" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {loading ? (
+          <div style={{ padding: '32px 0', textAlign: 'center', color: 'var(--admin-text-3)' }}>Loading…</div>
+        ) : filteredCollections.length === 0 ? (
+          <div style={{ padding: '48px 0', textAlign: 'center', color: 'var(--admin-text-3)', fontSize: 14 }}>
+            {search ? 'No collections match your search' : 'No collections yet'}
+          </div>
+        ) : (
+          filteredCollections.map((collection) => (
+            <div
+              key={collection.id}
+              style={{
+                background: 'var(--admin-surface)',
+                border: '1px solid var(--admin-border)',
+                borderRadius: 'var(--admin-radius)',
+                padding: '14px 16px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+                {collection.image_url ? (
+                  <img
+                    src={collection.image_url}
+                    alt={collection.name}
+                    style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 8,
+                      background: 'var(--admin-surface-2)',
+                      flexShrink: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 16,
+                      fontWeight: 700,
+                      color: 'var(--admin-text-3)',
+                    }}
+                  >
+                    {collection.name?.charAt(0)?.toUpperCase()}
+                  </div>
+                )}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 600, fontSize: 15, color: 'var(--admin-text)', marginBottom: 2 }}>
+                    {collection.name}
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--admin-text-3)' }}>{collection.slug}</div>
+                </div>
+                <StatusBadge status={collection.is_active ? 'active' : 'inactive'} type="product" />
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--admin-text-3)', marginBottom: 12 }}>
+                {collection.collection_products?.length || 0} products
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <Link
+                  href={`/admin/collections/${collection.id}`}
+                  className="admin-btn-ghost"
+                  style={{ flex: 1, textAlign: 'center', fontSize: 13, padding: '8px 0' }}
+                >
+                  Edit
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setDeleteTarget({ id: collection.id, name: collection.name })}
+                  style={{
+                    flex: 1,
+                    fontSize: 13,
+                    padding: '8px 0',
+                    background: 'none',
+                    border: '1px solid var(--admin-border)',
+                    borderRadius: 'var(--admin-radius-sm)',
+                    color: 'var(--admin-danger)',
+                    fontFamily: 'inherit',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* FAB — mobile only */}
+      <Link href="/admin/collections/new" className="admin-fab admin-mobile-only" aria-label="Add collection">
+        +
+      </Link>
 
       <ConfirmModal
         open={!!deleteTarget}

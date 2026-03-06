@@ -59,6 +59,12 @@ export class AdminHomepageController {
       final_cta_subtext?: string;
       final_cta_button?: string;
       featured_products_limit?: number;
+      active_layout?: string;
+      marquee_text?: string;
+      marquee_active?: boolean;
+      todays_pick_product_id?: string | null;
+      todays_pick_active?: boolean;
+      todays_pick_label?: string;
     },
   ) {
     return this.homepageService.updateAppSettings(body);

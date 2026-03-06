@@ -20,6 +20,12 @@ const DEFAULT_SETTINGS: AppSettings = {
   final_cta_subtext: 'Browse our collections and order in minutes.',
   final_cta_button: 'Browse all collections',
   featured_products_limit: 8,
+  active_layout: 'cinematic',
+  marquee_text: 'Free delivery on orders above 250 EGP · Fresh every morning · Order by midnight',
+  marquee_active: true,
+  todays_pick_product_id: null,
+  todays_pick_active: false,
+  todays_pick_label: "Today's Pick",
 };
 
 export function useAppSettings(): AppSettings | null {

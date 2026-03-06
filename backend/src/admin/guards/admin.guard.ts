@@ -33,11 +33,15 @@ export class AdminGuard implements CanActivate {
     }
 
     const roleInfo = await this.adminService.getAdminRoleAndPermissions(user.id);
+    const collaborator = await this.adminService.getCollaboratorByAdminId(user.id);
     request.user = {
       id: user.id,
       email: user.email,
       ...roleInfo,
       permissionsSet: new Set(roleInfo.permissions),
+      collaboratorId: collaborator?.id ?? null,
+      isCollaborator: !!collaborator,
+      collaboratorBrandName: collaborator?.brand_name ?? null,
     };
     return true;
   }

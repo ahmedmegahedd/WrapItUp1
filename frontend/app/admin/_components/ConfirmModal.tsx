@@ -3,7 +3,7 @@
 interface ConfirmModalProps {
   open: boolean
   title?: string
-  message: string
+  message: React.ReactNode
   confirmLabel?: string
   onConfirm: () => void
   onCancel: () => void
@@ -60,9 +60,9 @@ export default function ConfirmModal({
         <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--admin-text)', marginBottom: 10 }}>
           {title}
         </h3>
-        <p style={{ fontSize: 14, color: 'var(--admin-text-2)', lineHeight: 1.6, marginBottom: 24 }}>
+        <div style={{ fontSize: 14, color: 'var(--admin-text-2)', lineHeight: 1.6, marginBottom: 24 }}>
           {message}
-        </p>
+        </div>
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
           <button
             type="button"

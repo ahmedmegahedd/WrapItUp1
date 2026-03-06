@@ -18,7 +18,9 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { hapticSuccess } from '@/lib/haptics';
 import { t } from '@/lib/i18n';
 import { colors, spacing, borderRadius } from '@/constants/theme';
+import { LinearGradient } from 'expo-linear-gradient';
 import { OptimizedImage } from '@/components/OptimizedImage';
+import { SkeletonRewards } from '@/components/skeletons';
 
 export default function RewardsScreen() {
   const { language } = useLanguage();
@@ -87,11 +89,7 @@ export default function RewardsScreen() {
   );
 
   if (loading && rewards.length === 0) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
+    return <SkeletonRewards />;
   }
 
   return (
@@ -102,7 +100,12 @@ export default function RewardsScreen() {
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.primary]} />
       }
     >
-      <View style={styles.balanceHero}>
+      <LinearGradient
+        colors={['#C9963A', '#A67B28']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.balanceHero}
+      >
         <Text style={styles.balanceHeroLabel}>{t(language, 'yourBalance')}</Text>
         {signedIn && accountEmail ? (
           balance !== null ? (
@@ -113,14 +116,14 @@ export default function RewardsScreen() {
             <Text style={styles.balanceHeroMuted}>—</Text>
           )
         ) : (
-          <View>
+          <View style={{ alignItems: 'center' }}>
             <Text style={styles.signInPrompt}>{t(language, 'signInToViewPoints')}</Text>
             <TouchableOpacity style={styles.signInBtn} onPress={() => router.push('/(auth)/login')}>
               <Text style={styles.signInBtnText}>{t(language, 'signIn')}</Text>
             </TouchableOpacity>
           </View>
         )}
-      </View>
+      </LinearGradient>
 
       <Text style={styles.sectionTitle}>{t(language, 'rewards')}</Text>
       {rewards.length === 0 ? (
@@ -176,57 +179,71 @@ const styles = StyleSheet.create({
   content: { padding: spacing.lg, paddingBottom: spacing.xl * 2 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   balanceHero: {
-    backgroundColor: colors.card,
-    borderRadius: borderRadius.lg,
+    borderRadius: 20,
     paddingVertical: spacing.xl,
     paddingHorizontal: spacing.lg,
     marginBottom: spacing.lg,
     alignItems: 'center',
+    shadowColor: colors.gold,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
   },
-  balanceHeroLabel: { fontSize: 14, color: colors.textMuted, marginBottom: spacing.xs },
-  balanceHeroValue: { fontSize: 22, fontWeight: '700', color: colors.primary },
-  balanceHeroMuted: { fontSize: 18, color: colors.textMuted },
-  signInPrompt: { fontSize: 14, color: colors.textMuted, marginBottom: spacing.sm },
+  balanceHeroLabel: { fontSize: 13, color: 'rgba(255,255,255,0.8)', marginBottom: spacing.xs, fontWeight: '600', letterSpacing: 0.5 },
+  balanceHeroValue: { fontSize: 28, fontWeight: '800', color: '#fff', letterSpacing: 0.3 },
+  balanceHeroMuted: { fontSize: 20, color: 'rgba(255,255,255,0.6)' },
+  signInPrompt: { fontSize: 14, color: 'rgba(255,255,255,0.85)', marginBottom: spacing.sm, textAlign: 'center' },
   signInBtn: {
-    alignSelf: 'flex-start',
     paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    backgroundColor: colors.primary,
-    borderRadius: borderRadius.sm,
+    paddingHorizontal: spacing.lg,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.5)',
   },
-  signInBtnText: { color: '#fff', fontWeight: '600', fontSize: 14 },
-  sectionTitle: { fontSize: 20, fontWeight: '700', color: colors.text, marginBottom: spacing.md },
+  signInBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  sectionTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: spacing.md,
+  },
   empty: { color: colors.textMuted, textAlign: 'center', paddingVertical: spacing.xl },
   card: {
     flexDirection: 'row',
     backgroundColor: colors.card,
-    borderRadius: borderRadius.lg,
+    borderRadius: 16,
     overflow: 'hidden',
     marginBottom: spacing.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    shadowColor: colors.text,
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
-    shadowRadius: 4,
+    shadowRadius: 6,
     elevation: 2,
   },
-  cardImage: { width: 100, height: 100 },
-  placeholder: { backgroundColor: colors.border },
+  cardImage: { width: 110, height: 110 },
+  placeholder: { backgroundColor: colors.cardBorder },
   cardBody: { flex: 1, padding: spacing.md, justifyContent: 'space-between' },
-  cardTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
+  cardTitle: { fontSize: 15, fontWeight: '700', color: colors.text },
   cardDesc: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
-  pointsReq: { fontSize: 14, fontWeight: '700', color: colors.primary, marginTop: 4 },
-  canRedeem: { fontSize: 12, color: colors.success, marginTop: 2 },
+  pointsReq: { fontSize: 13, fontWeight: '700', color: colors.gold, marginTop: 4 },
+  canRedeem: { fontSize: 12, color: colors.success, marginTop: 2, fontWeight: '600' },
   needMore: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
   redeemBtn: {
     marginTop: spacing.sm,
     alignSelf: 'flex-start',
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.gold,
     borderRadius: borderRadius.sm,
     minWidth: 90,
     alignItems: 'center',
   },
-  redeemBtnDisabled: { opacity: 0.5 },
-  redeemBtnText: { color: '#fff', fontWeight: '600', fontSize: 14 },
+  redeemBtnDisabled: { opacity: 0.45 },
+  redeemBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
 });

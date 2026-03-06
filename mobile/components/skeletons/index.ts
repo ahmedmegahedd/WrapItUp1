@@ -5,3 +5,5 @@ export { SkeletonProductGridCard } from './SkeletonProductGridCard';
 export { SkeletonProductDetail } from './SkeletonProductDetail';
 export { SkeletonOrderRow } from './SkeletonOrderRow';
 export { SkeletonHome } from './SkeletonHome';
+export { SkeletonCollections } from './SkeletonCollections';
+export { SkeletonRewards } from './SkeletonRewards';

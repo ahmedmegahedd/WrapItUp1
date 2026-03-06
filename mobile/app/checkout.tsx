@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
 import {
   View,
   Text,
@@ -33,7 +39,39 @@ import { hapticPrimary, hapticSuccess } from '@/lib/haptics';
 import { t } from '@/lib/i18n';
 import { formatPrice } from '@/lib/format';
 import { colors, spacing, borderRadius } from '@/constants/theme';
+import { Ionicons } from '@expo/vector-icons';
 import { addDays, format, startOfDay } from 'date-fns';
+
+function CheckoutProgressBar({ progress }: { progress: number }) {
+  const width = useSharedValue(0);
+
+  useEffect(() => {
+    width.value = withTiming(progress, { duration: 400, easing: Easing.out(Easing.cubic) });
+  }, [progress]);
+
+  const barStyle = useAnimatedStyle(() => ({
+    width: `${width.value}%` as any,
+  }));
+
+  return (
+    <View style={progressStyles.track}>
+      <Animated.View style={[progressStyles.fill, barStyle]} />
+    </View>
+  );
+}
+
+const progressStyles = StyleSheet.create({
+  track: {
+    height: 3,
+    backgroundColor: colors.cardBorder,
+    overflow: 'hidden',
+  },
+  fill: {
+    height: '100%',
+    backgroundColor: colors.primary,
+    borderRadius: 2,
+  },
+});
 
 function buildDefaultDeliveryDays(count = 61): { date: string; status: string }[] {
   const today = startOfDay(new Date());
@@ -73,6 +111,18 @@ export default function CheckoutScreen() {
   const [destinations, setDestinations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+
+  // Progress: count filled required fields out of 5
+  const progressPct = (() => {
+    const filled = [
+      customerName.trim().length > 0,
+      customerEmail.trim().length > 0,
+      deliveryDate.length > 0,
+      deliveryTimeSlotId.length > 0,
+      deliveryDestinationId.length > 0 || deliveryAddress.trim().length > 0,
+    ].filter(Boolean).length;
+    return Math.round((filled / 5) * 100);
+  })();
   const [calendarVisible, setCalendarVisible] = useState(false);
   const [calendarDate, setCalendarDate] = useState(() => new Date());
 
@@ -217,6 +267,7 @@ export default function CheckoutScreen() {
   return (
     <>
       <Stack.Screen options={{ title: t(language, 'checkout') }} />
+      <CheckoutProgressBar progress={progressPct} />
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -463,6 +514,7 @@ export default function CheckoutScreen() {
             style={styles.payBtn}
             onPress={() => { hapticPrimary(); handlePay(); }}
           >
+            <Ionicons name="lock-closed" size={16} color="#fff" style={styles.payLockIcon} />
             <Text style={styles.payBtnText}>{t(language, 'pay')} {formatPrice(total)}</Text>
           </TouchableOpacity>
         </ScrollView>
@@ -473,13 +525,21 @@ export default function CheckoutScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.backgroundMuted },
-  scroll: { padding: spacing.lg, paddingBottom: spacing.xl },
+  scroll: { padding: spacing.lg, paddingBottom: spacing.xl * 2 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   empty: { color: colors.textMuted, marginBottom: spacing.md },
   btn: { backgroundColor: colors.primary, paddingHorizontal: spacing.lg, paddingVertical: spacing.md, borderRadius: borderRadius.md },
   btnText: { color: '#fff', fontWeight: '600' },
-  section: { fontWeight: '700', color: colors.text, marginTop: spacing.lg, marginBottom: spacing.sm },
-  sectionSub: { fontWeight: '600', color: colors.textMuted, fontSize: 14, marginTop: spacing.sm, marginBottom: spacing.sm },
+  section: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginTop: spacing.lg,
+    marginBottom: spacing.sm,
+  },
+  sectionSub: { fontWeight: '600', color: colors.textMuted, fontSize: 13, marginTop: spacing.sm, marginBottom: spacing.sm },
   pickOnMapBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -487,20 +547,20 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     marginBottom: spacing.sm,
     borderRadius: borderRadius.md,
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: colors.primary,
-    backgroundColor: colors.backgroundMuted,
+    backgroundColor: colors.primaryLight,
   },
   pickOnMapBtnText: { color: colors.primary, fontWeight: '700', fontSize: 15 },
   input: {
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.cardBorder,
     borderRadius: borderRadius.md,
     padding: spacing.md,
     fontSize: 16,
     marginBottom: spacing.sm,
     color: colors.text,
-    backgroundColor: colors.card,
+    backgroundColor: colors.background,
   },
   textArea: { minHeight: 80 },
   dateRowWrap: {
@@ -514,24 +574,24 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.full,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.cardBorder,
     marginRight: spacing.sm,
     backgroundColor: colors.card,
     minHeight: 40,
     justifyContent: 'center',
   },
-  dateChipSelected: { borderColor: colors.primary, backgroundColor: colors.backgroundMuted },
+  dateChipSelected: { borderColor: colors.primary, backgroundColor: colors.primaryLight },
   dateChipText: { fontSize: 14, color: colors.text },
-  dateChipTextSelected: { color: colors.primary, fontWeight: '600' },
+  dateChipTextSelected: { color: colors.primary, fontWeight: '700' },
   calendarBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: colors.overlay,
     justifyContent: 'flex-end',
   },
   calendarModal: {
     backgroundColor: colors.background,
-    borderTopLeftRadius: borderRadius.lg,
-    borderTopRightRadius: borderRadius.lg,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     paddingBottom: spacing.xl,
   },
   calendarHeader: {
@@ -541,16 +601,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.cardBorder,
   },
-  calendarTitle: { fontSize: 18, fontWeight: '600', color: colors.text },
+  calendarTitle: { fontSize: 18, fontWeight: '700', color: colors.text },
   calendarDone: { fontSize: 16, color: colors.primary, fontWeight: '600' },
   calendarDoneButton: {
     marginHorizontal: spacing.lg,
     marginTop: spacing.md,
     paddingVertical: spacing.md,
     backgroundColor: colors.primary,
-    borderRadius: borderRadius.md,
+    borderRadius: 14,
     alignItems: 'center',
   },
   calendarDoneButtonText: { fontSize: 16, color: '#fff', fontWeight: '600' },
@@ -560,12 +620,12 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.full,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.cardBorder,
     backgroundColor: colors.card,
   },
-  chipSelected: { borderColor: colors.primary, backgroundColor: colors.backgroundMuted },
+  chipSelected: { borderColor: colors.primary, backgroundColor: colors.primaryLight },
   chipText: { fontSize: 14, color: colors.text },
-  chipTextSelected: { color: colors.primary, fontWeight: '600' },
+  chipTextSelected: { color: colors.primary, fontWeight: '700' },
   destRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -573,38 +633,57 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     borderRadius: borderRadius.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.cardBorder,
     marginBottom: spacing.sm,
     backgroundColor: colors.card,
   },
-  destRowSelected: { borderColor: colors.primary },
-  destName: { fontWeight: '600', color: colors.text },
+  destRowSelected: { borderColor: colors.primary, backgroundColor: colors.primaryLight },
+  destName: { fontWeight: '600', color: colors.text, flex: 1, marginRight: spacing.sm },
   destFee: { fontWeight: '700', color: colors.primary },
   promoRow: { flexDirection: 'row', gap: spacing.sm },
   promoInput: { flex: 1, marginBottom: 0 },
   promoBtn: {
-    backgroundColor: colors.border,
+    backgroundColor: colors.backgroundMuted,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
     paddingHorizontal: spacing.lg,
     justifyContent: 'center',
     borderRadius: borderRadius.md,
   },
-  promoBtnText: { fontWeight: '600', color: colors.text },
+  promoBtnText: { fontWeight: '700', color: colors.primary },
   promoError: { color: colors.error, fontSize: 12, marginTop: 4 },
   promoOk: { color: colors.success, fontSize: 12, marginTop: 4 },
-  pointsGradientWrap: { paddingVertical: spacing.sm, paddingHorizontal: spacing.md, borderRadius: borderRadius.md, marginTop: spacing.xl, marginBottom: spacing.sm },
+  pointsGradientWrap: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.md,
+    marginTop: spacing.xl,
+    marginBottom: spacing.sm,
+  },
   pointsGradientText: { fontSize: 13, color: '#fff', fontWeight: '600', textAlign: 'center' },
   summaryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.sm },
   summaryLabel: { fontSize: 15, color: colors.textMuted },
   summaryValue: { fontSize: 15, fontWeight: '600', color: colors.text },
-  totalRow: { marginTop: spacing.sm, marginBottom: spacing.md },
-  totalLabel: { fontSize: 18, fontWeight: '600', color: colors.text },
-  total: { fontSize: 22, fontWeight: '700', color: colors.primary },
+  totalRow: {
+    marginTop: spacing.sm,
+    marginBottom: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.cardBorder,
+    paddingTop: spacing.sm,
+  },
+  totalLabel: { fontSize: 17, fontWeight: '800', color: colors.text },
+  total: { fontSize: 17, fontWeight: '800', color: colors.text },
   payBtn: {
     backgroundColor: colors.primary,
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
+    height: 58,
+    borderRadius: 16,
     alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
   },
-  payBtnDisabled: { opacity: 0.7 },
-  payBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  payLockIcon: { marginRight: 4 },
+  payBtnDisabled: { opacity: 0.55 },
+  payBtnText: { color: '#fff', fontWeight: '700', fontSize: 17, letterSpacing: 0.4 },
 });

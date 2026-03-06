@@ -10,6 +10,7 @@ import { LoyaltyService } from '../loyalty/loyalty.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { InventoryService } from '../inventory/inventory.service';
+import { CollaboratorsService } from '../collaborators/collaborators.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 
@@ -18,6 +19,7 @@ export class OrdersService {
   constructor(
     private supabaseService: SupabaseService,
     private productsService: ProductsService,
+    private collaboratorsService: CollaboratorsService,
     private addonsService: AddonsService,
     @Inject(forwardRef(() => DeliveryService))
     private deliveryService: DeliveryService,
@@ -123,6 +125,8 @@ export class OrdersService {
         selected_addons: addonsSnapshot,
         selected_variation_option_ids: selectedVariationOptionIds,
         line_total: lineTotal,
+        unit_price: itemPrice,
+        collaborator_id: (product as any).collaborator_id ?? null,
       });
     }
 
@@ -202,8 +206,17 @@ export class OrdersService {
       };
     });
 
-    const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
+    const { data: insertedOrderItems, error: itemsError } = await supabase
+      .from('order_items')
+      .insert(orderItems)
+      .select('id, product_id, quantity, line_total');
     if (itemsError) throw new BadRequestException(itemsError.message);
+
+    try {
+      await this.recordCommissionsForOrder(order.id, orderItemsData, insertedOrderItems || []);
+    } catch (e) {
+      console.warn('[Orders] recordCommissionsForOrder failed (non-blocking):', e);
+    }
 
     try {
       const orderItemsForInventory = orderItemsData.map((item) => ({
@@ -301,14 +314,34 @@ export class OrdersService {
     }
   }
 
-  async findAll(filters?: {
-    status?: string;
-    paymentStatus?: string;
-    deliveryDate?: string;
-    startDate?: string;
-    endDate?: string;
-  }) {
+  async findAll(
+    filters?: {
+      status?: string;
+      paymentStatus?: string;
+      deliveryDate?: string;
+      startDate?: string;
+      endDate?: string;
+    },
+    collaboratorId?: string | null,
+  ) {
     const supabase = this.supabaseService.getAdminClient();
+
+    let orderIds: string[] | null = null;
+    if (collaboratorId) {
+      const { data: products } = await supabase
+        .from('products')
+        .select('id')
+        .eq('collaborator_id', collaboratorId);
+      const productIds = (products || []).map((p) => p.id);
+      if (productIds.length === 0) return [];
+      const { data: orderItems } = await supabase
+        .from('order_items')
+        .select('order_id')
+        .in('product_id', productIds);
+      orderIds = [...new Set((orderItems || []).map((oi) => oi.order_id))];
+      if (orderIds.length === 0) return [];
+    }
+
     let query = supabase
       .from('orders')
       .select(`
@@ -317,34 +350,31 @@ export class OrdersService {
       `)
       .order('created_at', { ascending: false });
 
+    if (orderIds) {
+      query = query.in('id', orderIds);
+    }
     if (filters?.status) {
       query = query.eq('order_status', filters.status);
     }
-
     if (filters?.paymentStatus) {
       query = query.eq('payment_status', filters.paymentStatus);
     }
-
     if (filters?.deliveryDate) {
       query = query.eq('delivery_date', filters.deliveryDate);
     }
-
     if (filters?.startDate) {
       query = query.gte('created_at', filters.startDate);
     }
-
     if (filters?.endDate) {
       query = query.lte('created_at', filters.endDate);
     }
 
     const { data, error } = await query;
-
     if (error) throw new BadRequestException(error.message);
-
     return data;
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, collaboratorId?: string | null) {
     const supabase = this.supabaseService.getAdminClient();
     const { data, error } = await supabase
       .from('orders')
@@ -358,13 +388,22 @@ export class OrdersService {
     if (error || !data) {
       throw new NotFoundException('Order not found');
     }
-
+    if (collaboratorId) {
+      const productIds = (data.order_items || []).map((i: any) => i.product_id).filter(Boolean);
+      if (productIds.length === 0) throw new NotFoundException('Order not found');
+      const { data: products } = await supabase
+        .from('products')
+        .select('id')
+        .in('id', productIds)
+        .eq('collaborator_id', collaboratorId);
+      if (!products?.length) throw new NotFoundException('Order not found');
+    }
     return data;
   }
 
   /** Order with admin notes (for admin panel). Notes are internal only. */
-  async findOneWithAdminNotes(id: string) {
-    const order = await this.findOne(id);
+  async findOneWithAdminNotes(id: string, collaboratorId?: string | null) {
+    const order = await this.findOne(id, collaboratorId);
     const supabase = this.supabaseService.getAdminClient();
     const [notesRes, profileRes] = await Promise.all([
       supabase
@@ -467,6 +506,47 @@ export class OrdersService {
     }
 
     return this.findOne(id);
+  }
+
+  private async recordCommissionsForOrder(
+    orderId: string,
+    orderItemsData: Array<{
+      product_id: string;
+      product_title: string;
+      quantity: number;
+      line_total: number;
+      unit_price: number;
+      collaborator_id?: string | null;
+    }>,
+    insertedOrderItems: Array<{ id: string; product_id: string; quantity: number; line_total: number }>,
+  ): Promise<void> {
+    const supabase = this.supabaseService.getAdminClient();
+    for (const item of orderItemsData) {
+      if (!item.collaborator_id) continue;
+      const inserted = insertedOrderItems.find(
+        (oi) => oi.product_id === item.product_id && oi.quantity === item.quantity,
+      );
+      if (!inserted) continue;
+      const collaborator = await this.collaboratorsService.getCollaboratorById(item.collaborator_id);
+      const rate = Number(collaborator.commission_rate ?? 0);
+      const subtotal = Number(item.line_total);
+      const commissionAmount = Math.round((subtotal * (rate / 100)) * 100) / 100;
+      const wrapitupAmount = Math.round((subtotal - commissionAmount) * 100) / 100;
+      await supabase.from('commission_records').insert({
+        collaborator_id: item.collaborator_id,
+        order_id: orderId,
+        order_item_id: inserted.id,
+        product_id: item.product_id,
+        product_name: item.product_title,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        subtotal,
+        commission_rate: rate,
+        commission_amount: commissionAmount,
+        wrapitup_amount: wrapitupAmount,
+        payout_status: 'pending',
+      });
+    }
   }
 
   private async generateOrderNumber(): Promise<string> {

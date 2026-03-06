@@ -11,12 +11,14 @@ import { LoyaltyModule } from '../loyalty/loyalty.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { AnalyticsModule } from '../analytics/analytics.module';
 import { InventoryModule } from '../inventory/inventory.module';
+import { CollaboratorsModule } from '../collaborators/collaborators.module';
 
 @Module({
   imports: [
-    ProductsModule,
+    forwardRef(() => ProductsModule),
     AddonsModule,
     SupabaseModule,
+    forwardRef(() => CollaboratorsModule),
     forwardRef(() => DeliveryModule),
     DeliveryDestinationsModule,
     PromoCodesModule,

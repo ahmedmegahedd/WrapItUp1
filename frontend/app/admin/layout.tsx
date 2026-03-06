@@ -24,6 +24,7 @@ const ICONS: Record<string, string> = {
   menu:       'M3 12h18M3 6h18M3 18h18',
   bag:        'M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0',
   users:      'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75',
+  handshake:  'M12 2l2.5 2.5L12 7l-2.5-2.5L12 2zM9 10l2.5 2.5L9 15l-2.5-2.5L9 10zm6 0l2.5 2.5L15 15l-2.5-2.5L15 10zM2 14l2.5 2.5L2 19l-2.5-2.5L2 14zm20 0l2.5 2.5L22 19l-2.5-2.5L22 14zM9 19l2.5 2.5L9 24l-2.5-2.5L9 19zm6 0l2.5 2.5L15 24l-2.5-2.5L15 19z',
   truck:      'M1 3h15v13H1zM16 8h4l3 3v5h-7V8zM5.5 19a1.5 1.5 0 100-3 1.5 1.5 0 000 3zM18.5 19a1.5 1.5 0 100-3 1.5 1.5 0 000 3z',
   mapPin:     'M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0zM12 13a3 3 0 100-6 3 3 0 000 6z',
   tag:        'M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82zM7 7h.01',
@@ -38,7 +39,7 @@ const ICONS: Record<string, string> = {
   hamburger:  'M3 12h18M3 6h18M3 18h18',
 }
 
-type NavItemDef = { href: string; label: string; icon: string; exact?: boolean; badge?: 'pending' }
+type NavItemDef = { href: string; label: string; icon: string; exact?: boolean; badge?: 'pending' | 'pending_products'; superAdminOnly?: boolean }
 
 const NAV_GROUPS: { label: string; items: NavItemDef[] }[] = [
   {
@@ -48,7 +49,7 @@ const NAV_GROUPS: { label: string; items: NavItemDef[] }[] = [
   {
     label: 'CATALOG',
     items: [
-      { href: '/admin/products', label: 'Products', icon: 'box' },
+      { href: '/admin/products', label: 'Products', icon: 'box', badge: 'pending_products' },
       { href: '/admin/collections', label: 'Collections', icon: 'folder' },
       { href: '/admin/addons', label: 'Add-ons', icon: 'plusCircle' },
       { href: '/admin/navbar-collections', label: 'Navbar', icon: 'menu' },
@@ -71,6 +72,7 @@ const NAV_GROUPS: { label: string; items: NavItemDef[] }[] = [
   {
     label: 'OPERATIONS',
     items: [
+      { href: '/admin/collaborators', label: 'Collaborators', icon: 'handshake', superAdminOnly: true },
       { href: '/admin/delivery-settings', label: 'Delivery', icon: 'truck' },
       { href: '/admin/delivery-destinations', label: 'Destinations', icon: 'mapPin' },
       { href: '/admin/promo-codes', label: 'Promo Codes', icon: 'tag' },
@@ -115,11 +117,12 @@ function NavItem({ item, isActive, collapsed, badge, onClick }: {
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
-  const [adminUser, setAdminUser] = useState<{ email: string; permissions: string[]; is_super_admin: boolean } | null>(null)
+  const [adminUser, setAdminUser] = useState<{ email: string; permissions: string[]; is_super_admin: boolean; is_collaborator?: boolean; collaborator_brand_name?: string | null } | null>(null)
   const [loading, setLoading] = useState(true)
   const [collapsed, setCollapsed] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [pendingCount, setPendingCount] = useState(0)
+  const [pendingProductsCount, setPendingProductsCount] = useState(0)
 
   useEffect(() => {
     async function checkAuth() {
@@ -134,6 +137,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             email: user.email ?? '',
             permissions: Array.isArray(user.permissions) ? user.permissions : [],
             is_super_admin: user.is_super_admin === true,
+            is_collaborator: user.is_collaborator === true,
+            collaborator_brand_name: user.collaborator_brand_name ?? null,
           })
         } else {
           setAdminUser(null)
@@ -177,6 +182,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       .catch(() => {})
   }, [adminUser, pathname])
 
+  useEffect(() => {
+    if (!adminUser?.is_super_admin) return
+    api.get('/admin/products', { params: { type: 'collaborator', approvalStatus: 'pending' } })
+      .then((res) => setPendingProductsCount(Array.isArray(res.data) ? res.data.length : 0))
+      .catch(() => {})
+  }, [adminUser?.is_super_admin, pathname])
+
   useEffect(() => { setDrawerOpen(false) }, [pathname])
 
   function isActive(item: NavItemDef) {
@@ -207,11 +219,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const sidebarWidth = collapsed ? 64 : 240
 
-  const filterNavGroups = () =>
-    NAV_GROUPS.map((group) => ({
+  const filterNavGroups = () => {
+    const isCollaborator = adminUser?.is_collaborator === true
+    return NAV_GROUPS.map((group) => ({
       ...group,
-      items: group.items.filter((item) => canAccessPath(item.href, adminUser.permissions, adminUser.is_super_admin)),
+      items: group.items.filter((item) => {
+        if (item.superAdminOnly && !adminUser?.is_super_admin) return false
+        if (isCollaborator) return item.href === '/admin/products' || item.href === '/admin/orders' || item.href === '/admin'
+        return canAccessPath(item.href, adminUser.permissions, adminUser.is_super_admin)
+      }),
     })).filter((g) => g.items.length > 0)
+  }
 
   const renderNavGroups = (forDrawer = false) => (
     <nav style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '12px 8px' }}>
@@ -228,7 +246,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               item={item}
               isActive={isActive(item)}
               collapsed={forDrawer ? false : collapsed}
-              badge={item.badge === 'pending' ? pendingCount : undefined}
+              badge={item.badge === 'pending' ? pendingCount : item.badge === 'pending_products' ? pendingProductsCount : undefined}
               onClick={forDrawer ? () => setDrawerOpen(false) : undefined}
             />
           ))}
@@ -239,6 +257,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const adminEmail = adminUser.email || 'Admin'
   const adminInitial = adminEmail.charAt(0).toUpperCase() || 'A'
+  const collaboratorBadge = adminUser?.is_collaborator && adminUser?.collaborator_brand_name ? `Collaborator · ${adminUser.collaborator_brand_name}` : null
 
   return (
     <div className="admin-root" style={{ minHeight: '100vh', display: 'flex' }}>
@@ -281,6 +300,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </div>
               <div style={{ flex: 1, overflow: 'hidden' }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--admin-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{adminEmail}</div>
+                {collaboratorBadge && <div style={{ fontSize: 10, color: 'var(--admin-accent)', marginTop: 1 }}>{collaboratorBadge}</div>}
                 <button type="button" onClick={logout} style={{ background: 'none', border: 'none', padding: 0, fontSize: 11, color: 'var(--admin-text-3)', cursor: 'pointer', fontFamily: 'inherit', minHeight: 'unset', minWidth: 'unset' }}>
                   Sign out
                 </button>
@@ -300,12 +320,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* ── Mobile Header ── */}
       <header className="lg:hidden" style={{ position: 'fixed', top: 0, left: 0, right: 0, height: 56, background: 'var(--admin-surface)', borderBottom: '1px solid var(--admin-border)', display: 'flex', alignItems: 'center', padding: '0 16px', zIndex: 200, gap: 12 }}>
-        <button type="button" onClick={() => setDrawerOpen(true)} aria-label="Open menu" style={{ background: 'none', border: 'none', padding: 6, color: 'var(--admin-text)', cursor: 'pointer', minHeight: 'unset', minWidth: 'unset', borderRadius: 6, display: 'flex', alignItems: 'center' }}>
+        <button type="button" onClick={() => setDrawerOpen(true)} aria-label="Open menu" style={{ background: 'none', border: 'none', padding: 11, color: 'var(--admin-text)', cursor: 'pointer', minHeight: 44, minWidth: 44, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Icon d={ICONS.hamburger} size={22} />
         </button>
         <span style={{ fontWeight: 700, fontSize: 16, color: 'var(--admin-accent)', flex: 1, textAlign: 'center' }}>🎁 Wrap It Up</span>
-        <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--admin-accent-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--admin-accent)', fontWeight: 700, fontSize: 13 }}>
-          {adminInitial}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {collaboratorBadge && <span style={{ fontSize: 11, color: 'var(--admin-accent)', fontWeight: 600 }}>{collaboratorBadge}</span>}
+          <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--admin-accent-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--admin-accent)', fontWeight: 700, fontSize: 13 }}>
+            {adminInitial}
+          </div>
         </div>
       </header>
 
@@ -315,7 +338,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <aside className="lg:hidden" style={{ position: 'fixed', top: 0, left: 0, bottom: 0, width: 280, background: 'var(--admin-surface)', zIndex: 301, display: 'flex', flexDirection: 'column', overflowX: 'hidden' }}>
             <div style={{ padding: 16, borderBottom: '1px solid var(--admin-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
               <span style={{ fontWeight: 700, fontSize: 16, color: 'var(--admin-accent)' }}>🎁 Wrap It Up</span>
-              <button type="button" onClick={() => setDrawerOpen(false)} style={{ background: 'none', border: 'none', padding: 6, cursor: 'pointer', color: 'var(--admin-text-2)', minHeight: 'unset', minWidth: 'unset', borderRadius: 6 }}>
+              <button type="button" onClick={() => setDrawerOpen(false)} style={{ background: 'none', border: 'none', padding: 10, cursor: 'pointer', color: 'var(--admin-text-2)', minHeight: 44, minWidth: 44, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Icon d={ICONS.x} size={20} />
               </button>
             </div>
@@ -324,8 +347,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--admin-accent-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--admin-accent)', fontWeight: 700, fontSize: 13, flexShrink: 0 }}>
                 {adminInitial}
               </div>
-              <div style={{ flex: 1, overflow: 'hidden' }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--admin-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{adminEmail}</div>
+<div style={{ flex: 1, overflow: 'hidden' }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--admin-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{adminEmail}</div>
+              {collaboratorBadge && <div style={{ fontSize: 10, color: 'var(--admin-accent)', marginTop: 1 }}>{collaboratorBadge}</div>}
               </div>
               <button type="button" onClick={logout} style={{ background: 'none', border: 'none', padding: 8, cursor: 'pointer', color: 'var(--admin-text-3)', minHeight: 'unset', minWidth: 'unset', borderRadius: 6 }} title="Sign out">
                 <Icon d={ICONS.logout} size={18} />

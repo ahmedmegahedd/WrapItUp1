@@ -1,10 +1,17 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, Platform } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { colors } from '@/constants/theme';
 import { t, type I18nKey } from '@/lib/i18n';
 
 const TAB_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
@@ -25,8 +32,65 @@ const TAB_KEYS: Record<string, I18nKey> = {
   account: 'account',
 };
 
-const PINK_500 = '#ec4899';
-const PINK_400 = '#f472b6';
+interface TabItemProps {
+  routeKey: string;
+  isFocused: boolean;
+  iconName: keyof typeof Ionicons.glyphMap;
+  label: string;
+  badge: number | undefined;
+  showBadge: boolean;
+  onPress: () => void;
+}
+
+function TabItem({ routeKey, isFocused, iconName, label, badge, showBadge, onPress }: TabItemProps) {
+  const scale = useSharedValue(1);
+  const prevBadge = useRef<number | undefined>(undefined);
+
+  useEffect(() => {
+    if (showBadge && badge !== prevBadge.current) {
+      scale.value = withSequence(
+        withSpring(1.45, { damping: 4, stiffness: 300 }),
+        withSpring(1, { damping: 8, stiffness: 200 }),
+      );
+    }
+    if (!showBadge) {
+      scale.value = withTiming(1, { duration: 150 });
+    }
+    prevBadge.current = badge;
+  }, [badge, showBadge]);
+
+  const badgeAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  return (
+    <TouchableOpacity
+      key={routeKey}
+      accessibilityRole="button"
+      accessibilityState={isFocused ? { selected: true } : {}}
+      onPress={onPress}
+      style={styles.tab}
+      activeOpacity={0.8}
+    >
+      <View style={styles.iconWrap}>
+        <Ionicons
+          name={iconName}
+          size={22}
+          color={isFocused ? colors.primary : 'rgba(255,255,255,0.45)'}
+        />
+        {showBadge && (
+          <Animated.View style={[styles.badge, badgeAnimStyle]}>
+            <Text style={styles.badgeText}>{(badge ?? 0) > 99 ? '99+' : badge}</Text>
+          </Animated.View>
+        )}
+      </View>
+      <Text style={[styles.label, isFocused && styles.labelActive]} numberOfLines={1}>
+        {label}
+      </Text>
+      {isFocused && <View style={styles.activeDot} />}
+    </TouchableOpacity>
+  );
+}
 
 export function GlassyTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
@@ -35,12 +99,7 @@ export function GlassyTabBar({ state, descriptors, navigation }: BottomTabBarPro
 
   return (
     <View style={[styles.wrapper, { paddingBottom: bottom }]} pointerEvents="box-none">
-      <LinearGradient
-        colors={[PINK_500, PINK_400]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.pill}
-      >
+      <View style={styles.pill}>
         <View style={styles.tabRow}>
           {state.routes.filter((r) => r.name !== 'rewards' && r.name !== 'orders').map((route) => {
             const { options } = descriptors[route.key];
@@ -65,32 +124,20 @@ export function GlassyTabBar({ state, descriptors, navigation }: BottomTabBarPro
             const showBadge = typeof badge === 'number' && badge > 0;
 
             return (
-              <TouchableOpacity
+              <TabItem
                 key={route.key}
-                accessibilityRole="button"
-                accessibilityState={isFocused ? { selected: true } : {}}
+                routeKey={route.key}
+                isFocused={isFocused}
+                iconName={iconName}
+                label={label}
+                badge={badge}
+                showBadge={showBadge}
                 onPress={onPress}
-                style={[styles.tab, isFocused && styles.tabActive]}
-                activeOpacity={0.8}
-              >
-                <View style={styles.iconWrap}>
-                  <Ionicons
-                    name={iconName}
-                    size={22}
-                    color="#fff"
-                  />
-                  {showBadge && (
-                    <View style={styles.badge}>
-                      <Text style={styles.badgeText}>{badge > 99 ? '99+' : badge}</Text>
-                    </View>
-                  )}
-                </View>
-                <Text style={styles.label} numberOfLines={1}>{label}</Text>
-              </TouchableOpacity>
+              />
             );
           })}
         </View>
-      </LinearGradient>
+      </View>
     </View>
   );
 }
@@ -112,12 +159,15 @@ const styles = StyleSheet.create({
     minHeight: 56,
     alignItems: 'center',
     justifyContent: 'space-around',
+    backgroundColor: 'rgba(28, 16, 8, 0.93)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
+        shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.25,
-        shadowRadius: 12,
+        shadowRadius: 20,
       },
       android: {
         elevation: 8,
@@ -136,10 +186,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 6,
     paddingHorizontal: 4,
-    borderRadius: 9999,
-  },
-  tabActive: {
-    backgroundColor: 'rgba(255,255,255,0.3)',
   },
   iconWrap: {
     position: 'relative',
@@ -158,13 +204,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   badgeText: {
-    color: PINK_500,
+    color: colors.primary,
     fontSize: 11,
     fontWeight: '700',
   },
   label: {
     fontSize: 11,
-    color: '#fff',
+    color: 'rgba(255,255,255,0.45)',
     fontWeight: '500',
+  },
+  labelActive: {
+    color: colors.primary,
+  },
+  activeDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.primary,
+    marginTop: 2,
   },
 });

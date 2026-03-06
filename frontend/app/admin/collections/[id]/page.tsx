@@ -240,7 +240,7 @@ export default function AdminCollectionEditPage() {
   }
 
   return (
-    <div>
+    <div className="admin-product-form-wrap">
       <Toast toasts={toasts} onDismiss={dismissToast} />
       {showImagePreview && (
         <ImagePreviewCrop
@@ -265,7 +265,7 @@ export default function AdminCollectionEditPage() {
           <div className="admin-card">
             <p className="admin-section-header">Basic Information</p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+            <div className="admin-product-grid-2" style={{ marginBottom: 16 }}>
               <div>
                 <label style={labelStyle}>Name *</label>
                 <input
@@ -336,35 +336,63 @@ export default function AdminCollectionEditPage() {
           <div className="admin-card">
             <p className="admin-section-header">Collection Image</p>
 
-            <label
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                border: '2px dashed var(--admin-border)',
-                borderRadius: 'var(--admin-radius)',
-                padding: '24px',
-                cursor: 'pointer',
-                textAlign: 'center',
-                marginBottom: formData.image_url ? 16 : 0,
-              }}
-            >
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                disabled={uploading}
-                style={{ display: 'none' }}
-              />
-              <span style={{ fontSize: 28, marginBottom: 8 }}>🖼️</span>
-              <span style={{ fontSize: 14, color: 'var(--admin-text-2)' }}>
-                {uploading ? 'Uploading...' : 'Click to upload collection image'}
-              </span>
-              <span style={{ fontSize: 12, color: 'var(--admin-text-3)', marginTop: 4 }}>
-                Square image recommended
-              </span>
-            </label>
+            <div className="admin-image-grid" style={{ marginBottom: formData.image_url ? 16 : 0 }}>
+              <label style={{ display: 'block', cursor: 'pointer' }}>
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handleImageUpload}
+                  disabled={uploading}
+                  style={{ display: 'none' }}
+                />
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: '2px dashed var(--admin-border)',
+                    borderRadius: 'var(--admin-radius)',
+                    padding: '20px 12px',
+                    textAlign: 'center',
+                    gap: 6,
+                  }}
+                >
+                  <span style={{ fontSize: 24 }}>📷</span>
+                  <span style={{ fontSize: 13, color: 'var(--admin-text-2)', fontWeight: 500 }}>
+                    {uploading ? 'Uploading...' : 'Take Photo'}
+                  </span>
+                </div>
+              </label>
+              <label style={{ display: 'block', cursor: 'pointer' }}>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  disabled={uploading}
+                  style={{ display: 'none' }}
+                />
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: '2px dashed var(--admin-border)',
+                    borderRadius: 'var(--admin-radius)',
+                    padding: '20px 12px',
+                    textAlign: 'center',
+                    gap: 6,
+                  }}
+                >
+                  <span style={{ fontSize: 24 }}>🖼️</span>
+                  <span style={{ fontSize: 13, color: 'var(--admin-text-2)', fontWeight: 500 }}>
+                    Choose from Library
+                  </span>
+                </div>
+              </label>
+            </div>
 
             {formData.image_url && (
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
@@ -539,7 +567,20 @@ export default function AdminCollectionEditPage() {
           </div>
 
           {/* Actions */}
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+          <div
+            style={{
+              position: 'sticky',
+              bottom: 0,
+              background: 'var(--admin-surface)',
+              borderTop: '1px solid var(--admin-border)',
+              padding: '12px 16px',
+              paddingBottom: 'max(12px, env(safe-area-inset-bottom))',
+              display: 'flex',
+              gap: 10,
+              justifyContent: 'flex-end',
+              zIndex: 10,
+            }}
+          >
             <button
               type="button"
               onClick={() => router.push('/admin/collections')}

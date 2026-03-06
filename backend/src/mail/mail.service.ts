@@ -120,4 +120,44 @@ export class MailService {
       return false;
     }
   }
+
+  async sendProductPendingReview(params: {
+    to: string;
+    productName: string;
+    brandName: string;
+    priceEgp: number;
+    adminProductUrl: string;
+  }): Promise<boolean> {
+    if (!this.resend) {
+      console.log('[Mail] Resend not configured. Product pending review (no email sent):', params.productName);
+      return false;
+    }
+    try {
+      const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Product Pending Review</title></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); color: white; padding: 24px; border-radius: 12px 12px 0 0; text-align: center;">
+    <h1 style="margin: 0; font-size: 22px;">New product pending review</h1>
+  </div>
+  <div style="background: #fff; border: 1px solid #eee; border-top: none; border-radius: 0 0 12px 12px; padding: 24px;">
+    <p>Collaborator <strong>${params.brandName}</strong> has submitted a new product for review.</p>
+    <p><strong>Product:</strong> ${params.productName}<br><strong>Price:</strong> E£ ${Number(params.priceEgp).toFixed(2)}</p>
+    <p><a href="${params.adminProductUrl}" style="display: inline-block; background: #ec4899; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px;">View in admin</a></p>
+  </div>
+</body>
+</html>`;
+      await this.resend.emails.send({
+        from: `${this.fromName} <${this.fromEmail}>`,
+        to: params.to,
+        subject: `New product pending review: ${params.productName}`,
+        html,
+      });
+      return true;
+    } catch (err) {
+      console.error('[Mail] Failed to send product pending review:', err);
+      return false;
+    }
+  }
 }

@@ -146,7 +146,7 @@ export class HomepageService {
     return data;
   }
 
-  /** Public: get mobile app settings (section order, promotion, final CTA, featured limit) */
+  /** Public: get mobile app settings (section order, promotion, final CTA, featured limit, layout) */
   async getAppSettings(): Promise<{
     home_section_order: string[];
     promotion_visible: boolean;
@@ -156,6 +156,12 @@ export class HomepageService {
     final_cta_subtext: string;
     final_cta_button: string;
     featured_products_limit: number;
+    active_layout: string;
+    marquee_text: string;
+    marquee_active: boolean;
+    todays_pick_product_id: string | null;
+    todays_pick_active: boolean;
+    todays_pick_label: string;
   }> {
     const supabase = this.getClient();
     const { data: rows, error } = await supabase.from('app_settings').select('key, value');
@@ -183,6 +189,12 @@ export class HomepageService {
       final_cta_subtext: (map.get('final_cta_subtext') as string) ?? 'Browse our collections and order in minutes.',
       final_cta_button: (map.get('final_cta_button') as string) ?? 'Browse all collections',
       featured_products_limit: typeof map.get('featured_products_limit') === 'number' ? (map.get('featured_products_limit') as number) : 8,
+      active_layout: (map.get('active_layout') as string) ?? 'cinematic',
+      marquee_text: (map.get('marquee_text') as string) ?? 'Free delivery on orders above 250 EGP · Fresh every morning · Order by midnight',
+      marquee_active: map.get('marquee_active') !== false,
+      todays_pick_product_id: (map.get('todays_pick_product_id') as string) ?? null,
+      todays_pick_active: map.get('todays_pick_active') === true,
+      todays_pick_label: (map.get('todays_pick_label') as string) ?? "Today's Pick",
     };
   }
 
@@ -196,6 +208,12 @@ export class HomepageService {
     final_cta_subtext?: string;
     final_cta_button?: string;
     featured_products_limit?: number;
+    active_layout?: string;
+    marquee_text?: string;
+    marquee_active?: boolean;
+    todays_pick_product_id?: string | null;
+    todays_pick_active?: boolean;
+    todays_pick_label?: string;
   }): Promise<ReturnType<HomepageService['getAppSettings']>> {
     const supabase = this.getClient();
     const now = new Date().toISOString();
@@ -209,6 +227,12 @@ export class HomepageService {
       final_cta_subtext: updates.final_cta_subtext,
       final_cta_button: updates.final_cta_button,
       featured_products_limit: updates.featured_products_limit,
+      active_layout: updates.active_layout,
+      marquee_text: updates.marquee_text,
+      marquee_active: updates.marquee_active,
+      todays_pick_product_id: updates.todays_pick_product_id,
+      todays_pick_active: updates.todays_pick_active,
+      todays_pick_label: updates.todays_pick_label,
     };
 
     for (const [key, value] of Object.entries(keyValue)) {

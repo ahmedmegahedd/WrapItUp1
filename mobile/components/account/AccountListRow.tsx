@@ -20,7 +20,7 @@ export function AccountListRow({ icon, title, onPress, rightText, destructive, h
       <Ionicons
         name={icon}
         size={22}
-        color={destructive ? accountColors.destructive : accountColors.charcoalMuted}
+        color={destructive ? accountColors.destructive : colors.primary}
       />
       <Text style={[styles.title, destructive && styles.titleDestructive]} numberOfLines={1}>
         {title}

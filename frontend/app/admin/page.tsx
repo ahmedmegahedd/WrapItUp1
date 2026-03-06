@@ -23,13 +23,37 @@ function formatToday() {
 }
 
 export default function AdminDashboard() {
+  const [me, setMe] = useState<{ is_collaborator?: boolean; collaborator_brand_name?: string | null } | null>(null)
   const [orders, setOrders] = useState<any[]>([])
   const [products, setProducts] = useState<any[]>([])
   const [lowStockMaterialsCount, setLowStockMaterialsCount] = useState(0)
   const [shoppingListCount, setShoppingListCount] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [collabProfile, setCollabProfile] = useState<any>(null)
+  const [collabEarnings, setCollabEarnings] = useState<any>(null)
 
   useEffect(() => {
+    api.get('/admin/auth/me').then((r) => setMe(r.data?.user ?? null)).catch(() => setMe(null))
+  }, [])
+
+  useEffect(() => {
+    if (me?.is_collaborator) {
+      Promise.all([
+        api.get('/admin/collaborators/me'),
+        api.get('/admin/collaborators/me/earnings'),
+        api.get('/admin/orders'),
+        api.get('/admin/products'),
+      ])
+        .then(([profileRes, earningsRes, ordersRes, productsRes]) => {
+          setCollabProfile(profileRes.data)
+          setCollabEarnings(earningsRes.data)
+          setOrders(ordersRes.data || [])
+          setProducts(productsRes.data || [])
+        })
+        .catch(console.error)
+        .finally(() => setLoading(false))
+      return
+    }
     Promise.all([
       api.get('/admin/orders'),
       api.get('/admin/products'),
@@ -44,7 +68,7 @@ export default function AdminDashboard() {
       })
       .catch(console.error)
       .finally(() => setLoading(false))
-  }, [])
+  }, [me?.is_collaborator])
 
   const today = new Date().toISOString().split('T')[0]
   const todaysOrders = orders.filter((o) => o.delivery_date?.startsWith(today))
@@ -71,6 +95,87 @@ export default function AdminDashboard() {
   }
 
   const formatEgp = (n: number) => `E£ ${Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 })}`
+
+  if (me?.is_collaborator) {
+    const myProducts = products || []
+    const pending = myProducts.filter((p) => p.approval_status === 'pending').length
+    const active = myProducts.filter((p) => p.approval_status === 'active').length
+    const rejected = myProducts.filter((p) => p.approval_status === 'rejected').length
+    const summary = collabEarnings?.summary ?? {}
+    const recentOrders = [...(orders || [])].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()).slice(0, 5)
+    return (
+      <div style={{ padding: '24px 24px 40px', maxWidth: 900, margin: '0 auto' }}>
+        <div style={{ marginBottom: 28 }}>
+          <h1 style={{ fontSize: 26, fontWeight: 700, color: 'var(--admin-text)', margin: 0, lineHeight: 1.2 }}>
+            Welcome, {collabProfile?.brand_name ?? me?.collaborator_brand_name ?? 'Collaborator'} 👋
+          </h1>
+          <p style={{ color: 'var(--admin-text-3)', marginTop: 6, fontSize: 14 }}>{formatToday()}</p>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 14, marginBottom: 28 }}>
+          <Link href="/admin/products" style={{ background: 'var(--admin-surface)', border: '1px solid var(--admin-border)', borderRadius: 'var(--admin-radius)', padding: 18, textDecoration: 'none', display: 'block', boxShadow: 'var(--admin-shadow)' }}>
+            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--admin-text)' }}>{loading ? '—' : myProducts.length}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--admin-text)', marginTop: 6 }}>Total Products</div>
+          </Link>
+          <Link href="/admin/products" style={{ background: 'var(--admin-surface)', border: '1px solid var(--admin-border)', borderRadius: 'var(--admin-radius)', padding: 18, textDecoration: 'none', display: 'block', boxShadow: 'var(--admin-shadow)' }}>
+            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--admin-accent)' }}>{loading ? '—' : pending}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--admin-text)', marginTop: 6 }}>Pending Review</div>
+          </Link>
+          <Link href="/admin/products" style={{ background: 'var(--admin-surface)', border: '1px solid var(--admin-border)', borderRadius: 'var(--admin-radius)', padding: 18, textDecoration: 'none', display: 'block', boxShadow: 'var(--admin-shadow)' }}>
+            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--admin-success, #4A7C5C)' }}>{loading ? '—' : active}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--admin-text)', marginTop: 6 }}>Active</div>
+          </Link>
+          <Link href="/admin/products" style={{ background: 'var(--admin-surface)', border: '1px solid var(--admin-border)', borderRadius: 'var(--admin-radius)', padding: 18, textDecoration: 'none', display: 'block', boxShadow: 'var(--admin-shadow)' }}>
+            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--admin-danger)' }}>{loading ? '—' : rejected}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--admin-text)', marginTop: 6 }}>Rejected</div>
+          </Link>
+          <div style={{ background: 'var(--admin-surface)', border: '1px solid var(--admin-border)', borderRadius: 'var(--admin-radius)', padding: 18, boxShadow: 'var(--admin-shadow)' }}>
+            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--admin-text)' }}>{loading ? '—' : formatEgp(summary.total_commission ?? 0)}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--admin-text)', marginTop: 6 }}>Total Earned</div>
+          </div>
+          <div style={{ background: 'var(--admin-surface)', border: '1px solid var(--admin-border)', borderRadius: 'var(--admin-radius)', padding: 18, boxShadow: 'var(--admin-shadow)' }}>
+            <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--admin-accent)' }}>{loading ? '—' : formatEgp(summary.pending_payout ?? 0)}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--admin-text)', marginTop: 6 }}>Pending Payout</div>
+          </div>
+        </div>
+        <div style={{ background: 'var(--admin-surface)', border: '1px solid var(--admin-border)', borderRadius: 'var(--admin-radius)', boxShadow: 'var(--admin-shadow)', overflow: 'hidden' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid var(--admin-border)' }}>
+            <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--admin-text)' }}>Recent Orders (with your products)</span>
+            <Link href="/admin/orders" style={{ fontSize: 13, color: 'var(--admin-accent)', textDecoration: 'none', fontWeight: 500 }}>View all →</Link>
+          </div>
+          {loading ? (
+            <div style={{ padding: 16 }}>Loading…</div>
+          ) : recentOrders.length === 0 ? (
+            <div style={{ padding: 40, textAlign: 'center', color: 'var(--admin-text-3)', fontSize: 14 }}>No orders yet</div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Order #</th>
+                    <th>Customer</th>
+                    <th>Total</th>
+                    <th>Payment</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentOrders.map((order) => (
+                    <tr key={order.id}>
+                      <td style={{ fontWeight: 600 }}>{order.order_number}</td>
+                      <td><div style={{ fontSize: 13 }}>{order.customer_name}</div><div style={{ fontSize: 12, color: 'var(--admin-text-3)' }}>{order.customer_email}</div></td>
+                      <td style={{ fontWeight: 600 }}>{formatEgp(order.total)}</td>
+                      <td><StatusBadge status={order.payment_status} type="payment" /></td>
+                      <td><StatusBadge status={order.order_status} type="order" /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
 
   const metricCards = [
     {
@@ -283,39 +388,57 @@ export default function AdminDashboard() {
               No orders yet
             </div>
           ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Order #</th>
-                    <th>Customer</th>
-                    <th>Total</th>
-                    <th>Payment</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentOrders.map((order) => (
-                    <tr key={order.id}>
-                      <td style={{ fontWeight: 600 }}>{order.order_number}</td>
-                      <td>
-                        <div style={{ fontSize: 13 }}>{order.customer_name}</div>
-                        <div style={{ fontSize: 12, color: 'var(--admin-text-3)' }}>
-                          {order.customer_email}
-                        </div>
-                      </td>
-                      <td style={{ fontWeight: 600 }}>{formatEgp(order.total)}</td>
-                      <td>
-                        <StatusBadge status={order.payment_status} type="payment" />
-                      </td>
-                      <td>
-                        <StatusBadge status={order.order_status} type="order" />
-                      </td>
+            <>
+              {/* Desktop table */}
+              <div className="admin-desktop-only" style={{ overflowX: 'auto' }}>
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Order #</th>
+                      <th>Customer</th>
+                      <th>Total</th>
+                      <th>Payment</th>
+                      <th>Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {recentOrders.map((order) => (
+                      <tr key={order.id}>
+                        <td style={{ fontWeight: 600 }}>{order.order_number}</td>
+                        <td>
+                          <div style={{ fontSize: 13 }}>{order.customer_name}</div>
+                          <div style={{ fontSize: 12, color: 'var(--admin-text-3)' }}>
+                            {order.customer_email}
+                          </div>
+                        </td>
+                        <td style={{ fontWeight: 600 }}>{formatEgp(order.total)}</td>
+                        <td>
+                          <StatusBadge status={order.payment_status} type="payment" />
+                        </td>
+                        <td>
+                          <StatusBadge status={order.order_status} type="order" />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {/* Mobile cards */}
+              <div className="admin-mobile-only" style={{ padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {recentOrders.map((order) => (
+                  <div key={order.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: 'var(--admin-surface-2)', borderRadius: 'var(--admin-radius-sm)' }}>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 700 }}>#{order.order_number}</div>
+                      <div style={{ fontSize: 12, color: 'var(--admin-text-3)', marginTop: 1 }}>{order.customer_name}</div>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700 }}>{formatEgp(order.total)}</span>
+                      <StatusBadge status={order.order_status} type="order" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
 

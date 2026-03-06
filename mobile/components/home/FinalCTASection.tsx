@@ -46,6 +46,8 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     padding: spacing.xl,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,

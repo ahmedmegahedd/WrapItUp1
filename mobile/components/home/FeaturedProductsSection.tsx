@@ -11,6 +11,7 @@ import { router } from 'expo-router';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { SaveProductButton } from '@/components/SaveProductButton';
+import { ProductBadge, resolveBadge } from '@/components/ProductBadge';
 import { t } from '@/lib/i18n';
 import { formatPrice } from '@/lib/format';
 import { colors, spacing, borderRadius } from '@/constants/theme';
@@ -49,6 +50,7 @@ export function FeaturedProductsSection({ products }: FeaturedProductsSectionPro
       >
         {products.map((item) => {
           const imageUrl = getPrimaryImageUrl(item);
+          const badge = resolveBadge(item);
           return (
             <TouchableOpacity
               key={item.id}
@@ -63,6 +65,11 @@ export function FeaturedProductsSection({ products }: FeaturedProductsSectionPro
                   <View style={[styles.cardImage, styles.placeholder]} />
                 )}
                 <SaveProductButton productSlug={item.slug} size={22} style={styles.saveBtn} />
+                {badge && (
+                  <View style={styles.badgeWrap}>
+                    <ProductBadge variant={badge} />
+                  </View>
+                )}
               </View>
               <View style={styles.cardInfo}>
                 <Text style={styles.cardTitle} numberOfLines={2}>
@@ -94,6 +101,10 @@ const styles = StyleSheet.create({
     color: colors.text,
     paddingHorizontal: spacing.lg,
     marginBottom: spacing.md,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.primary,
+    marginLeft: spacing.lg,
+    paddingLeft: 12,
   },
   scrollContent: {
     paddingHorizontal: spacing.lg,
@@ -102,13 +113,15 @@ const styles = StyleSheet.create({
   },
   card: {
     width: CARD_WIDTH,
-    borderRadius: borderRadius.lg,
+    borderRadius: 16,
     overflow: 'hidden',
     backgroundColor: colors.card,
-    shadowColor: '#000',
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    shadowColor: colors.text,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
     elevation: 2,
   },
   cardImageWrap: { width: '100%', aspectRatio: 1, position: 'relative' },
@@ -118,6 +131,7 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
   },
   saveBtn: { position: 'absolute', top: spacing.sm, right: spacing.sm },
+  badgeWrap: { position: 'absolute', top: spacing.sm, left: spacing.sm },
   placeholder: {
     backgroundColor: colors.border,
   },
@@ -125,7 +139,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   cardTitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: colors.text,
     marginBottom: spacing.xs,
@@ -137,7 +151,12 @@ const styles = StyleSheet.create({
   },
   pointsEarned: {
     fontSize: 11,
-    color: colors.textMuted,
-    marginTop: 2,
+    color: colors.gold,
+    marginTop: 3,
+    backgroundColor: colors.goldLight,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
   },
 });

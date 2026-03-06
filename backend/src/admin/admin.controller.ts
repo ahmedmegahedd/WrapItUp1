@@ -1,4 +1,5 @@
-import { Controller, Post, Body, UseGuards, Get, Request, Param, Query, Patch, Delete, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Get, Request, Req, Param, Query, Patch, Delete, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { AdminService } from './admin.service';
 import { AdminUsersService } from './admin-users.service';
 import { AdminRolesService } from './admin-roles.service';
@@ -9,6 +10,7 @@ import { UpdateRoleDto } from './dto/update-role.dto';
 import { CreateAdminCredentialsDto } from './dto/create-admin-credentials.dto';
 import { AdminGuard } from './guards/admin.guard';
 import { PermissionGuard } from './guards/permission.guard';
+import { SuperAdminGuard } from './guards/super-admin.guard';
 import { RequirePermission } from './decorators/require-permission.decorator';
 import { ADMIN_PERMISSIONS } from './admin-permissions.const';
 import { ProductsService } from '../products/products.service';
@@ -24,6 +26,8 @@ import { DeliveryDestinationsService } from '../delivery-destinations/delivery-d
 import { LoyaltyService } from '../loyalty/loyalty.service';
 import { CreateRewardDto } from '../loyalty/dto/create-reward.dto';
 import { UpdateRewardDto } from '../loyalty/dto/update-reward.dto';
+import { CollaboratorsService } from '../collaborators/collaborators.service';
+import { MailService } from '../mail/mail.service';
 
 @Controller('admin')
 export class AdminController {
@@ -37,6 +41,9 @@ export class AdminController {
     private readonly deliveryDestinationsService: DeliveryDestinationsService,
     private readonly loyaltyService: LoyaltyService,
     private readonly dashboardService: DashboardService,
+    private readonly collaboratorsService: CollaboratorsService,
+    private readonly mailService: MailService,
+    private readonly configService: ConfigService,
   ) {}
 
   @Post('auth/login')
@@ -113,6 +120,9 @@ export class AdminController {
         role_name: u.role_name,
         is_super_admin: u.is_super_admin,
         permissions: u.permissions ?? [],
+        collaborator_id: u.collaboratorId ?? null,
+        is_collaborator: !!u.collaboratorId,
+        collaborator_brand_name: u.collaboratorBrandName ?? null,
       },
     };
   }
@@ -121,36 +131,90 @@ export class AdminController {
   @Post('products')
   @UseGuards(AdminGuard, PermissionGuard)
   @RequirePermission(ADMIN_PERMISSIONS.PRODUCTS_VIEW)
-  createProduct(@Body() createProductDto: CreateProductDto) {
-    return this.productsService.create(createProductDto);
+  async createProduct(@Req() req: any, @Body() createProductDto: CreateProductDto) {
+    const product = await this.productsService.create(createProductDto, req.user?.collaboratorId);
+    if (product?.collaborator_id) {
+      try {
+        const collaborator = await this.collaboratorsService.getCollaboratorById(product.collaborator_id);
+        const to = this.configService.get<string>('NOTIFY_ADMIN_EMAIL') || this.configService.get<string>('ADMIN_EMAIL');
+        const baseUrl = this.configService.get<string>('ADMIN_BASE_URL') || 'http://localhost:3000';
+        if (to) {
+          await this.mailService.sendProductPendingReview({
+            to,
+            productName: product.title,
+            brandName: collaborator.brand_name,
+            priceEgp: Number(product.discount_price ?? product.base_price ?? 0),
+            adminProductUrl: `${baseUrl.replace(/\/$/, '')}/admin/products/${product.id}`,
+          });
+        }
+      } catch (e) {
+        console.warn('[Admin] sendProductPendingReview failed (non-blocking):', e);
+      }
+    }
+    return product;
   }
 
   @Get('products')
   @UseGuards(AdminGuard, PermissionGuard)
   @RequirePermission(ADMIN_PERMISSIONS.PRODUCTS_VIEW)
-  findAllProducts() {
-    return this.productsService.findAll(true);
+  findAllProducts(
+    @Req() req: any,
+    @Query('type') type?: 'wrapitup' | 'collaborator',
+    @Query('approvalStatus') approvalStatus?: string,
+  ) {
+    const opts = req.user?.collaboratorId
+      ? { collaboratorId: req.user.collaboratorId }
+      : { type, approvalStatus };
+    return this.productsService.findAllForAdmin(true, opts);
   }
 
   @Get('products/:id')
   @UseGuards(AdminGuard, PermissionGuard)
   @RequirePermission(ADMIN_PERMISSIONS.PRODUCTS_VIEW)
-  findOneProduct(@Param('id') id: string) {
-    return this.productsService.findOne(id);
+  findOneProduct(@Req() req: any, @Param('id') id: string) {
+    return this.productsService.findOneForAdmin(id, req.user?.collaboratorId);
   }
 
   @Patch('products/:id')
   @UseGuards(AdminGuard, PermissionGuard)
   @RequirePermission(ADMIN_PERMISSIONS.PRODUCTS_VIEW)
-  updateProduct(@Param('id') id: string, @Body() updateProductDto: UpdateProductDto) {
-    return this.productsService.update(id, updateProductDto);
+  updateProduct(
+    @Req() req: any,
+    @Param('id') id: string,
+    @Body() updateProductDto: UpdateProductDto,
+  ) {
+    return this.productsService.update(id, updateProductDto, req.user?.collaboratorId);
   }
 
   @Delete('products/:id')
   @UseGuards(AdminGuard, PermissionGuard)
   @RequirePermission(ADMIN_PERMISSIONS.PRODUCTS_VIEW)
-  removeProduct(@Param('id') id: string) {
-    return this.productsService.remove(id);
+  removeProduct(@Req() req: any, @Param('id') id: string) {
+    return this.productsService.remove(id, req.user?.collaboratorId);
+  }
+
+  @Patch('products/:id/approve')
+  @UseGuards(AdminGuard, SuperAdminGuard)
+  approveProduct(@Param('id') id: string) {
+    return this.productsService.setApprovalStatus(id, 'approved');
+  }
+
+  @Patch('products/:id/activate')
+  @UseGuards(AdminGuard, SuperAdminGuard)
+  activateProduct(@Param('id') id: string) {
+    return this.productsService.setApprovalStatus(id, 'active');
+  }
+
+  @Patch('products/:id/reject')
+  @UseGuards(AdminGuard, SuperAdminGuard)
+  rejectProduct(@Param('id') id: string, @Body('reason') reason?: string) {
+    return this.productsService.setApprovalStatus(id, 'rejected', reason);
+  }
+
+  @Patch('products/:id/set-pending')
+  @UseGuards(AdminGuard, SuperAdminGuard)
+  setProductPending(@Param('id') id: string) {
+    return this.productsService.setApprovalPending(id);
   }
 
   // Collections management
@@ -240,26 +304,24 @@ export class AdminController {
   @UseGuards(AdminGuard, PermissionGuard)
   @RequirePermission(ADMIN_PERMISSIONS.ORDERS_VIEW)
   findAllOrders(
+    @Req() req: any,
     @Query('status') status?: string,
     @Query('paymentStatus') paymentStatus?: string,
     @Query('deliveryDate') deliveryDate?: string,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
   ) {
-    return this.ordersService.findAll({
-      status,
-      paymentStatus,
-      deliveryDate,
-      startDate,
-      endDate,
-    });
+    return this.ordersService.findAll(
+      { status, paymentStatus, deliveryDate, startDate, endDate },
+      req.user?.collaboratorId,
+    );
   }
 
   @Get('orders/:id')
   @UseGuards(AdminGuard, PermissionGuard)
   @RequirePermission(ADMIN_PERMISSIONS.ORDERS_VIEW)
-  findOneOrder(@Param('id') id: string) {
-    return this.ordersService.findOneWithAdminNotes(id);
+  findOneOrder(@Req() req: any, @Param('id') id: string) {
+    return this.ordersService.findOneWithAdminNotes(id, req.user?.collaboratorId);
   }
 
   @Patch('orders/:id/status')

@@ -1,14 +1,41 @@
 export const colors = {
-  primary: '#ec4899',
-  primaryDark: '#db2777',
-  background: '#ffffff',
-  backgroundMuted: '#fdf2f8',
-  card: '#ffffff',
+  // Brand — hot pink
+  primary: '#EC4899',
+  primaryDark: '#DB2777',
+  primaryLight: '#FDF2F8',
+
+  // Backgrounds
+  background: '#FFFFFF',
+  backgroundMuted: '#FDF2F8',
+  backgroundElevated: '#FFFFFF',
+
+  // Surface
+  card: '#FFFFFF',
+  cardBorder: '#FCE7F3',
+
+  // Text
   text: '#111827',
-  textMuted: '#6b7280',
-  border: '#e5e7eb',
-  success: '#10b981',
-  error: '#ef4444',
+  textMuted: '#6B7280',
+  textLight: '#9CA3AF',
+
+  // Semantic
+  success: '#10B981',
+  successLight: '#D1FAE5',
+  error: '#EF4444',
+  errorLight: '#FEE2E2',
+  warning: '#F59E0B',
+  warningLight: '#FEF3C7',
+
+  // Accent — gold for points, rewards, badges
+  gold: '#F59E0B',
+  goldLight: '#FEF3C7',
+
+  // Overlay
+  overlay: 'rgba(0, 0, 0, 0.5)',
+  overlayLight: 'rgba(0, 0, 0, 0.2)',
+
+  // Legacy alias so existing borderColor references still compile
+  border: '#FCE7F3',
 };
 
 export const spacing = {

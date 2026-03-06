@@ -5,7 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing } from '@/constants/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const HERO_HEIGHT_RATIO = 0.4;
+const HERO_HEIGHT_RATIO = 0.45;
 const HERO_HEIGHT = SCREEN_WIDTH * HERO_HEIGHT_RATIO;
 
 export interface CollectionHeroProps {
@@ -33,9 +33,12 @@ export function CollectionHero({ imageUri, title, description }: CollectionHeroP
         <View style={styles.placeholder} />
       )}
       <LinearGradient
-        colors={['rgba(0,0,0,0.1)', 'rgba(0,0,0,0.6)', 'rgba(0,0,0,0.75)']}
+        colors={['rgba(0,0,0,0.0)', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.72)']}
         style={styles.gradient}
       />
+      <View style={styles.badge} pointerEvents="none">
+        <Text style={styles.badgeText}>COLLECTION</Text>
+      </View>
       <View style={styles.textWrap} pointerEvents="none">
         <Text style={styles.title} numberOfLines={3}>
           {title}
@@ -72,18 +75,35 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.xl,
   },
-  title: {
-    fontSize: 26,
+  badge: {
+    position: 'absolute',
+    top: 14,
+    start: 16,
+    backgroundColor: 'rgba(236,72,153,0.85)',
+    borderRadius: 9999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  badgeText: {
+    fontSize: 10,
     fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 1.2,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '800',
     color: '#ffffff',
     textAlign: 'center',
-    textShadowColor: 'rgba(0,0,0,0.4)',
+    letterSpacing: -0.3,
+    textShadowColor: 'rgba(0,0,0,0.5)',
     textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
+    textShadowRadius: 6,
   },
   description: {
     marginTop: spacing.sm,
     fontSize: 14,
+    fontWeight: '400',
     lineHeight: 20,
     color: 'rgba(255,255,255,0.95)',
     textAlign: 'center',

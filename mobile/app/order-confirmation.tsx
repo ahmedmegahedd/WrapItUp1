@@ -1,5 +1,14 @@
 import { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, Linking } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withDelay,
+  withSpring,
+  withSequence,
+  withTiming,
+  FadeInDown,
+} from 'react-native-reanimated';
 import { useLocalSearchParams, Stack, router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getOrderByNumber, registerPushToken } from '@/lib/api';
@@ -32,12 +41,40 @@ export default function OrderConfirmationScreen() {
   const [loading, setLoading] = useState(!!orderNumber);
   const pushRegistered = useRef(false);
 
+  // Celebration animations
+  const iconScale = useSharedValue(0);
+  const iconRotate = useSharedValue(0);
+  const confettiOpacity = useSharedValue(0);
+
+  const iconAnimStyle = useAnimatedStyle(() => ({
+    transform: [
+      { scale: iconScale.value },
+      { rotate: `${iconRotate.value}deg` },
+    ],
+  }));
+  const confettiStyle = useAnimatedStyle(() => ({
+    opacity: confettiOpacity.value,
+  }));
+
   useEffect(() => {
     if (!orderNumber) return;
     getOrderByNumber(orderNumber)
       .then((o) => {
         setOrder(o);
         if ((o?.points_earned ?? 0) > 0) refetchBalance();
+        // Trigger celebration
+        iconScale.value = withSequence(
+          withSpring(1.2, { damping: 5, stiffness: 260 }),
+          withSpring(1, { damping: 8, stiffness: 200 }),
+        );
+        iconRotate.value = withSequence(
+          withTiming(-8, { duration: 120 }),
+          withSpring(0, { damping: 6, stiffness: 180 }),
+        );
+        confettiOpacity.value = withSequence(
+          withDelay(100, withTiming(1, { duration: 300 })),
+          withDelay(1200, withTiming(0, { duration: 600 })),
+        );
         setTimeout(() => {
           try {
             clearCart();
@@ -95,11 +132,43 @@ export default function OrderConfirmationScreen() {
     <>
       <Stack.Screen options={{ title: t(language, 'orderConfirmed') }} />
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-        <View style={styles.iconWrap}>
-          <Text style={styles.icon}>✓</Text>
+        <View style={styles.celebrationZone}>
+          {/* Confetti dots */}
+          <Animated.View style={[styles.confettiWrap, confettiStyle]} pointerEvents="none">
+            {[
+              { top: 0, left: '15%', bg: colors.primary, size: 8 },
+              { top: 8, left: '72%', bg: colors.gold, size: 6 },
+              { top: 20, left: '38%', bg: colors.success, size: 7 },
+              { top: 4, left: '55%', bg: colors.primary, size: 5 },
+              { top: 16, left: '85%', bg: colors.gold, size: 8 },
+              { top: 24, left: '8%', bg: colors.success, size: 6 },
+            ].map((dot, i) => (
+              <View
+                key={i}
+                style={{
+                  position: 'absolute',
+                  top: dot.top,
+                  left: dot.left as any,
+                  width: dot.size,
+                  height: dot.size,
+                  borderRadius: dot.size / 2,
+                  backgroundColor: dot.bg,
+                }}
+              />
+            ))}
+          </Animated.View>
+
+          <Animated.View style={[styles.iconWrap, iconAnimStyle]}>
+            <Text style={styles.icon}>✓</Text>
+          </Animated.View>
         </View>
-        <Text style={styles.title}>{t(language, 'thankYou')}</Text>
-        <Text style={styles.subtitle}>{t(language, 'orderConfirmedMessage')}</Text>
+
+        <Animated.Text entering={FadeInDown.delay(200).springify()} style={styles.title}>
+          {t(language, 'thankYou')}
+        </Animated.Text>
+        <Animated.Text entering={FadeInDown.delay(320).springify()} style={styles.subtitle}>
+          {t(language, 'orderConfirmedMessage')}
+        </Animated.Text>
         <View style={styles.card}>
           <Text style={styles.sectionLabel}>{t(language, 'order')}</Text>
           <Text style={styles.orderNum}>{order.order_number}</Text>
@@ -160,54 +229,89 @@ export default function OrderConfirmationScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.backgroundMuted },
-  content: { padding: spacing.lg, paddingBottom: spacing.xl },
+  content: { padding: spacing.lg, paddingBottom: spacing.xl * 2, alignItems: 'stretch' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   error: { color: colors.textMuted, marginBottom: spacing.md },
+  celebrationZone: {
+    alignItems: 'center',
+    position: 'relative',
+    marginTop: spacing.xl,
+    height: 120,
+    justifyContent: 'flex-end',
+    paddingBottom: spacing.sm,
+  },
+  confettiWrap: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 60,
+  },
   iconWrap: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: colors.success,
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'center',
-    marginTop: spacing.xl,
+    shadowColor: colors.success,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
   },
-  icon: { fontSize: 40, color: '#fff', fontWeight: '700' },
-  title: { fontSize: 26, fontWeight: '700', color: colors.text, textAlign: 'center', marginTop: spacing.lg },
-  subtitle: { fontSize: 16, color: colors.textMuted, textAlign: 'center', marginTop: spacing.xs },
+  icon: { fontSize: 38, color: '#fff', fontWeight: '700' },
+  title: { fontSize: 26, fontWeight: '800', color: colors.text, textAlign: 'center', marginTop: spacing.lg, letterSpacing: 0.3 },
+  subtitle: { fontSize: 15, color: colors.textMuted, textAlign: 'center', marginTop: spacing.xs },
   card: {
     backgroundColor: colors.card,
-    borderRadius: borderRadius.lg,
+    borderRadius: 16,
     padding: spacing.lg,
-    marginTop: spacing.xl,
+    marginTop: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    shadowColor: colors.text,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  sectionLabel: { fontSize: 12, fontWeight: '600', color: colors.textMuted, marginBottom: spacing.xs },
-  orderNum: { fontWeight: '700', fontSize: 18, color: colors.text },
-  total: { fontSize: 22, fontWeight: '700', color: colors.primary, marginTop: 4 },
-  pointsEarned: { fontSize: 14, color: colors.primary, marginTop: 6 },
+  sectionLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: spacing.sm,
+  },
+  orderNum: { fontWeight: '800', fontSize: 20, color: colors.text },
+  total: { fontSize: 22, fontWeight: '800', color: colors.text, marginTop: 4 },
+  pointsEarned: { fontSize: 13, color: colors.gold, marginTop: 6, fontWeight: '700' },
   meta: { fontSize: 14, color: colors.textMuted, marginTop: 4 },
   summaryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: spacing.sm },
   summaryTitle: { fontSize: 14, color: colors.text, flex: 1 },
   summaryLineTotal: { fontSize: 14, fontWeight: '600', color: colors.text },
   trackBtn: {
-    marginTop: spacing.xl,
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
+    marginTop: spacing.lg,
+    height: 52,
+    borderRadius: 14,
     alignItems: 'center',
-    borderWidth: 2,
+    justifyContent: 'center',
+    borderWidth: 1.5,
     borderColor: colors.primary,
-    backgroundColor: 'transparent',
+    backgroundColor: colors.primaryLight,
   },
-  trackBtnText: { color: colors.primary, fontWeight: '600', fontSize: 16 },
+  trackBtnText: { color: colors.primary, fontWeight: '700', fontSize: 15 },
   btn: {
     marginTop: spacing.md,
     backgroundColor: colors.primary,
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
+    height: 54,
+    borderRadius: 14,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  btnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  btnText: { color: '#fff', fontWeight: '700', fontSize: 16, letterSpacing: 0.3 },
   link: { marginTop: spacing.md, alignItems: 'center' },
-  linkText: { color: colors.primary, fontSize: 14 },
+  linkText: { color: colors.primary, fontSize: 14, fontWeight: '600' },
 });

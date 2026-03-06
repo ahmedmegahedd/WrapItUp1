@@ -47,11 +47,11 @@ export function SkeletonShimmer({
 
 const styles = StyleSheet.create({
   base: {
-    backgroundColor: colors.border,
+    backgroundColor: '#EDE8DF',
     overflow: 'hidden',
   },
   shimmer: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: colors.backgroundMuted,
+    backgroundColor: '#F7F3EE',
   },
 });

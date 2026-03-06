@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { OptimizedImage } from '@/components/OptimizedImage';
 import { router } from 'expo-router';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -41,7 +42,15 @@ export function FeaturedCollectionsSection({ collections }: FeaturedCollectionsS
             ) : (
               <View style={[styles.cardImage, styles.placeholder]} />
             )}
-            <View style={styles.cardOverlay} />
+            <LinearGradient
+              colors={['transparent', 'rgba(28,16,8,0.70)']}
+              style={StyleSheet.absoluteFill}
+              start={{ x: 0, y: 0.4 }}
+              end={{ x: 0, y: 1 }}
+            />
+            <View style={styles.categoryPill}>
+              <Text style={styles.categoryPillText}>{item.name?.split(' ')[0]?.toUpperCase()}</Text>
+            </View>
             <Text style={styles.cardTitle} numberOfLines={2}>
               {item.name}
             </Text>
@@ -55,13 +64,19 @@ export function FeaturedCollectionsSection({ collections }: FeaturedCollectionsS
 const styles = StyleSheet.create({
   section: {
     paddingVertical: spacing.lg,
+    backgroundColor: colors.backgroundMuted,
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: '700',
     color: colors.text,
     paddingHorizontal: spacing.lg,
+    paddingLeft: spacing.lg + 3 + 12,
     marginBottom: spacing.md,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.primary,
+    marginLeft: spacing.lg,
+    paddingLeft: 12,
   },
   scrollContent: {
     paddingHorizontal: spacing.lg,
@@ -71,13 +86,13 @@ const styles = StyleSheet.create({
   card: {
     width: CARD_WIDTH,
     aspectRatio: 1 / CARD_ASPECT,
-    borderRadius: borderRadius.lg,
+    borderRadius: 20,
     overflow: 'hidden',
     backgroundColor: colors.card,
-    shadowColor: '#000',
+    shadowColor: colors.text,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
     elevation: 3,
   },
   cardImage: {
@@ -88,9 +103,19 @@ const styles = StyleSheet.create({
   placeholder: {
     backgroundColor: colors.border,
   },
-  cardOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.25)',
+  categoryPill: {
+    position: 'absolute',
+    top: spacing.sm,
+    left: spacing.sm,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderRadius: 9999,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+  },
+  categoryPillText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '700',
   },
   cardTitle: {
     position: 'absolute',
@@ -100,7 +125,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     color: '#fff',
     fontSize: 15,
-    fontWeight: '600',
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
 });

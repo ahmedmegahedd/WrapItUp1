@@ -122,7 +122,9 @@ export default function CollectionScreen() {
                   ) : (
                     <View style={[styles.img, styles.imgPlaceholder]} />
                   )}
-                  <SaveProductButton productSlug={item.slug} size={20} style={styles.saveBtn} />
+                  <View style={styles.saveBtnWrap}>
+                    <SaveProductButton productSlug={item.slug} size={18} />
+                  </View>
                 </View>
                 <Text style={styles.name} numberOfLines={2}>
                   {item.title}
@@ -130,9 +132,12 @@ export default function CollectionScreen() {
                 <Text style={styles.price}>{formatPrice(Number(item.discount_price ?? item.base_price))}</Text>
                 {(item.points_value ?? 0) > 0 && (
                   <Text style={styles.pointsEarned}>
-                    {t(language, 'pointsEarnedFromProduct').replace('{{points}}', String(item.points_value))}
+                    ⭐ {item.points_value} pts
                   </Text>
                 )}
+                <View style={styles.addHint}>
+                  <Text style={styles.addHintText}>🛒 Add</Text>
+                </View>
               </TouchableOpacity>
             )
           }
@@ -169,19 +174,60 @@ const styles = StyleSheet.create({
   card: {
     width: '48%',
     backgroundColor: colors.card,
-    borderRadius: borderRadius.md,
+    borderRadius: 16,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowColor: '#EC4899',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
   },
   imgWrap: { position: 'relative', width: '100%', aspectRatio: 1 },
   img: { width: '100%', height: '100%', resizeMode: 'cover' },
   imgPlaceholder: { backgroundColor: colors.border },
-  saveBtn: { position: 'absolute', top: spacing.xs, right: spacing.xs },
-  name: { padding: spacing.sm, fontWeight: '600', color: colors.text, fontSize: 14 },
-  price: { paddingHorizontal: spacing.sm, paddingBottom: spacing.sm, fontWeight: '700', color: colors.primary },
-  pointsEarned: { paddingHorizontal: spacing.sm, paddingBottom: spacing.sm, fontSize: 12, color: colors.textMuted },
+  saveBtnWrap: {
+    position: 'absolute',
+    top: spacing.xs,
+    right: spacing.xs,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  name: {
+    paddingHorizontal: 10,
+    paddingTop: 10,
+    paddingBottom: 4,
+    fontWeight: '600',
+    color: colors.text,
+    fontSize: 13,
+  },
+  price: {
+    paddingHorizontal: 10,
+    paddingBottom: 6,
+    fontWeight: '800',
+    color: colors.primary,
+    fontSize: 15,
+  },
+  pointsEarned: { paddingHorizontal: 10, paddingBottom: 4, fontSize: 12, color: colors.textMuted },
+  addHint: {
+    height: 32,
+    backgroundColor: '#FDF2F8',
+    borderTopWidth: 1,
+    borderTopColor: '#FCE7F3',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addHintText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.primary,
+  },
 });

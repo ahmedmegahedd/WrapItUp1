@@ -85,9 +85,15 @@ export interface AppSettings {
   final_cta_subtext: string;
   final_cta_button: string;
   featured_products_limit: number;
+  active_layout: 'cinematic' | 'story' | 'editorial';
+  marquee_text: string;
+  marquee_active: boolean;
+  todays_pick_product_id: string | null;
+  todays_pick_active: boolean;
+  todays_pick_label: string;
 }
 
-/** App home screen settings (section order, promotion, final CTA, featured limit). */
+/** App home screen settings (section order, promotion, final CTA, featured limit, layout). */
 export async function getAppSettings(): Promise<AppSettings> {
   const { data } = await api.get<AppSettings>('/homepage/app-settings');
   const defaultOrder = [
@@ -98,6 +104,9 @@ export async function getAppSettings(): Promise<AppSettings> {
     'value_proposition',
     'final_cta',
   ];
+  const rawLayout = data?.active_layout;
+  const active_layout: AppSettings['active_layout'] =
+    rawLayout === 'story' || rawLayout === 'editorial' ? rawLayout : 'cinematic';
   return {
     home_section_order: Array.isArray(data?.home_section_order) ? data.home_section_order : defaultOrder,
     promotion_visible: data?.promotion_visible !== false,
@@ -108,6 +117,12 @@ export async function getAppSettings(): Promise<AppSettings> {
     final_cta_button: data?.final_cta_button ?? 'Browse all collections',
     featured_products_limit:
       typeof data?.featured_products_limit === 'number' ? data.featured_products_limit : 8,
+    active_layout,
+    marquee_text: data?.marquee_text ?? 'Free delivery on orders above 250 EGP · Fresh every morning · Order by midnight',
+    marquee_active: data?.marquee_active !== false,
+    todays_pick_product_id: data?.todays_pick_product_id ?? null,
+    todays_pick_active: data?.todays_pick_active === true,
+    todays_pick_label: data?.todays_pick_label ?? "Today's Pick",
   };
 }
 

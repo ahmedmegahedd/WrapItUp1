@@ -1,25 +1,24 @@
 /**
- * Luxury account screen design tokens.
- * Neutral palette: cream, soft beige, charcoal, muted gold accents.
+ * Account screen design tokens — aligned with pink brand palette.
  */
 export const accountColors = {
-  background: '#faf8f5',
-  backgroundElevated: '#ffffff',
-  cream: '#f5f1eb',
-  beige: '#e8e2d9',
-  charcoal: '#2c2c2c',
-  charcoalMuted: '#5c5c5c',
-  text: '#2c2c2c',
-  textSecondary: '#5c5c5c',
-  textMuted: '#8a8a8a',
-  gold: '#b8860b',
-  goldMuted: '#c9a227',
-  border: '#e8e2d9',
-  borderLight: '#f0ebe3',
-  success: '#4a7c59',
-  error: '#a63d3d',
-  destructive: '#a63d3d',
-  link: '#5c5c5c',
+  background: '#FDF2F8',
+  backgroundElevated: '#FFFFFF',
+  cream: '#FDF2F8',
+  beige: '#FCE7F3',
+  charcoal: '#111827',
+  charcoalMuted: '#6B7280',
+  text: '#111827',
+  textSecondary: '#6B7280',
+  textMuted: '#6B7280',
+  gold: '#F59E0B',
+  goldMuted: '#F59E0B',
+  border: '#FCE7F3',
+  borderLight: '#FCE7F3',
+  success: '#10B981',
+  error: '#EF4444',
+  destructive: '#EF4444',
+  link: '#EC4899',
 };
 
 export const accountSpacing = {

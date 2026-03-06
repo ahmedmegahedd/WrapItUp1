@@ -19,6 +19,7 @@ export const ADMIN_PAGE_PERMISSIONS: Record<string, string> = {
   '/admin/admin-controls': 'admin_controls.view',
   '/admin/inventory': 'inventory.view',
   '/admin/inventory/shopping-list': 'inventory.view',
+  '/admin/collaborators': 'collaborators.view',
 }
 
 export function canAccessPath(pathname: string, permissions: string[], isSuperAdmin: boolean): boolean {

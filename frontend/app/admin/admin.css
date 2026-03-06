@@ -268,6 +268,105 @@
   transform: translateX(20px);
 }
 
+/* Mobile responsive utilities */
+.admin-desktop-only {
+  display: block;
+}
+.admin-mobile-only {
+  display: none;
+}
+@media (max-width: 767px) {
+  .admin-desktop-only {
+    display: none !important;
+  }
+  .admin-mobile-only {
+    display: block !important;
+  }
+}
+
+/* FAB (floating action button) */
+.admin-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--admin-accent);
+  color: white;
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(196,114,74,0.45);
+  z-index: 200;
+  text-decoration: none;
+  border: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.admin-fab:hover {
+  transform: scale(1.07);
+  box-shadow: 0 6px 20px rgba(196,114,74,0.55);
+}
+
+/* Mobile: product form container */
+.admin-product-form-wrap {
+  padding: 24px 24px 120px;
+  max-width: 780px;
+  margin: 0 auto;
+}
+@media (max-width: 640px) {
+  .admin-product-form-wrap {
+    padding: 16px 16px 120px;
+    max-width: 100%;
+  }
+}
+
+/* Mobile: 2-column form grid that stacks on mobile */
+.admin-product-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 640px) {
+  .admin-product-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Mobile: image grid — 2 columns on small screens */
+.admin-image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+}
+@media (max-width: 640px) {
+  .admin-image-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+}
+
+/* Mobile: 16px inputs to prevent iOS auto-zoom */
+@media (max-width: 768px) {
+  .admin-input {
+    font-size: 16px !important;
+    min-height: 48px;
+  }
+  input.admin-input,
+  select.admin-input,
+  textarea.admin-input {
+    font-size: 16px !important;
+  }
+}
+
+/* Mobile: prevent horizontal overflow in admin pages */
+.admin-root {
+  overflow-x: hidden;
+}
+
 /* Toast */
 .admin-toast-container {
   position: fixed;

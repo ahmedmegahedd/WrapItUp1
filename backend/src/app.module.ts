@@ -17,6 +17,7 @@ import { LoyaltyModule } from './loyalty/loyalty.module';
 import { AuthModule } from './auth/auth.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { InventoryModule } from './inventory/inventory.module';
+import { CollaboratorsModule } from './collaborators/collaborators.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { InventoryModule } from './inventory/inventory.module';
     LoyaltyModule,
     NotificationsModule,
     InventoryModule,
+    CollaboratorsModule,
   ],
 })
 export class AppModule {}

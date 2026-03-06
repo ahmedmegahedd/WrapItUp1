@@ -28,7 +28,6 @@ export function FilterSortRow({ onFilterPress, onSortPress }: FilterSortRowProps
         <Text style={styles.label}>{t(language, 'filter')}</Text>
         <Text style={styles.chevron}>▾</Text>
       </TouchableOpacity>
-      <View style={styles.gap} />
       <TouchableOpacity
         style={styles.control}
         onPress={onSortPress}
@@ -47,10 +46,9 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    paddingBottom: spacing.md,
-    backgroundColor: colors.backgroundMuted,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: '#FFFFFF',
     gap: spacing.sm,
   },
   control: {
@@ -58,22 +56,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.sm,
+    paddingVertical: 10,
     paddingHorizontal: spacing.md,
-    backgroundColor: colors.card,
-    borderRadius: borderRadius.sm,
+    backgroundColor: colors.backgroundMuted,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  gap: { width: spacing.sm },
   label: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
-    color: colors.text,
+    color: '#EC4899',
   },
   chevron: {
     fontSize: 12,
-    color: colors.textMuted,
+    color: '#EC4899',
     marginStart: 4,
   },
 });

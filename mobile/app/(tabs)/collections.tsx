@@ -24,6 +24,7 @@ import {
   type EditorialCardSize,
 } from '@/components/collections';
 import { OptimizedImage } from '@/components/OptimizedImage';
+import { SkeletonCollections } from '@/components/skeletons';
 
 const TAB_BAR_PILL_HEIGHT = 56;
 const EDITORIAL_SIZES: EditorialCardSize[] = ['medium', 'small', 'large', 'small', 'medium', 'large', 'medium'];
@@ -140,11 +141,7 @@ export default function CollectionsScreen() {
   }, [selectedId, selectedSlug]);
 
   if (loading) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
+    return <SkeletonCollections />;
   }
 
   if (viewMode === 'full') {
@@ -190,7 +187,9 @@ export default function CollectionsScreen() {
                 {item.image_url ? (
                   <OptimizedImage uri={item.image_url} style={styles.thumb} />
                 ) : (
-                  <View style={[styles.thumb, styles.thumbPlaceholder]} />
+                  <View style={[styles.thumb, styles.thumbPlaceholder]}>
+                    <Text style={styles.thumbInitial}>{item.name?.charAt(0)?.toUpperCase() ?? ''}</Text>
+                  </View>
                 )}
                 <View style={styles.textWrap}>
                   <Text style={styles.name}>{item.name}</Text>
@@ -198,7 +197,9 @@ export default function CollectionsScreen() {
                     <Text style={styles.desc} numberOfLines={2}>{item.description}</Text>
                   ) : null}
                 </View>
-                <Text style={styles.chevron}>›</Text>
+                <View style={styles.chevronCircle}>
+                  <Ionicons name={isRTL ? 'chevron-back' : 'chevron-forward'} size={14} color={colors.primary} />
+                </View>
               </TouchableOpacity>
             ))
           )}
@@ -207,8 +208,8 @@ export default function CollectionsScreen() {
     );
   }
 
-  const columnGap = spacing.sm;
-  const halfWidth = (screenWidth - spacing.lg * 2 - columnGap) / 2;
+  const columnGap = 10;
+  const halfWidth = (screenWidth - 16 * 2 - columnGap) / 2;
 
   return (
     <View style={styles.container}>
@@ -243,6 +244,13 @@ export default function CollectionsScreen() {
               />
             ))}
           </ScrollView>
+        </View>
+
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Featured Products</Text>
+          <TouchableOpacity onPress={handleViewAll} activeOpacity={0.7}>
+            <Text style={styles.sectionSeeAll}>See all →</Text>
+          </TouchableOpacity>
         </View>
 
         {error && collections.length === 0 ? (
@@ -297,12 +305,13 @@ export default function CollectionsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.backgroundMuted },
+  container: { flex: 1, backgroundColor: '#FFFFFF' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   scroll: { flex: 1 },
   bubbleSection: {
-    paddingVertical: spacing.md,
-    paddingStart: spacing.lg,
+    paddingTop: 20,
+    paddingBottom: 12,
+    paddingStart: 20,
     paddingEnd: spacing.xs,
   },
   bubbleList: {
@@ -310,10 +319,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 0,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingBottom: 10,
+  },
+  sectionTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  sectionSeeAll: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.primary,
+  },
   editorialGrid: {
     flexDirection: 'row',
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
+    paddingHorizontal: 16,
+    paddingBottom: 32,
     alignItems: 'flex-start',
   },
   column: {
@@ -343,8 +369,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
   },
   backToBubblesText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
     color: colors.primary,
   },
   fullList: { flex: 1 },
@@ -353,23 +379,42 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.card,
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.cardBorder,
+    padding: 14,
+    marginBottom: 10,
+    shadowColor: '#EC4899',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
   },
   thumb: {
-    width: 56,
-    height: 56,
-    borderRadius: borderRadius.sm,
+    width: 60,
+    height: 60,
+    borderRadius: 14,
+    overflow: 'hidden',
   },
-  thumbPlaceholder: { backgroundColor: colors.border },
+  thumbPlaceholder: {
+    backgroundColor: '#FCE7F3',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  thumbInitial: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.primary,
+  },
   textWrap: { flex: 1, marginStart: spacing.md },
-  name: { fontSize: 16, fontWeight: '600', color: colors.text },
-  desc: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
-  chevron: { fontSize: 24, color: colors.textMuted },
+  name: { fontSize: 15, fontWeight: '700', color: colors.text },
+  desc: { fontSize: 13, color: '#9CA3AF', marginTop: 2 },
+  chevronCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#FCE7F3',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 });

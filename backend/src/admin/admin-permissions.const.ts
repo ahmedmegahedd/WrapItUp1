@@ -18,6 +18,7 @@ export const ADMIN_PERMISSIONS = {
   ANALYTICS_VIEW: 'analytics.view',
   ADMIN_CONTROLS_VIEW: 'admin_controls.view',
   INVENTORY_VIEW: 'inventory.view',
+  COLLABORATORS_VIEW: 'collaborators.view',
 } as const;
 
 export type AdminPermissionKey = (typeof ADMIN_PERMISSIONS)[keyof typeof ADMIN_PERMISSIONS];

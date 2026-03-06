@@ -57,8 +57,8 @@ export default function RootLayout({
       <body>
         <AnalyticsProvider>
           <CartProvider>
-            {children}
             <FloatingNavbar />
+            {children}
           </CartProvider>
         </AnalyticsProvider>
       </body>

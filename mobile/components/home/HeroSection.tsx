@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useFocusEffect } from '@react-navigation/native';
@@ -46,7 +47,12 @@ export function HeroSection() {
         ) : (
           <View style={[StyleSheet.absoluteFill, styles.placeholderBg]} />
         )}
-        <View style={styles.overlay} />
+        <LinearGradient
+          colors={['transparent', 'rgba(28,16,8,0.75)']}
+          style={StyleSheet.absoluteFill}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+        />
         <View style={styles.content}>
           <Text style={styles.headline} numberOfLines={2}>
             {headline}
@@ -83,10 +89,6 @@ const styles = StyleSheet.create({
   placeholderBg: {
     backgroundColor: colors.primary,
   },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-  },
   content: {
     zIndex: 1,
   },
@@ -94,10 +96,10 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '700',
     color: '#fff',
-    letterSpacing: 0.3,
-    textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
+    letterSpacing: 0.5,
+    textShadowColor: 'rgba(0,0,0,0.4)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
     ...(Platform.OS === 'android' && { elevation: 2 }),
   },
   subtext: {
@@ -113,7 +115,9 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
-    backgroundColor: colors.primary,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.6)',
     borderRadius: borderRadius.full,
     minWidth: 160,
     alignItems: 'center',

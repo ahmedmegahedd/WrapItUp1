@@ -9,6 +9,7 @@ import ImagePreviewCrop from '@/components/ImagePreviewCrop'
 import Toggle from '../../_components/Toggle'
 import Toast, { useToast } from '../../_components/Toast'
 import AdminPageHeader from '../../_components/AdminPageHeader'
+import ConfirmModal from '../../_components/ConfirmModal'
 
 export default function AdminProductEditPage() {
   const params = useParams()
@@ -16,7 +17,11 @@ export default function AdminProductEditPage() {
   const productId = params.id as string
   const isNew = productId === 'new'
 
+  const [me, setMe] = useState<{ is_super_admin?: boolean; is_collaborator?: boolean } | null>(null)
+  const [product, setProduct] = useState<any>(null)
   const [loading, setLoading] = useState(false)
+  const [rejectOpen, setRejectOpen] = useState(false)
+  const [rejectReason, setRejectReason] = useState('')
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -41,6 +46,9 @@ export default function AdminProductEditPage() {
   const [recipe, setRecipe] = useState<Array<{ materialId: string; quantity: string }>>([])
 
   useEffect(() => {
+    api.get('/admin/auth/me').then((r) => setMe(r.data?.user ?? null)).catch(() => setMe(null))
+  }, [])
+  useEffect(() => {
     api.get('/admin/inventory').then((res) => setMaterials(res.data || [])).catch(() => setMaterials([]))
   }, [])
   useEffect(() => {
@@ -53,19 +61,20 @@ export default function AdminProductEditPage() {
   async function loadProduct() {
     try {
       const response = await api.get(`/admin/products/${productId}`)
-      const product = response.data
+      const prod = response.data
+      setProduct(prod)
       setFormData({
-        title: product.title || '',
-        description: product.description || '',
-        base_price: product.base_price?.toString() || '',
-        discount_price: product.discount_price?.toString() || '',
-        stock_quantity: product.stock_quantity?.toString() || '',
-        points_value: product.points_value?.toString() ?? '0',
-        is_active: product.is_active ?? true,
-        minimum_order_enabled: product.minimum_quantity != null && product.minimum_quantity >= 1,
-        minimum_quantity: product.minimum_quantity != null ? String(product.minimum_quantity) : '1',
-        image_urls: product.product_images?.map((img: any) => img.image_url) || [],
-        variations: product.product_variations?.map((v: any) => ({
+        title: prod.title || '',
+        description: prod.description || '',
+        base_price: prod.base_price?.toString() || '',
+        discount_price: prod.discount_price?.toString() || '',
+        stock_quantity: prod.stock_quantity?.toString() || '',
+        points_value: prod.points_value?.toString() ?? '0',
+        is_active: prod.is_active ?? true,
+        minimum_order_enabled: prod.minimum_quantity != null && prod.minimum_quantity >= 1,
+        minimum_quantity: prod.minimum_quantity != null ? String(prod.minimum_quantity) : '1',
+        image_urls: prod.product_images?.map((img: any) => img.image_url) || [],
+        variations: prod.product_variations?.map((v: any) => ({
           name: v.name,
           display_order: v.display_order,
           options: v.product_variation_options?.map((opt: any) => ({
@@ -77,6 +86,7 @@ export default function AdminProductEditPage() {
       })
     } catch (error) {
       console.error('Error loading product:', error)
+      setProduct(null)
     }
     if (!isNew) {
       try {
@@ -289,7 +299,7 @@ export default function AdminProductEditPage() {
   }
 
   return (
-    <div style={{ padding: '24px 24px 100px', maxWidth: 780, margin: '0 auto' }}>
+    <div className="admin-product-form-wrap">
       {showImagePreview && (
         <ImagePreviewCrop
           imageUrl={previewImageUrl}
@@ -306,6 +316,84 @@ export default function AdminProductEditPage() {
           { label: isNew ? 'New' : 'Edit' },
         ]}
       />
+
+      {!isNew && product?.collaborator_id && (
+        <div
+          style={{
+            marginBottom: 16,
+            padding: 14,
+            borderRadius: 'var(--admin-radius)',
+            fontSize: 14,
+            fontWeight: 500,
+            background:
+              product.approval_status === 'rejected'
+                ? '#FDEDEC'
+                : product.approval_status === 'active'
+                  ? '#EBF5EF'
+                  : product.approval_status === 'approved'
+                    ? '#EBF3FF'
+                    : '#FEF9E7',
+            color:
+              product.approval_status === 'rejected'
+                ? '#C0392B'
+                : product.approval_status === 'active'
+                  ? '#4A7C5C'
+                  : product.approval_status === 'approved'
+                    ? '#1A56DB'
+                    : '#B8860B',
+            border: '1px solid',
+            borderColor:
+              product.approval_status === 'rejected'
+                ? '#C0392B'
+                : product.approval_status === 'active'
+                  ? '#4A7C5C'
+                  : product.approval_status === 'approved'
+                    ? '#1A56DB'
+                    : '#B8860B',
+          }}
+        >
+          {product.approval_status === 'pending' && '⏳ This product is pending review by WrapItUp'}
+          {product.approval_status === 'approved' && '✅ Approved — waiting for activation by WrapItUp'}
+          {product.approval_status === 'active' && '🟢 Live — your product is visible in the app'}
+          {product.approval_status === 'rejected' && (
+            <>
+              ❌ Rejected — Reason: {product.product_rejection_reason || 'None given'}
+              <div style={{ fontSize: 12, marginTop: 6, opacity: 0.9 }}>Edit your product and save to resubmit for review.</div>
+            </>
+          )}
+        </div>
+      )}
+
+      {!isNew && product?.collaborator_id && me?.is_super_admin && (
+        <div style={{ ...sectionStyle, marginBottom: 16 }}>
+          <div className="admin-section-header">Approval actions</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 13, color: 'var(--admin-text-2)' }}>Listed by: {product.collaborators?.brand_name ?? '—'} (commission: {product.collaborators?.commission_rate ?? 0}%)</span>
+            {product.approval_status === 'pending' && (
+              <button
+                type="button"
+                onClick={async () => { try { await api.patch(`/admin/products/${productId}/approve`); setProduct((p: any) => ({ ...p, approval_status: 'approved' })); showToast('success', 'Approved') } catch { showToast('error', 'Failed') } }}
+                className="admin-btn-ghost"
+                style={{ color: 'var(--admin-accent)' }}
+              >
+                Approve
+              </button>
+            )}
+            {product.approval_status === 'approved' && (
+              <>
+                <button type="button" onClick={async () => { try { await api.patch(`/admin/products/${productId}/activate`); setProduct((p: any) => ({ ...p, approval_status: 'active', is_active: true })); showToast('success', 'Activated') } catch { showToast('error', 'Failed') } }} style={{ color: 'var(--admin-success, #4A7C5C)' }} className="admin-btn-ghost">Activate</button>
+                <button type="button" onClick={() => setRejectOpen(true)} style={{ color: 'var(--admin-danger)' }} className="admin-btn-ghost">Reject</button>
+              </>
+            )}
+            {product.approval_status === 'active' && (
+              <button type="button" onClick={async () => { try { await api.patch(`/admin/products/${productId}`, { is_active: false }); setProduct((p: any) => ({ ...p, is_active: false })); showToast('success', 'Deactivated') } catch { showToast('error', 'Failed') } }} className="admin-btn-ghost">Deactivate</button>
+            )}
+            {product.approval_status === 'rejected' && (
+              <button type="button" onClick={async () => { try { await api.patch(`/admin/products/${productId}/set-pending`); setProduct((p: any) => ({ ...p, approval_status: 'pending' })); showToast('success', 'Set to pending') } catch { showToast('error', 'Failed') } }} className="admin-btn-ghost">Re-review</button>
+            )}
+          </div>
+        </div>
+      )}
 
       <form id="product-form" onSubmit={handleSubmit}>
         {/* Basic info */}
@@ -334,13 +422,16 @@ export default function AdminProductEditPage() {
                 style={{ resize: 'vertical' }}
               />
             </div>
-            <div>
-              <Toggle
-                checked={formData.is_active}
-                onChange={(v) => setFormData({ ...formData, is_active: v })}
-                label="Active (visible in store)"
-              />
-            </div>
+            {(!product?.collaborator_id || me?.is_super_admin) && (
+              <div>
+                <Toggle
+                  checked={formData.is_active}
+                  onChange={(v) => setFormData({ ...formData, is_active: v })}
+                  label={product?.collaborator_id && me?.is_super_admin ? 'Active (use Approve → Activate flow above)' : 'Active (visible in store)'}
+                  disabled={!!(product?.collaborator_id && me?.is_super_admin)}
+                />
+              </div>
+            )}
           </div>
         </div>
 
@@ -439,51 +530,75 @@ export default function AdminProductEditPage() {
         {/* Images */}
         <div style={sectionStyle}>
           <div className="admin-section-header">Images</div>
-          <label
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 10,
-              border: '2px dashed var(--admin-border)',
-              borderRadius: 'var(--admin-radius)',
-              padding: '20px',
-              marginBottom: 16,
-              cursor: uploading ? 'not-allowed' : 'pointer',
-              background: 'var(--admin-surface-2)',
-              opacity: uploading ? 0.6 : 1,
-              fontSize: 14,
-              color: 'var(--admin-text-2)',
-            }}
-          >
-            <span style={{ fontSize: 20 }}>🖼️</span>
-            {uploading ? 'Uploading…' : 'Click to upload image'}
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              disabled={uploading}
-              style={{ display: 'none' }}
-            />
-          </label>
-          {formData.image_urls.length > 0 && (
-            <div
+          <div style={{ display: 'flex', gap: 10, marginBottom: 16, opacity: uploading ? 0.6 : 1 }}>
+            <label
               style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
-                gap: 10,
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                border: '2px dashed var(--admin-border)',
+                borderRadius: 'var(--admin-radius)',
+                padding: '16px 12px',
+                cursor: uploading ? 'not-allowed' : 'pointer',
+                background: 'var(--admin-surface-2)',
+                fontSize: 14,
+                color: 'var(--admin-text-2)',
+                minHeight: 56,
               }}
             >
+              <span style={{ fontSize: 18 }}>📷</span>
+              <span>Camera</span>
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleImageUpload}
+                disabled={uploading}
+                style={{ display: 'none' }}
+              />
+            </label>
+            <label
+              style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                border: '2px dashed var(--admin-border)',
+                borderRadius: 'var(--admin-radius)',
+                padding: '16px 12px',
+                cursor: uploading ? 'not-allowed' : 'pointer',
+                background: 'var(--admin-surface-2)',
+                fontSize: 14,
+                color: 'var(--admin-text-2)',
+                minHeight: 56,
+              }}
+            >
+              <span style={{ fontSize: 18 }}>🖼️</span>
+              <span>{uploading ? 'Uploading…' : 'Library'}</span>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                disabled={uploading}
+                style={{ display: 'none' }}
+              />
+            </label>
+          </div>
+          {formData.image_urls.length > 0 && (
+            <div className="admin-image-grid">
               {formData.image_urls.map((url, index) => (
                 <div
                   key={index}
-                  style={{ position: 'relative', aspectRatio: '1', borderRadius: 8, overflow: 'hidden' }}
+                  style={{ position: 'relative', aspectRatio: '1', borderRadius: 10, overflow: 'hidden' }}
                 >
                   <Image
                     src={url}
                     alt={`Product ${index + 1}`}
                     fill
-                    sizes="120px"
+                    sizes="(max-width: 640px) 50vw, 120px"
                     style={{ objectFit: 'cover' }}
                   />
                   <button
@@ -496,17 +611,17 @@ export default function AdminProductEditPage() {
                     }
                     style={{
                       position: 'absolute',
-                      top: 4,
-                      right: 4,
-                      background: 'rgba(192,57,43,0.9)',
+                      top: 0,
+                      right: 0,
+                      background: 'rgba(192,57,43,0.92)',
                       color: 'white',
                       border: 'none',
-                      borderRadius: '50%',
-                      width: 22,
-                      height: 22,
+                      borderRadius: '0 10px 0 10px',
+                      width: 36,
+                      height: 36,
                       minHeight: 'unset',
                       minWidth: 'unset',
-                      fontSize: 14,
+                      fontSize: 20,
                       lineHeight: 1,
                       zIndex: 10,
                       display: 'flex',
@@ -791,6 +906,7 @@ export default function AdminProductEditPage() {
           background: 'var(--admin-surface)',
           borderTop: '1px solid var(--admin-border)',
           padding: '14px 24px',
+          paddingBottom: 'calc(14px + env(safe-area-inset-bottom, 0px))',
           display: 'flex',
           gap: 10,
           justifyContent: 'flex-end',
@@ -820,6 +936,28 @@ export default function AdminProductEditPage() {
           {loading ? 'Saving…' : isNew ? 'Create Product' : 'Save Changes'}
         </button>
       </div>
+
+      <ConfirmModal
+        open={rejectOpen}
+        title="Reject product?"
+        message={
+          <div>
+            <p>Provide a reason for rejection (optional). The collaborator will see it.</p>
+            <textarea value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} placeholder="Reason…" rows={3} className="admin-input" style={{ width: '100%', marginTop: 12, resize: 'vertical' }} />
+          </div>
+        }
+        confirmLabel="Reject"
+        onConfirm={async () => {
+          try {
+            await api.patch(`/admin/products/${productId}/reject`, { reason: rejectReason })
+            setProduct((p: any) => ({ ...p, approval_status: 'rejected', is_active: false, product_rejection_reason: rejectReason || null }))
+            showToast('success', 'Product rejected')
+          } catch { showToast('error', 'Failed to reject') }
+          setRejectOpen(false)
+          setRejectReason('')
+        }}
+        onCancel={() => { setRejectOpen(false); setRejectReason('') }}
+      />
 
       <Toast toasts={toasts} onDismiss={dismissToast} />
     </div>
