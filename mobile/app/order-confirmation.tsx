@@ -1,5 +1,12 @@
 import { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, Linking } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  ScrollView,
+} from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -9,6 +16,8 @@ import Animated, {
   withTiming,
   FadeInDown,
 } from 'react-native-reanimated';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, Stack, router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getOrderByNumber, registerPushToken } from '@/lib/api';
@@ -37,6 +46,7 @@ export default function OrderConfirmationScreen() {
   const { clearPayload } = useCheckoutPayment();
   const { clearCart } = useCart();
   const { expoPushToken } = usePushNotifications();
+  const insets = useSafeAreaInsets();
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(!!orderNumber);
   const pushRegistered = useRef(false);
@@ -44,7 +54,6 @@ export default function OrderConfirmationScreen() {
   // Celebration animations
   const iconScale = useSharedValue(0);
   const iconRotate = useSharedValue(0);
-  const confettiOpacity = useSharedValue(0);
 
   const iconAnimStyle = useAnimatedStyle(() => ({
     transform: [
@@ -52,14 +61,10 @@ export default function OrderConfirmationScreen() {
       { rotate: `${iconRotate.value}deg` },
     ],
   }));
-  const confettiStyle = useAnimatedStyle(() => ({
-    opacity: confettiOpacity.value,
-  }));
 
   useEffect(() => {
     if (!orderNumber) return;
     const run = async () => {
-      // Step 1: Fetch order — failure here is the only reason to show error UI
       let fetchedOrder = null;
       try {
         fetchedOrder = await getOrderByNumber(orderNumber);
@@ -71,7 +76,7 @@ export default function OrderConfirmationScreen() {
         return;
       }
 
-      // Step 2: Trigger celebration animations
+      // Celebration animations
       iconScale.value = withSequence(
         withSpring(1.2, { damping: 5, stiffness: 260 }),
         withSpring(1, { damping: 8, stiffness: 200 }),
@@ -80,15 +85,9 @@ export default function OrderConfirmationScreen() {
         withTiming(-8, { duration: 120 }),
         withSpring(0, { damping: 6, stiffness: 180 }),
       );
-      confettiOpacity.value = withSequence(
-        withDelay(100, withTiming(1, { duration: 300 })),
-        withDelay(1200, withTiming(0, { duration: 600 })),
-      );
 
-      // Step 3: Refetch loyalty balance if points were earned
       if ((fetchedOrder?.points_earned ?? 0) > 0) refetchBalance();
 
-      // Step 4: Update order history in AsyncStorage — isolated, never affects order display
       try {
         const raw = await AsyncStorage.getItem(ORDER_NUMBERS_KEY);
         const list: string[] = raw ? JSON.parse(raw) : [];
@@ -97,7 +96,6 @@ export default function OrderConfirmationScreen() {
           await AsyncStorage.setItem(ORDER_NUMBERS_KEY, JSON.stringify(list.slice(0, 50)));
         }
       } catch (err) {
-        // AsyncStorage failure is non-fatal — order is already displayed
         console.warn('[OrderConfirmation] AsyncStorage update failed:', err);
       }
 
@@ -115,6 +113,7 @@ export default function OrderConfirmationScreen() {
   if (loading) {
     return (
       <View style={styles.centered}>
+        <Stack.Screen options={{ headerShown: false }} />
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
@@ -122,15 +121,13 @@ export default function OrderConfirmationScreen() {
 
   if (!order) {
     return (
-      <>
-        <Stack.Screen options={{ title: t(language, 'order') }} />
-        <View style={styles.centered}>
-          <Text style={styles.error}>{t(language, 'orderNotFound')}</Text>
-          <TouchableOpacity style={styles.btn} onPress={() => router.replace('/(tabs)')}>
-            <Text style={styles.btnText}>{t(language, 'backToHome')}</Text>
-          </TouchableOpacity>
-        </View>
-      </>
+      <View style={styles.centered}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <Text style={styles.errorText}>{t(language, 'orderNotFound')}</Text>
+        <TouchableOpacity style={styles.solidBtn} onPress={() => router.replace('/(tabs)')}>
+          <Text style={styles.solidBtnText}>{t(language, 'backToHome')}</Text>
+        </TouchableOpacity>
+      </View>
     );
   }
 
@@ -139,191 +136,302 @@ export default function OrderConfirmationScreen() {
     : null;
 
   const items = order.order_items || [];
+  const pointsEarned = order.points_earned ?? 0;
+
+  const detailRows = [
+    { label: t(language, 'deliveryDateLabel'), value: new Date(order.delivery_date).toLocaleDateString() },
+    { label: t(language, 'timeSlotLabel'), value: order.delivery_time_slot },
+    ...(order.delivery_address ? [{ label: t(language, 'addressLabel'), value: order.delivery_address }] : []),
+    ...(paymentMethodLabel ? [{ label: t(language, 'paymentLabel'), value: paymentMethodLabel }] : []),
+    { label: t(language, 'total'), value: formatPrice(Number(order.total)), isTotal: true },
+  ];
 
   return (
-    <>
-      <Stack.Screen options={{ title: t(language, 'orderConfirmed') }} />
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-        <View style={styles.celebrationZone}>
-          {/* Confetti dots */}
-          <Animated.View style={[styles.confettiWrap, confettiStyle]} pointerEvents="none">
-            {[
-              { top: 0, left: '15%', bg: colors.primary, size: 8 },
-              { top: 8, left: '72%', bg: colors.gold, size: 6 },
-              { top: 20, left: '38%', bg: colors.success, size: 7 },
-              { top: 4, left: '55%', bg: colors.primary, size: 5 },
-              { top: 16, left: '85%', bg: colors.gold, size: 8 },
-              { top: 24, left: '8%', bg: colors.success, size: 6 },
-            ].map((dot, i) => (
-              <View
-                key={i}
-                style={{
-                  position: 'absolute',
-                  top: dot.top,
-                  left: dot.left as any,
-                  width: dot.size,
-                  height: dot.size,
-                  borderRadius: dot.size / 2,
-                  backgroundColor: dot.bg,
-                }}
-              />
-            ))}
-          </Animated.View>
+    <View style={styles.root}>
+      <Stack.Screen options={{ headerShown: false }} />
 
-          <Animated.View style={[styles.iconWrap, iconAnimStyle]}>
-            <Text style={styles.icon}>✓</Text>
-          </Animated.View>
-        </View>
-
-        <Animated.Text entering={FadeInDown.delay(200).springify()} style={styles.title}>
-          {t(language, 'thankYou')}
+      {/* Pink hero section */}
+      <View style={[styles.hero, { paddingTop: insets.top + 24 }]}>
+        <Animated.View style={[styles.iconCircle, iconAnimStyle]}>
+          <Ionicons name="checkmark" size={40} color="#fff" />
+        </Animated.View>
+        <Animated.Text entering={FadeInDown.delay(200).springify()} style={styles.heroTitle}>
+          {t(language, 'orderConfirmedHero')}
         </Animated.Text>
-        <Animated.Text entering={FadeInDown.delay(320).springify()} style={styles.subtitle}>
+        <Animated.Text entering={FadeInDown.delay(300).springify()} style={styles.heroSubtitle}>
           {t(language, 'orderConfirmedMessage')}
         </Animated.Text>
-        <View style={styles.card}>
-          <Text style={styles.sectionLabel}>{t(language, 'order')}</Text>
-          <Text style={styles.orderNum}>{order.order_number}</Text>
-          <Text style={styles.total}>{formatPrice(Number(order.total))}</Text>
-          {(order.points_earned ?? 0) > 0 && (
-            <Text style={styles.pointsEarned}>
-              {t(language, 'pointsEarnedConfirmation').replace('{{points}}', String(order.points_earned))}
-            </Text>
-          )}
-          <Text style={styles.meta}>
-            {t(language, 'deliveryDate')}: {new Date(order.delivery_date).toLocaleDateString()}
-          </Text>
-          <Text style={styles.meta}>
-            {t(language, 'timeSlot')}: {order.delivery_time_slot}
-          </Text>
-          {order.delivery_address ? (
-            <Text style={styles.meta}>
-              {t(language, 'deliveryAddress')}: {order.delivery_address}
-            </Text>
-          ) : null}
-          {paymentMethodLabel ? (
-            <Text style={styles.meta}>
-              {t(language, 'paymentMethod')}: {paymentMethodLabel}
-            </Text>
-          ) : null}
-        </View>
+        <Animated.View entering={FadeInDown.delay(380).springify()} style={styles.orderNumPill}>
+          <Text style={styles.orderNumPillText}>{order.order_number}</Text>
+        </Animated.View>
+      </View>
+
+      {/* Scrollable content overlaps hero by 20px */}
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 32 }]}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Points earned banner */}
+        {pointsEarned > 0 && (
+          <Animated.View entering={FadeInDown.delay(420).springify()} style={styles.pointsBanner}>
+            <Text style={styles.pointsBannerEmoji}>⭐</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.pointsBannerTitle}>{t(language, 'pointsEarnedBannerTitle')}</Text>
+              <Text style={styles.pointsBannerSubtitle}>
+                {t(language, 'pointsEarnedBannerSubtitle').replace('{{points}}', String(pointsEarned))}
+              </Text>
+            </View>
+          </Animated.View>
+        )}
+
+        {/* Order details card */}
+        <Animated.View entering={FadeInDown.delay(460).springify()} style={styles.card}>
+          <Text style={styles.sectionLabel}>{t(language, 'orderDetails')}</Text>
+          {detailRows.map((row, idx) => (
+            <View
+              key={idx}
+              style={[
+                styles.detailRow,
+                idx === detailRows.length - 1 && styles.detailRowLast,
+              ]}
+            >
+              <Text style={styles.detailLabel}>{row.label}</Text>
+              <Text
+                style={[styles.detailValue, (row as any).isTotal && styles.detailValueTotal]}
+                numberOfLines={(row.label === t(language, 'addressLabel')) ? 2 : 1}
+              >
+                {row.value}
+              </Text>
+            </View>
+          ))}
+        </Animated.View>
+
+        {/* Order items card */}
         {items.length > 0 && (
-          <View style={styles.card}>
-            <Text style={styles.sectionLabel}>{t(language, 'orderSummary')}</Text>
+          <Animated.View entering={FadeInDown.delay(520).springify()} style={styles.card}>
+            <Text style={styles.sectionLabel}>{t(language, 'yourOrder')}</Text>
             {items.map((item: any, idx: number) => (
-              <View key={item.id || idx} style={styles.summaryRow}>
-                <Text style={styles.summaryTitle}>
-                  {item.product_title} × {item.quantity}
-                </Text>
-                <Text style={styles.summaryLineTotal}>{formatPrice(parseFloat(item.line_total))}</Text>
+              <View
+                key={item.id || idx}
+                style={[styles.itemRow, idx === items.length - 1 && styles.itemRowLast]}
+              >
+                <View style={styles.qtyBadge}>
+                  <Text style={styles.qtyBadgeText}>{item.quantity}</Text>
+                </View>
+                <Text style={styles.itemTitle} numberOfLines={2}>{item.product_title}</Text>
+                <Text style={styles.itemLineTotal}>{formatPrice(parseFloat(item.line_total))}</Text>
               </View>
             ))}
-          </View>
+          </Animated.View>
         )}
-        {order.delivery_maps_link ? (
+
+        {/* CTA buttons */}
+        <Animated.View entering={FadeInDown.delay(580).springify()} style={styles.ctaWrap}>
+          {/* Track Order — always visible, navigates to tracking screen */}
           <TouchableOpacity
-            style={styles.trackBtn}
-            onPress={() => Linking.openURL(order.delivery_maps_link)}
+            style={styles.solidBtn}
+            onPress={() =>
+              router.push({ pathname: '/order-tracking', params: { orderNumber: order.order_number } })
+            }
+            activeOpacity={0.8}
           >
-            <Text style={styles.trackBtnText}>{t(language, 'trackOrder')}</Text>
+            <Ionicons name="location-outline" size={18} color="#fff" style={{ marginRight: 8 }} />
+            <Text style={styles.solidBtnText}>{t(language, 'trackOrder')}</Text>
           </TouchableOpacity>
-        ) : null}
-        <TouchableOpacity style={styles.btn} onPress={() => router.replace('/(tabs)')}>
-          <Text style={styles.btnText}>{t(language, 'backToHome')}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.link} onPress={() => router.push('/(tabs)/orders')}>
-          <Text style={styles.linkText}>{t(language, 'viewOrderHistory')}</Text>
-        </TouchableOpacity>
+
+          {/* Back to Home — outlined */}
+          <TouchableOpacity
+            style={styles.outlineBtn}
+            onPress={() => router.replace('/(tabs)')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.outlineBtnText}>{t(language, 'backToHome')}</Text>
+          </TouchableOpacity>
+
+          {/* View Order History — text link */}
+          <TouchableOpacity style={styles.textLink} onPress={() => router.push('/(tabs)/orders')}>
+            <Text style={styles.textLinkText}>{t(language, 'viewOrderHistory')}</Text>
+          </TouchableOpacity>
+        </Animated.View>
       </ScrollView>
-    </>
+    </View>
   );
 }
 
+const CARD_SHADOW = {
+  shadowColor: colors.primary,
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.08,
+  shadowRadius: 12,
+  elevation: 2,
+};
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.backgroundMuted },
-  content: { padding: spacing.lg, paddingBottom: spacing.xl * 2, alignItems: 'stretch' },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  error: { color: colors.textMuted, marginBottom: spacing.md },
-  celebrationZone: {
+  root: { flex: 1, backgroundColor: colors.primary },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.backgroundMuted, padding: spacing.lg },
+  errorText: { color: colors.textMuted, marginBottom: spacing.md, fontSize: 15 },
+
+  // Hero
+  hero: {
+    backgroundColor: colors.primary,
     alignItems: 'center',
-    position: 'relative',
-    marginTop: spacing.xl,
-    height: 120,
-    justifyContent: 'flex-end',
-    paddingBottom: spacing.sm,
+    paddingBottom: 48,
+    paddingHorizontal: spacing.lg,
   },
-  confettiWrap: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 60,
-  },
-  iconWrap: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.success,
+  iconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
-    alignSelf: 'center',
-    shadowColor: colors.success,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 6,
   },
-  icon: { fontSize: 38, color: '#fff', fontWeight: '700' },
-  title: { fontSize: 26, fontWeight: '800', color: colors.text, textAlign: 'center', marginTop: spacing.lg, letterSpacing: 0.3 },
-  subtitle: { fontSize: 15, color: colors.textMuted, textAlign: 'center', marginTop: spacing.xs },
+  heroTitle: {
+    marginTop: 16,
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#fff',
+    textAlign: 'center',
+  },
+  heroSubtitle: {
+    marginTop: 4,
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.85)',
+    textAlign: 'center',
+  },
+  orderNumPill: {
+    marginTop: 12,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: borderRadius.full,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+  },
+  orderNumPillText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#fff',
+    letterSpacing: 1.5,
+  },
+
+  // Scroll
+  scrollView: {
+    flex: 1,
+    backgroundColor: colors.backgroundMuted,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    marginTop: -20,
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 28,
+  },
+
+  // Points banner
+  pointsBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: '#FEF3C7',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+    padding: 14,
+    marginBottom: 16,
+  },
+  pointsBannerEmoji: { fontSize: 24 },
+  pointsBannerTitle: { fontSize: 13, fontWeight: '700', color: '#92400E' },
+  pointsBannerSubtitle: { fontSize: 12, color: '#B45309', marginTop: 1 },
+
+  // Card
   card: {
-    backgroundColor: colors.card,
-    borderRadius: 16,
-    padding: spacing.lg,
-    marginTop: spacing.lg,
+    backgroundColor: '#fff',
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: colors.cardBorder,
-    shadowColor: colors.text,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    padding: 20,
+    marginBottom: 16,
+    ...CARD_SHADOW,
   },
   sectionLabel: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
     color: colors.textMuted,
+    letterSpacing: 1.5,
     textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginBottom: spacing.sm,
+    marginBottom: 16,
   },
-  orderNum: { fontWeight: '800', fontSize: 20, color: colors.text },
-  total: { fontSize: 22, fontWeight: '800', color: colors.text, marginTop: 4 },
-  pointsEarned: { fontSize: 13, color: colors.gold, marginTop: 6, fontWeight: '700' },
-  meta: { fontSize: 14, color: colors.textMuted, marginTop: 4 },
-  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: spacing.sm },
-  summaryTitle: { fontSize: 14, color: colors.text, flex: 1 },
-  summaryLineTotal: { fontSize: 14, fontWeight: '600', color: colors.text },
-  trackBtn: {
-    marginTop: spacing.lg,
-    height: 52,
-    borderRadius: 14,
+
+  // Detail rows
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: colors.primary,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.cardBorder,
+  },
+  detailRowLast: { borderBottomWidth: 0 },
+  detailLabel: { fontSize: 13, color: colors.textMuted, fontWeight: '500' },
+  detailValue: {
+    fontSize: 13,
+    color: colors.text,
+    fontWeight: '600',
+    textAlign: 'right',
+    flex: 1,
+    marginLeft: 16,
+  },
+  detailValueTotal: { color: colors.primary, fontWeight: '800', fontSize: 15 },
+
+  // Item rows
+  itemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.cardBorder,
+  },
+  itemRowLast: { borderBottomWidth: 0 },
+  qtyBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: colors.primaryLight,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  trackBtnText: { color: colors.primary, fontWeight: '700', fontSize: 15 },
-  btn: {
-    marginTop: spacing.md,
+  qtyBadgeText: { fontSize: 13, fontWeight: '700', color: colors.primary },
+  itemTitle: { flex: 1, marginHorizontal: 12, fontSize: 14, fontWeight: '600', color: colors.text },
+  itemLineTotal: { fontSize: 14, fontWeight: '700', color: colors.primary },
+
+  // CTAs
+  ctaWrap: { gap: 12, marginTop: 8 },
+  solidBtn: {
+    flexDirection: 'row',
     backgroundColor: colors.primary,
+    borderRadius: 16,
     height: 54,
-    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  btnText: { color: '#fff', fontWeight: '700', fontSize: 16, letterSpacing: 0.3 },
-  link: { marginTop: spacing.md, alignItems: 'center' },
-  linkText: { color: colors.primary, fontSize: 14, fontWeight: '600' },
+  solidBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  outlineBtn: {
+    borderWidth: 2,
+    borderColor: colors.primary,
+    borderRadius: 16,
+    height: 54,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+  },
+  outlineBtnText: { color: colors.primary, fontSize: 16, fontWeight: '600' },
+  textLink: { marginTop: 4, alignItems: 'center' },
+  textLinkText: {
+    color: colors.textMuted,
+    fontSize: 13,
+    fontWeight: '500',
+    textDecorationLine: 'underline',
+  },
 });

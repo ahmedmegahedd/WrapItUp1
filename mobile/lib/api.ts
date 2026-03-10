@@ -217,6 +217,14 @@ export async function getOrderByNumber(orderNumber: string): Promise<any> {
   return data;
 }
 
+/** Fetch all orders for the authenticated customer (Supabase access token required). */
+export async function getMyOrders(token: string): Promise<any[]> {
+  const { data } = await api.get('/orders/my-orders', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return data ?? [];
+}
+
 /** Register Expo push token for order confirmation notifications (optional). */
 export async function registerPushToken(email: string, token: string): Promise<void> {
   await api.post('/notifications/push-token', { email: email.trim(), token: token.trim() });

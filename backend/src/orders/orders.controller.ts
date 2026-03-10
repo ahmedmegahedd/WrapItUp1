@@ -1,7 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Query, UseGuards, Request } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
+import { AdminGuard } from '../admin/guards/admin.guard';
+import { CustomerGuard } from './guards/customer.guard';
 
 @Controller('orders')
 export class OrdersController {
@@ -12,7 +14,16 @@ export class OrdersController {
     return this.ordersService.create(createOrderDto);
   }
 
+  /** Returns all orders for the authenticated customer (Supabase JWT required). */
+  @Get('my-orders')
+  @UseGuards(CustomerGuard)
+  getMyOrders(@Request() req: any) {
+    return this.ordersService.findByCustomerEmail(req.user.email);
+  }
+
+  /** Returns all orders — admin only. */
   @Get()
+  @UseGuards(AdminGuard)
   findAll(
     @Query('status') status?: string,
     @Query('paymentStatus') paymentStatus?: string,
@@ -29,14 +40,14 @@ export class OrdersController {
     });
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.ordersService.findOne(id);
-  }
-
   @Get('number/:orderNumber')
   findByOrderNumber(@Param('orderNumber') orderNumber: string) {
     return this.ordersService.findByOrderNumber(orderNumber);
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.ordersService.findOne(id);
   }
 
   @Patch(':id/status')

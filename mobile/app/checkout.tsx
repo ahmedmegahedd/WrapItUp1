@@ -27,6 +27,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAddresses } from '@/contexts/AddressesContext';
 import { usePendingDelivery } from '@/contexts/PendingDeliveryContext';
 import { useCheckoutPayment } from '@/contexts/CheckoutPaymentContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { buildMapsLink } from '@/lib/geocoding';
 import {
   getTimeSlots,
@@ -84,6 +85,7 @@ function buildDefaultDeliveryDays(count = 61): { date: string; status: string }[
 
 export default function CheckoutScreen() {
   const { language } = useLanguage();
+  const { session } = useAuth();
   const { addresses } = useAddresses();
   const { takePending } = usePendingDelivery();
   const { items, getTotal, getPointsEarned } = useCart();
@@ -91,7 +93,7 @@ export default function CheckoutScreen() {
   const { setPayload } = useCheckoutPayment();
 
   const [customerName, setCustomerName] = useState('');
-  const [customerEmail, setCustomerEmail] = useState('');
+  const [customerEmail, setCustomerEmail] = useState(session?.user?.email ?? '');
   const [customerPhone, setCustomerPhone] = useState('');
   const [deliveryDate, setDeliveryDate] = useState('');
   const [deliveryTimeSlotId, setDeliveryTimeSlotId] = useState('');
@@ -186,6 +188,10 @@ export default function CheckoutScreen() {
     }
     if (!customerEmail.trim()) {
       Alert.alert(t(language, 'error'), t(language, 'pleaseEnterEmail'));
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim())) {
+      Alert.alert(t(language, 'error'), t(language, 'pleaseEnterValidEmail'));
       return;
     }
     if (!deliveryDate) {

@@ -102,7 +102,8 @@ export default function SelectPaymentMethodScreen() {
     } catch (error: any) {
       setSubmitting(false);
       hapticError();
-      const msg = error?.response?.data?.message || error?.message || 'Could not start payment. Please try again.';
+      const raw = error?.response?.data?.message || error?.message || 'Could not start payment. Please try again.';
+      const msg = Array.isArray(raw) ? raw.join('\n') : String(raw);
       Alert.alert(t(language, 'paymentFailed'), msg, [{ text: t(language, 'ok') }]);
     }
   };
@@ -138,7 +139,8 @@ export default function SelectPaymentMethodScreen() {
     } catch (e: any) {
       setSubmitting(false);
       hapticError();
-      const msg = e.response?.data?.message || e.message || 'Something went wrong';
+      const raw = e.response?.data?.message || e.message || 'Something went wrong';
+      const msg = Array.isArray(raw) ? raw.join('\n') : String(raw);
       Alert.alert(
         t(language, 'paymentFailed'),
         msg,

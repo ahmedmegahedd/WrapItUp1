@@ -198,7 +198,7 @@ export class OrdersService {
     if (orderError) throw new BadRequestException(orderError.message);
 
     const orderItems = orderItemsData.map((item) => {
-      const { selected_variation_option_ids, ...rest } = item;
+      const { selected_variation_option_ids, collaborator_id: _cid, unit_price: _up, ...rest } = item;
       return {
         ...rest,
         order_id: order.id,
@@ -441,6 +441,29 @@ export class OrdersService {
     return data;
   }
 
+  async findByCustomerEmail(email: string) {
+    const supabase = this.supabaseService.getAdminClient();
+    const { data, error } = await supabase
+      .from('orders')
+      .select(`
+        *,
+        order_items (
+          id,
+          product_title,
+          quantity,
+          line_total
+        )
+      `)
+      .eq('customer_email', email)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw new BadRequestException(`Failed to fetch orders: ${error.message}`);
+    }
+
+    return data ?? [];
+  }
+
   async findByOrderNumber(orderNumber: string) {
     const supabase = this.supabaseService.getAdminClient();
     const { data, error } = await supabase
@@ -551,15 +574,17 @@ export class OrdersService {
 
   private async generateOrderNumber(): Promise<string> {
     const supabase = this.supabaseService.getAdminClient();
-    const today = new Date().toISOString().split('T')[0].replace(/-/g, '');
-    
-    // Get count of orders today
-    const { count } = await supabase
-      .from('orders')
-      .select('*', { count: 'exact', head: true })
-      .gte('created_at', `${today.substring(0, 4)}-${today.substring(4, 6)}-${today.substring(6, 8)}T00:00:00`);
 
-    const sequence = ((count || 0) + 1).toString().padStart(6, '0');
-    return `WRP-${today}-${sequence}`;
+    // Global counter — never resets, 6 digits: 000001, 000002, 001337
+    const { count, error } = await supabase
+      .from('orders')
+      .select('*', { count: 'exact', head: true });
+
+    if (error) {
+      return Date.now().toString().slice(-6).padStart(6, '0');
+    }
+
+    const sequence = (count ?? 0) + 1;
+    return sequence.toString().padStart(6, '0');
   }
 }

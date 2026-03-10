@@ -14,6 +14,7 @@ import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { SplashGate } from '@/components/SplashGate';
 import { t } from '@/lib/i18n';
+import { colors } from '@/constants/theme';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -42,7 +43,8 @@ function AppContent() {
         <Stack.Screen name="paymob-webview" options={{ headerShown: true }} />
         <Stack.Screen name="payment-failed" options={{ headerShown: true }} />
         <Stack.Screen name="delivery-address-map" options={{ headerShown: true }} />
-        <Stack.Screen name="order-confirmation" options={{ headerShown: true, title: t(language, 'orderConfirmed') }} />
+        <Stack.Screen name="order-confirmation" options={{ headerShown: false }} />
+        <Stack.Screen name="order-tracking" options={{ headerShown: true, title: t(language, 'trackOrder'), headerStyle: { backgroundColor: '#fff' }, headerTintColor: colors.primary, headerShadowVisible: false }} />
         <Stack.Screen name="(account)" options={{ headerShown: false }} />
         <Stack.Screen name="account-personal" options={{ headerShown: true }} />
         <Stack.Screen name="account-language" options={{ headerShown: true }} />

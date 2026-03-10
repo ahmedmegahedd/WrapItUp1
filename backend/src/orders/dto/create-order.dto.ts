@@ -1,4 +1,4 @@
-import { IsString, IsEmail, IsOptional, IsDateString, IsArray, ValidateNested, IsNumber, Min, IsUUID } from 'class-validator';
+import { IsString, IsEmail, IsOptional, IsDateString, IsArray, IsObject, ValidateNested, IsNumber, Min, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class OrderItemDto {
@@ -9,7 +9,7 @@ export class OrderItemDto {
   @Min(1)
   quantity: number;
 
-  @IsArray()
+  @IsObject()
   @IsOptional()
   selected_variations?: Record<string, string>; // { variationName: optionId }
 

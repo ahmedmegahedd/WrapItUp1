@@ -12,6 +12,9 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { AnalyticsModule } from '../analytics/analytics.module';
 import { InventoryModule } from '../inventory/inventory.module';
 import { CollaboratorsModule } from '../collaborators/collaborators.module';
+import { AdminModule } from '../admin/admin.module';
+import { AdminGuard } from '../admin/guards/admin.guard';
+import { CustomerGuard } from './guards/customer.guard';
 
 @Module({
   imports: [
@@ -26,9 +29,10 @@ import { CollaboratorsModule } from '../collaborators/collaborators.module';
     NotificationsModule,
     AnalyticsModule,
     InventoryModule,
+    forwardRef(() => AdminModule),
   ],
   controllers: [OrdersController],
-  providers: [OrdersService],
+  providers: [OrdersService, AdminGuard, CustomerGuard],
   exports: [OrdersService],
 })
 export class OrdersModule {}
