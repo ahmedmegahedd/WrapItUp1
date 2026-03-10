@@ -19,11 +19,13 @@ export class PaymentsService {
 
   async handleWebhook(payload: Record<string, any>) {
     const receivedHmac = payload.hmac;
-    if (receivedHmac) {
-      const isValid = this.paymobService.verifyHmac(payload, receivedHmac);
-      if (!isValid) {
-        return { received: true };
-      }
+    if (!receivedHmac) {
+      return { received: true };
+    }
+
+    const isValid = this.paymobService.verifyHmac(payload, receivedHmac);
+    if (!isValid) {
+      return { received: true };
     }
 
     const obj = payload.obj;

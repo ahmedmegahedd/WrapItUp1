@@ -15,17 +15,20 @@ import {
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { WebView } from 'react-native-webview';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useCheckoutPayment } from '@/contexts/CheckoutPaymentContext';
 import { openPaymobPayment } from '@/lib/paymob';
 import { t } from '@/lib/i18n';
 import { colors, spacing } from '@/constants/theme';
 
 export default function PaymobWebViewScreen() {
   const { language } = useLanguage();
+  const { clearPayload } = useCheckoutPayment();
   const params = useLocalSearchParams<{
     paymentKeyToken: string;
     orderId: string;
     orderNumber: string;
   }>();
+  const orderNumber = params?.orderNumber ? String(params.orderNumber) : null;
   const [loading, setLoading] = useState(true);
   const webViewRef = useRef<WebView>(null);
 
@@ -37,22 +40,29 @@ export default function PaymobWebViewScreen() {
   const handleNavigationStateChange = useCallback(
     (navState: { url: string }) => {
       const u = navState?.url || '';
-      if (u.includes('success=true') || u.includes('/success')) {
-        const orderNumber = params.orderNumber;
-        if (orderNumber) {
-          router.replace({
-            pathname: '/order-confirmation',
-            params: { orderNumber },
-          });
-        }
+      const isSuccess =
+        u.includes('success=true') ||
+        u.includes('is_success=true') ||
+        u.includes('/success');
+      const isFailure =
+        u.includes('success=false') ||
+        u.includes('is_success=false') ||
+        u.includes('/failure') ||
+        u.includes('transaction_status=failed');
+      if (isSuccess && orderNumber) {
+        clearPayload();
+        router.replace({
+          pathname: '/order-confirmation',
+          params: { orderNumber },
+        });
         return;
       }
-      if (u.includes('success=false') || u.includes('error')) {
+      if (isFailure) {
         router.replace('/payment-failed');
         return;
       }
     },
-    [params.orderNumber]
+    [orderNumber, clearPayload]
   );
 
   const handleBack = useCallback(() => {
@@ -68,6 +78,20 @@ export default function PaymobWebViewScreen() {
       ]
     );
   }, [language]);
+
+  if (!orderNumber) {
+    return (
+      <>
+        <Stack.Screen options={{ title: t(language, 'pay') }} />
+        <View style={styles.centered}>
+          <Text style={styles.errorText}>Invalid payment session. Please go back and try again.</Text>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <Text style={styles.backBtnText}>← {t(language, 'goBack')}</Text>
+          </TouchableOpacity>
+        </View>
+      </>
+    );
+  }
 
   if (!url) {
     return (

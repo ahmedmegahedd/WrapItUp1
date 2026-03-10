@@ -58,40 +58,52 @@ export default function OrderConfirmationScreen() {
 
   useEffect(() => {
     if (!orderNumber) return;
-    getOrderByNumber(orderNumber)
-      .then((o) => {
-        setOrder(o);
-        if ((o?.points_earned ?? 0) > 0) refetchBalance();
-        // Trigger celebration
-        iconScale.value = withSequence(
-          withSpring(1.2, { damping: 5, stiffness: 260 }),
-          withSpring(1, { damping: 8, stiffness: 200 }),
-        );
-        iconRotate.value = withSequence(
-          withTiming(-8, { duration: 120 }),
-          withSpring(0, { damping: 6, stiffness: 180 }),
-        );
-        confettiOpacity.value = withSequence(
-          withDelay(100, withTiming(1, { duration: 300 })),
-          withDelay(1200, withTiming(0, { duration: 600 })),
-        );
-        setTimeout(() => {
-          try {
-            clearCart();
-            clearPayload();
-          } catch (_) {}
-        }, 150);
-        return AsyncStorage.getItem(ORDER_NUMBERS_KEY);
-      })
-      .then((raw) => {
+    const run = async () => {
+      // Step 1: Fetch order — failure here is the only reason to show error UI
+      let fetchedOrder = null;
+      try {
+        fetchedOrder = await getOrderByNumber(orderNumber);
+        setOrder(fetchedOrder);
+      } catch (err) {
+        console.warn('[OrderConfirmation] Failed to fetch order:', err);
+        setOrder(null);
+        setLoading(false);
+        return;
+      }
+
+      // Step 2: Trigger celebration animations
+      iconScale.value = withSequence(
+        withSpring(1.2, { damping: 5, stiffness: 260 }),
+        withSpring(1, { damping: 8, stiffness: 200 }),
+      );
+      iconRotate.value = withSequence(
+        withTiming(-8, { duration: 120 }),
+        withSpring(0, { damping: 6, stiffness: 180 }),
+      );
+      confettiOpacity.value = withSequence(
+        withDelay(100, withTiming(1, { duration: 300 })),
+        withDelay(1200, withTiming(0, { duration: 600 })),
+      );
+
+      // Step 3: Refetch loyalty balance if points were earned
+      if ((fetchedOrder?.points_earned ?? 0) > 0) refetchBalance();
+
+      // Step 4: Update order history in AsyncStorage — isolated, never affects order display
+      try {
+        const raw = await AsyncStorage.getItem(ORDER_NUMBERS_KEY);
         const list: string[] = raw ? JSON.parse(raw) : [];
-        if (orderNumber && !list.includes(orderNumber)) {
+        if (!list.includes(orderNumber)) {
           list.unshift(orderNumber);
-          AsyncStorage.setItem(ORDER_NUMBERS_KEY, JSON.stringify(list.slice(0, 50)));
+          await AsyncStorage.setItem(ORDER_NUMBERS_KEY, JSON.stringify(list.slice(0, 50)));
         }
-      })
-      .catch(() => setOrder(null))
-      .finally(() => setLoading(false));
+      } catch (err) {
+        // AsyncStorage failure is non-fatal — order is already displayed
+        console.warn('[OrderConfirmation] AsyncStorage update failed:', err);
+      }
+
+      setLoading(false);
+    };
+    run();
   }, [orderNumber]);
 
   useEffect(() => {

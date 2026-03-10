@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Req } from '@nestjs/common';
+import { Controller, Post, Body, Req, HttpException, HttpStatus } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
 
 export class InitiatePaymentDto {
@@ -18,11 +18,18 @@ export class PaymentsController {
 
   @Post('initiate')
   async initiate(@Body() body: InitiatePaymentDto) {
-    return this.paymentsService.initiatePayment(
-      body.amountEGP,
-      body.orderId,
-      body.customerInfo,
-    );
+    try {
+      return await this.paymentsService.initiatePayment(
+        body.amountEGP,
+        body.orderId,
+        body.customerInfo,
+      );
+    } catch (error: any) {
+      throw new HttpException(
+        { message: error.message || 'Payment initiation failed' },
+        HttpStatus.BAD_GATEWAY,
+      );
+    }
   }
 
   @Post('webhook')

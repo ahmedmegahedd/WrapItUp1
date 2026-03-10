@@ -29,6 +29,9 @@ export default function AdminProductsPage() {
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null)
   const [rejectTarget, setRejectTarget] = useState<{ id: string; title: string } | null>(null)
   const [rejectReason, setRejectReason] = useState('')
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   const { toasts, showToast, dismissToast } = useToast()
 
   const isCollaborator = me?.is_collaborator === true
@@ -94,17 +97,45 @@ export default function AdminProductsPage() {
   }, [approvalFilter, collaboratorFilter])
 
   async function handleDelete() {
-    if (!deleteTarget) return
+    if (!deleteTarget || isDeleting) return
+    setIsDeleting(true)
     try {
       await api.delete(`/admin/products/${deleteTarget.id}`)
       setWrapitupProducts((prev) => prev.filter((p) => p.id !== deleteTarget.id))
       setCollaboratorProducts((prev) => prev.filter((p) => p.id !== deleteTarget.id))
+      setSelectedIds((prev) => { const next = new Set(prev); next.delete(deleteTarget.id); return next })
       showToast('success', `"${deleteTarget.title}" deleted`)
     } catch {
       showToast('error', 'Failed to delete product')
     } finally {
       setDeleteTarget(null)
+      setIsDeleting(false)
     }
+  }
+
+  async function handleBulkDelete() {
+    if (isDeleting) return
+    setIsDeleting(true)
+    const ids = Array.from(selectedIds)
+    const results = await Promise.allSettled(ids.map((id) => api.delete(`/admin/products/${id}`)))
+    const succeeded = ids.filter((_, i) => results[i].status === 'fulfilled')
+    const failed = ids.filter((_, i) => results[i].status === 'rejected')
+    setWrapitupProducts((prev) => prev.filter((p) => !succeeded.includes(p.id)))
+    setCollaboratorProducts((prev) => prev.filter((p) => !succeeded.includes(p.id)))
+    setSelectedIds(new Set())
+    setBulkDeleteOpen(false)
+    setIsDeleting(false)
+    if (succeeded.length > 0) showToast('success', `${succeeded.length} product${succeeded.length > 1 ? 's' : ''} deleted`)
+    if (failed.length > 0) showToast('error', `${failed.length} product${failed.length > 1 ? 's' : ''} failed to delete`)
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
   }
 
   async function toggleShowInAll(product: any) {
@@ -192,6 +223,19 @@ export default function AdminProductsPage() {
 
   const list = isCollaborator ? filteredProducts : activeTab === 'wrapitup' ? filteredProducts : filteredByCollaborator
 
+  const deletableList = list.filter((p) => {
+    const isCollaboratorProduct = !!p.collaborator_id
+    return !isCollaboratorProduct || p.approval_status === 'pending' || p.approval_status === 'rejected'
+  })
+  const allSelected = deletableList.length > 0 && deletableList.every((p) => selectedIds.has(p.id))
+  function toggleSelectAll() {
+    if (allSelected) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(deletableList.map((p) => p.id)))
+    }
+  }
+
   const imgUrl = (p: any) => p.product_images?.[0]?.image_url || p.product_images?.[0]?.url
 
   return (
@@ -206,7 +250,7 @@ export default function AdminProductsPage() {
         <div style={{ display: 'flex', gap: 4, marginBottom: 20, borderBottom: '1px solid var(--admin-border)' }}>
           <button
             type="button"
-            onClick={() => setActiveTab('wrapitup')}
+            onClick={() => { setActiveTab('wrapitup'); setSelectedIds(new Set()) }}
             className="admin-tab"
             style={{
               padding: '10px 16px',
@@ -225,7 +269,7 @@ export default function AdminProductsPage() {
           </button>
           <button
             type="button"
-            onClick={() => setActiveTab('collaborator')}
+            onClick={() => { setActiveTab('collaborator'); setSelectedIds(new Set()) }}
             className="admin-tab"
             style={{
               padding: '10px 16px',
@@ -293,11 +337,41 @@ export default function AdminProductsPage() {
         )}
       </div>
 
+      {selectedIds.size > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, padding: '10px 14px', background: 'var(--admin-surface-2)', borderRadius: 'var(--admin-radius)', border: '1px solid var(--admin-border)' }}>
+          <span style={{ fontSize: 14, color: 'var(--admin-text-2)' }}>{selectedIds.size} selected</span>
+          <button
+            type="button"
+            onClick={() => setBulkDeleteOpen(true)}
+            style={{ fontSize: 13, padding: '6px 16px', background: 'var(--admin-danger)', color: 'white', border: 'none', borderRadius: 'var(--admin-radius-sm)', fontFamily: 'inherit', fontWeight: 600, cursor: 'pointer' }}
+          >
+            Delete Selected
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedIds(new Set())}
+            className="admin-btn-ghost"
+            style={{ fontSize: 13, padding: '6px 14px' }}
+          >
+            Clear
+          </button>
+        </div>
+      )}
+
       {/* Desktop table */}
       <div className="admin-table-wrapper admin-desktop-only">
         <table className="admin-table">
           <thead>
             <tr>
+              <th style={{ width: 36 }}>
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  onChange={toggleSelectAll}
+                  title="Select all deletable"
+                  style={{ cursor: 'pointer' }}
+                />
+              </th>
               <th>Product</th>
               <th>Price</th>
               <th>Stock</th>
@@ -328,7 +402,17 @@ export default function AdminProductsPage() {
                 const canDelete = !isCollaboratorProduct || product.approval_status === 'pending' || product.approval_status === 'rejected'
 
                 return (
-                  <tr key={product.id}>
+                  <tr key={product.id} style={selectedIds.has(product.id) ? { background: 'var(--admin-surface-2)' } : undefined}>
+                    <td style={{ width: 36 }}>
+                      {canDelete && (
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(product.id)}
+                          onChange={() => toggleSelect(product.id)}
+                          style={{ cursor: 'pointer' }}
+                        />
+                      )}
+                    </td>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                         {imgUrl(product) ? (
@@ -438,14 +522,22 @@ export default function AdminProductsPage() {
                 <div
                   key={product.id}
                   style={{
-                    background: 'var(--admin-surface)',
-                    border: '1px solid var(--admin-border)',
+                    background: selectedIds.has(product.id) ? 'var(--admin-surface-2)' : 'var(--admin-surface)',
+                    border: selectedIds.has(product.id) ? '1px solid var(--admin-accent)' : '1px solid var(--admin-border)',
                     borderRadius: 'var(--admin-radius)',
                     padding: 14,
                     boxShadow: 'var(--admin-shadow)',
                   }}
                 >
                   <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                    {canDelete && (
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(product.id)}
+                        onChange={() => toggleSelect(product.id)}
+                        style={{ marginTop: 18, cursor: 'pointer', flexShrink: 0 }}
+                      />
+                    )}
                     {imgUrl(product) ? (
                       <img src={imgUrl(product)} alt={product.title} style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: 8, flexShrink: 0, border: '1px solid var(--admin-border)' }} />
                     ) : (
@@ -497,7 +589,16 @@ export default function AdminProductsPage() {
         <Link href="/admin/products/new" className="admin-fab admin-mobile-only">+</Link>
       )}
 
-      <ConfirmModal open={!!deleteTarget} title="Delete product?" message={`"${deleteTarget?.title}" will be permanently deleted. This cannot be undone.`} confirmLabel="Delete" onConfirm={handleDelete} onCancel={() => setDeleteTarget(null)} />
+      <ConfirmModal
+        open={bulkDeleteOpen}
+        title={`Delete ${selectedIds.size} product${selectedIds.size > 1 ? 's' : ''}?`}
+        message={`${selectedIds.size} product${selectedIds.size > 1 ? 's' : ''} will be permanently deleted. This cannot be undone.`}
+        confirmLabel={isDeleting ? 'Deleting…' : 'Delete All'}
+        onConfirm={handleBulkDelete}
+        onCancel={() => setBulkDeleteOpen(false)}
+      />
+
+      <ConfirmModal open={!!deleteTarget} title="Delete product?" message={`"${deleteTarget?.title}" will be permanently deleted. This cannot be undone.`} confirmLabel={isDeleting ? 'Deleting…' : 'Delete'} onConfirm={handleDelete} onCancel={() => setDeleteTarget(null)} />
 
       <ConfirmModal
         open={!!rejectTarget}

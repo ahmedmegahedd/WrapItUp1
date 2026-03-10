@@ -14,6 +14,9 @@ export default function AdminCollectionsPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   const { toasts, showToast, dismissToast } = useToast()
 
   useEffect(() => {
@@ -32,16 +35,43 @@ export default function AdminCollectionsPage() {
   }
 
   async function handleDelete() {
-    if (!deleteTarget) return
+    if (!deleteTarget || isDeleting) return
+    setIsDeleting(true)
     try {
       await api.delete(`/admin/collections/${deleteTarget.id}`)
       setCollections((prev) => prev.filter((c) => c.id !== deleteTarget.id))
+      setSelectedIds((prev) => { const next = new Set(prev); next.delete(deleteTarget.id); return next })
       showToast('success', `"${deleteTarget.name}" deleted`)
     } catch {
       showToast('error', 'Failed to delete collection')
     } finally {
       setDeleteTarget(null)
+      setIsDeleting(false)
     }
+  }
+
+  async function handleBulkDelete() {
+    if (isDeleting) return
+    setIsDeleting(true)
+    const ids = Array.from(selectedIds)
+    const results = await Promise.allSettled(ids.map((id) => api.delete(`/admin/collections/${id}`)))
+    const succeeded = ids.filter((_, i) => results[i].status === 'fulfilled')
+    const failed = ids.filter((_, i) => results[i].status === 'rejected')
+    setCollections((prev) => prev.filter((c) => !succeeded.includes(c.id)))
+    setSelectedIds(new Set())
+    setBulkDeleteOpen(false)
+    setIsDeleting(false)
+    if (succeeded.length > 0) showToast('success', `${succeeded.length} collection${succeeded.length > 1 ? 's' : ''} deleted`)
+    if (failed.length > 0) showToast('error', `${failed.length} collection${failed.length > 1 ? 's' : ''} failed to delete`)
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
   }
 
   const searchLower = search.trim().toLowerCase()
@@ -52,6 +82,15 @@ export default function AdminCollectionsPage() {
           (c.slug || '').toLowerCase().includes(searchLower),
       )
     : collections
+
+  const allSelected = filteredCollections.length > 0 && filteredCollections.every((c) => selectedIds.has(c.id))
+  function toggleSelectAll() {
+    if (allSelected) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(filteredCollections.map((c) => c.id)))
+    }
+  }
 
   return (
     <div style={{ padding: '24px 24px 40px', maxWidth: 1000, margin: '0 auto' }}>
@@ -77,10 +116,40 @@ export default function AdminCollectionsPage() {
         )}
       </div>
 
+      {selectedIds.size > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, padding: '10px 14px', background: 'var(--admin-surface-2)', borderRadius: 'var(--admin-radius)', border: '1px solid var(--admin-border)' }}>
+          <span style={{ fontSize: 14, color: 'var(--admin-text-2)' }}>{selectedIds.size} selected</span>
+          <button
+            type="button"
+            onClick={() => setBulkDeleteOpen(true)}
+            style={{ fontSize: 13, padding: '6px 16px', background: 'var(--admin-danger)', color: 'white', border: 'none', borderRadius: 'var(--admin-radius-sm)', fontFamily: 'inherit', fontWeight: 600, cursor: 'pointer' }}
+          >
+            Delete Selected
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedIds(new Set())}
+            className="admin-btn-ghost"
+            style={{ fontSize: 13, padding: '6px 14px' }}
+          >
+            Clear
+          </button>
+        </div>
+      )}
+
       <div className="admin-table-wrapper admin-desktop-only">
         <table className="admin-table">
           <thead>
             <tr>
+              <th style={{ width: 36 }}>
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  onChange={toggleSelectAll}
+                  title="Select all"
+                  style={{ cursor: 'pointer' }}
+                />
+              </th>
               <th>Name</th>
               <th>Slug</th>
               <th>Products</th>
@@ -94,7 +163,7 @@ export default function AdminCollectionsPage() {
             ) : filteredCollections.length === 0 ? (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={6}
                   style={{
                     textAlign: 'center',
                     padding: '48px 20px',
@@ -107,7 +176,15 @@ export default function AdminCollectionsPage() {
               </tr>
             ) : (
               filteredCollections.map((collection) => (
-                <tr key={collection.id}>
+                <tr key={collection.id} style={selectedIds.has(collection.id) ? { background: 'var(--admin-surface-2)' } : undefined}>
+                  <td style={{ width: 36 }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(collection.id)}
+                      onChange={() => toggleSelect(collection.id)}
+                      style={{ cursor: 'pointer' }}
+                    />
+                  </td>
                   <td style={{ fontWeight: 500 }}>{collection.name}</td>
                   <td style={{ color: 'var(--admin-text-3)', fontSize: 13 }}>{collection.slug}</td>
                   <td>
@@ -178,13 +255,19 @@ export default function AdminCollectionsPage() {
             <div
               key={collection.id}
               style={{
-                background: 'var(--admin-surface)',
-                border: '1px solid var(--admin-border)',
+                background: selectedIds.has(collection.id) ? 'var(--admin-surface-2)' : 'var(--admin-surface)',
+                border: selectedIds.has(collection.id) ? '1px solid var(--admin-accent)' : '1px solid var(--admin-border)',
                 borderRadius: 'var(--admin-radius)',
                 padding: '14px 16px',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+                <input
+                  type="checkbox"
+                  checked={selectedIds.has(collection.id)}
+                  onChange={() => toggleSelect(collection.id)}
+                  style={{ cursor: 'pointer', flexShrink: 0 }}
+                />
                 {collection.image_url ? (
                   <img
                     src={collection.image_url}
@@ -258,10 +341,19 @@ export default function AdminCollectionsPage() {
       </Link>
 
       <ConfirmModal
+        open={bulkDeleteOpen}
+        title={`Delete ${selectedIds.size} collection${selectedIds.size > 1 ? 's' : ''}?`}
+        message={`${selectedIds.size} collection${selectedIds.size > 1 ? 's' : ''} will be permanently deleted. Products will not be deleted.`}
+        confirmLabel={isDeleting ? 'Deleting…' : 'Delete All'}
+        onConfirm={handleBulkDelete}
+        onCancel={() => setBulkDeleteOpen(false)}
+      />
+
+      <ConfirmModal
         open={!!deleteTarget}
         title="Delete collection?"
         message={`"${deleteTarget?.name}" will be permanently deleted. Products will not be deleted.`}
-        confirmLabel="Delete"
+        confirmLabel={isDeleting ? 'Deleting…' : 'Delete'}
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />

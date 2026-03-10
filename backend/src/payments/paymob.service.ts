@@ -37,13 +37,19 @@ export class PaymobService {
     if (!apiKey) {
       throw new BadRequestException('Paymob API key not configured');
     }
-    const { data } = await axios.post<{ token: string }>(PAYMOB_AUTH_URL, {
-      api_key: apiKey,
-    });
-    if (!data?.token) {
-      throw new BadRequestException('Paymob authentication failed');
+    try {
+      const { data } = await axios.post<{ token: string }>(PAYMOB_AUTH_URL, {
+        api_key: apiKey,
+      });
+      if (!data?.token) {
+        throw new BadRequestException('Paymob authentication failed');
+      }
+      return data.token;
+    } catch (error: any) {
+      if (error instanceof BadRequestException) throw error;
+      const msg = error?.response?.data?.message || error.message;
+      throw new Error(`Paymob authentication failed: ${msg}`);
     }
-    return data.token;
   }
 
   async createPaymobOrder(
@@ -52,18 +58,24 @@ export class PaymobService {
     merchantOrderId: string,
     items: PaymobOrderItem[] = [],
   ): Promise<number> {
-    const { data } = await axios.post<{ id: number }>(PAYMOB_ORDER_URL, {
-      auth_token: authToken,
-      delivery_needed: false,
-      amount_cents: amountCents,
-      currency: 'EGP',
-      merchant_order_id: merchantOrderId,
-      items: items.length ? items : [],
-    });
-    if (data?.id == null) {
-      throw new BadRequestException('Paymob order registration failed');
+    try {
+      const { data } = await axios.post<{ id: number }>(PAYMOB_ORDER_URL, {
+        auth_token: authToken,
+        delivery_needed: false,
+        amount_cents: amountCents,
+        currency: 'EGP',
+        merchant_order_id: merchantOrderId,
+        items: items.length ? items : [],
+      });
+      if (data?.id == null) {
+        throw new BadRequestException('Paymob order registration failed');
+      }
+      return data.id;
+    } catch (error: any) {
+      if (error instanceof BadRequestException) throw error;
+      const msg = error?.response?.data?.message || error.message;
+      throw new Error(`Paymob order creation failed: ${msg}`);
     }
-    return data.id;
   }
 
   async getPaymentKey(
@@ -81,22 +93,28 @@ export class PaymobService {
     if (!integrationId) {
       throw new BadRequestException('Paymob integration ID not configured');
     }
-    const { data } = await axios.post<{ token: string }>(
-      PAYMOB_PAYMENT_KEY_URL,
-      {
-        auth_token: authToken,
-        amount_cents: amountCents,
-        expiration: 3600,
-        order_id: paymobOrderId,
-        billing_data: billingData,
-        currency: 'EGP',
-        integration_id: parseInt(integrationId, 10),
-      },
-    );
-    if (!data?.token) {
-      throw new BadRequestException('Paymob payment key creation failed');
+    try {
+      const { data } = await axios.post<{ token: string }>(
+        PAYMOB_PAYMENT_KEY_URL,
+        {
+          auth_token: authToken,
+          amount_cents: amountCents,
+          expiration: 3600,
+          order_id: paymobOrderId,
+          billing_data: billingData,
+          currency: 'EGP',
+          integration_id: parseInt(integrationId, 10),
+        },
+      );
+      if (!data?.token) {
+        throw new BadRequestException('Paymob payment key creation failed');
+      }
+      return data.token;
+    } catch (error: any) {
+      if (error instanceof BadRequestException) throw error;
+      const msg = error?.response?.data?.message || error.message;
+      throw new Error(`Paymob payment key request failed: ${msg}`);
     }
-    return data.token;
   }
 
   async initiatePayment(
@@ -129,17 +147,25 @@ export class PaymobService {
    * Paymob sends obj with HMAC in a field; verify using PAYMOB_HMAC_SECRET.
    */
   verifyHmac(payload: Record<string, any>, receivedHmac: string): boolean {
-    const hmacSecret = this.configService.get<string>('PAYMOB_HMAC_SECRET');
-    if (!hmacSecret || !receivedHmac) return false;
-    const sortedKeys = Object.keys(payload).sort();
-    const concat = sortedKeys
-      .filter((k) => payload[k] !== undefined && payload[k] !== null && k !== 'hmac')
-      .map((k) => {
-        const v = payload[k];
-        return typeof v === 'object' ? JSON.stringify(v) : String(v);
-      })
-      .join('');
-    const expected = crypto.createHmac('sha512', hmacSecret).update(concat).digest('hex');
-    return crypto.timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(receivedHmac, 'hex'));
+    try {
+      const hmacSecret = this.configService.get<string>('PAYMOB_HMAC_SECRET');
+      if (!hmacSecret || !receivedHmac || typeof receivedHmac !== 'string') return false;
+      const sortedKeys = Object.keys(payload).sort();
+      const concat = sortedKeys
+        .filter((k) => payload[k] !== undefined && payload[k] !== null && k !== 'hmac')
+        .map((k) => {
+          const v = payload[k];
+          return typeof v === 'object' ? JSON.stringify(v) : String(v);
+        })
+        .join('');
+      const expected = crypto.createHmac('sha512', hmacSecret).update(concat).digest('hex');
+      const normalizedReceived = receivedHmac.toLowerCase();
+      if (!/^[0-9a-f]+$/.test(normalizedReceived) || normalizedReceived.length !== expected.length) {
+        return false;
+      }
+      return crypto.timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(normalizedReceived, 'hex'));
+    } catch {
+      return false;
+    }
   }
 }

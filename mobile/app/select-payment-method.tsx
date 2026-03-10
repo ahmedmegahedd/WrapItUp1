@@ -74,31 +74,37 @@ export default function SelectPaymentMethodScreen() {
   };
 
   const runCardPayment = async () => {
-    const orderPayload = { ...payload.orderPayload, payment_method: 'card' };
-    const order = await createOrder(orderPayload);
-    const nameParts = (payload.orderPayload.customer_name || '').trim().split(/\s+/);
-    const firstName = nameParts[0] || 'Customer';
-    const lastName = nameParts.slice(1).join(' ') || '';
-    const { paymentKeyToken } = await initiatePaymobPayment(
-      payload.total,
-      order.id,
-      {
-        firstName,
-        lastName,
-        email: payload.orderPayload.customer_email || '',
-        phone: payload.orderPayload.customer_phone || '',
-      },
-    );
-    clearPayload();
-    hapticSuccess();
-    router.replace({
-      pathname: '/paymob-webview',
-      params: {
-        paymentKeyToken,
-        orderId: order.id,
-        orderNumber: order.order_number,
-      },
-    });
+    try {
+      const orderPayload = { ...payload.orderPayload, payment_method: 'card' };
+      const order = await createOrder(orderPayload);
+      const nameParts = (payload.orderPayload.customer_name || '').trim().split(/\s+/);
+      const firstName = nameParts[0] || 'Customer';
+      const lastName = nameParts.slice(1).join(' ') || '';
+      const { paymentKeyToken } = await initiatePaymobPayment(
+        payload.total,
+        order.id,
+        {
+          firstName,
+          lastName,
+          email: payload.orderPayload.customer_email || '',
+          phone: payload.orderPayload.customer_phone || '',
+        },
+      );
+      hapticSuccess();
+      router.replace({
+        pathname: '/paymob-webview',
+        params: {
+          paymentKeyToken,
+          orderId: order.id,
+          orderNumber: order.order_number,
+        },
+      });
+    } catch (error: any) {
+      setSubmitting(false);
+      hapticError();
+      const msg = error?.response?.data?.message || error?.message || 'Could not start payment. Please try again.';
+      Alert.alert(t(language, 'paymentFailed'), msg, [{ text: t(language, 'ok') }]);
+    }
   };
 
   const handleConfirmPay = async () => {
@@ -112,14 +118,10 @@ export default function SelectPaymentMethodScreen() {
         if (!orderNumber) throw new Error('Order number missing');
         hapticSuccess();
         addOrderNumberToStorage(orderNumber).catch(() => {});
-        const errMsg = t(language, 'paymentFailed');
-        setTimeout(() => {
-          try {
-            router.push({ pathname: '/order-confirmation', params: { orderNumber } });
-          } catch (_) {
-            Alert.alert(t(language, 'error'), errMsg);
-          }
-        }, 0);
+        setSubmitting(false);
+        clearCart();
+        clearPayload();
+        router.replace({ pathname: '/order-confirmation', params: { orderNumber } });
         return;
       }
       if (selected === 'instapay') {
@@ -149,14 +151,16 @@ export default function SelectPaymentMethodScreen() {
   };
 
   const closeInstaPayModal = () => {
+    if (!instaPayOrderNumber) return;
+    const orderNumber = instaPayOrderNumber;
     setInstaPayOrderNumber(null);
     clearCart();
     clearPayload();
-    router.replace({ pathname: '/order-confirmation', params: { orderNumber: instaPayOrderNumber! } });
+    router.replace({ pathname: '/order-confirmation', params: { orderNumber } });
   };
 
   return (
-    <>
+    <View style={styles.root}>
       <Stack.Screen options={{ title: t(language, 'selectPaymentMethod') }} />
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         <Text style={styles.hint}>{t(language, 'paymentRedirectMessage')}</Text>
@@ -214,19 +218,18 @@ export default function SelectPaymentMethodScreen() {
         </View>
       </Modal>
 
-      {submitting && (selected === 'card' || selected === 'apple_pay') && (
-        <Modal visible transparent animationType="fade">
-          <View style={styles.loadingOverlay}>
-            <ActivityIndicator size="large" color="#fff" />
-            <Text style={styles.loadingText}>{t(language, 'pay')}</Text>
-          </View>
-        </Modal>
+      {submitting && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#fff" />
+          <Text style={styles.loadingText}>{t(language, 'pay')}</Text>
+        </View>
       )}
-    </>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  root: { flex: 1, position: 'relative' },
   container: { flex: 1, backgroundColor: colors.backgroundMuted },
   content: { padding: spacing.lg, paddingBottom: spacing.xl },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
@@ -264,6 +267,6 @@ const styles = StyleSheet.create({
   modalValue: { fontSize: 18, fontWeight: '700', color: colors.text },
   modalBtn: { marginTop: spacing.xl, backgroundColor: colors.primary, paddingVertical: spacing.md, borderRadius: borderRadius.md, alignItems: 'center' },
   modalBtnText: { color: '#fff', fontWeight: '600' },
-  loadingOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center' },
+  loadingOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 999, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', alignItems: 'center' },
   loadingText: { color: '#fff', marginTop: spacing.md, fontSize: 16 },
 });
