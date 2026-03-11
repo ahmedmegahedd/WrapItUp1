@@ -10,13 +10,14 @@ import AdminPageHeader from '../_components/AdminPageHeader'
 const ORDER_STATUSES = [
   { value: '', label: 'All' },
   { value: 'pending', label: 'Pending' },
+  { value: 'confirmed', label: 'Confirmed' },
   { value: 'preparing', label: 'Preparing' },
   { value: 'out_for_delivery', label: 'Out for Delivery' },
   { value: 'delivered', label: 'Delivered' },
   { value: 'cancelled', label: 'Cancelled' },
 ]
 
-const STATUS_OPTIONS = ['pending', 'preparing', 'out_for_delivery', 'delivered', 'cancelled']
+const STATUS_OPTIONS = ['pending', 'confirmed', 'preparing', 'out_for_delivery', 'delivered', 'cancelled']
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<any[]>([])
@@ -457,6 +458,28 @@ function OrderDetails({
     <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: '14px 32px', fontSize: 13 }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <DetailRow label="Phone" value={order.customer_phone || '—'} />
+        {(order.recipient_name || order.recipient_phone) && (
+          <div style={{ borderTop: '1px solid var(--admin-border)', paddingTop: 10, marginTop: 4 }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--admin-text-3)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6, margin: 0 }}>
+              Recipient
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 6 }}>
+              {order.recipient_name && (
+                <DetailRow label="Name" value={order.recipient_name} />
+              )}
+              {order.recipient_phone && (
+                <DetailRow
+                  label="Phone"
+                  value={
+                    <a href={`tel:${order.recipient_phone}`} style={{ color: 'var(--admin-accent)', textDecoration: 'none' }}>
+                      {order.recipient_phone}
+                    </a>
+                  }
+                />
+              )}
+            </div>
+          </div>
+        )}
         {order.delivery_destination_name && (
           <DetailRow label="Destination" value={order.delivery_destination_name} />
         )}

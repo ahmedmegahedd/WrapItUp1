@@ -15,6 +15,8 @@ export interface CheckoutPaymentPayload {
     promo_code_id?: string;
     discount_amount_egp: number;
     card_message?: string;
+    recipient_name?: string | null;
+    recipient_phone?: string | null;
     items: Array<{
       product_id: string;
       quantity: number;

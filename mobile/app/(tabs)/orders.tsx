@@ -87,6 +87,7 @@ const getStatusConfig = (status: string) =>
 
 function OrderCard({ item, language }: { item: any; language: string }) {
   const cfg = getStatusConfig(item.order_status);
+  const isCancelled = item.order_status === 'cancelled';
   const items: any[] = item.order_items ?? [];
   const itemsSummary = items
     .map((i) => `${i.product_title} × ${i.quantity}`)
@@ -98,18 +99,18 @@ function OrderCard({ item, language }: { item: any; language: string }) {
   };
 
   return (
-    <TouchableOpacity style={styles.card} onPress={navigateToTracking} activeOpacity={0.92}>
+    <TouchableOpacity style={[styles.card, isCancelled && { opacity: 0.72 }]} onPress={navigateToTracking} activeOpacity={0.92}>
       {/* Colored status strip */}
       <View style={[styles.cardStrip, { backgroundColor: cfg.dot }]} />
 
       <View style={styles.cardBody}>
         {/* Row 1: order number + total */}
         <View style={styles.cardRow}>
-          <Text style={styles.orderNumber}>
+          <Text style={[styles.orderNumber, isCancelled && styles.strikethrough]}>
             <Text style={styles.orderNumberLabel}>{t(language as any, 'orderNumberLabel')} </Text>
             {item.order_number}
           </Text>
-          <Text style={styles.total}>{formatPrice(Number(item.total))}</Text>
+          <Text style={[styles.total, isCancelled && styles.strikethrough]}>{formatPrice(Number(item.total))}</Text>
         </View>
 
         {/* Row 2: status badge + delivery date */}
@@ -120,7 +121,7 @@ function OrderCard({ item, language }: { item: any; language: string }) {
           </View>
           <View style={styles.metaRow}>
             <Ionicons name="calendar-outline" size={12} color={colors.textMuted} />
-            <Text style={styles.metaText}>
+            <Text style={[styles.metaText, isCancelled && styles.strikethrough]}>
               {new Date(item.delivery_date).toLocaleDateString()}
             </Text>
           </View>
@@ -130,7 +131,7 @@ function OrderCard({ item, language }: { item: any; language: string }) {
         {!!item.delivery_time_slot && (
           <View style={[styles.metaRow, { marginBottom: 12 }]}>
             <Ionicons name="time-outline" size={12} color={colors.textMuted} />
-            <Text style={styles.metaText}>{item.delivery_time_slot}</Text>
+            <Text style={[styles.metaText, isCancelled && styles.strikethrough]}>{item.delivery_time_slot}</Text>
           </View>
         )}
 
@@ -141,7 +142,7 @@ function OrderCard({ item, language }: { item: any; language: string }) {
         {itemsSummary.length > 0 && (
           <View style={[styles.metaRow, { marginTop: 12, alignItems: 'flex-start' }]}>
             <Ionicons name="bag-outline" size={13} color={colors.textMuted} style={{ marginTop: 1 }} />
-            <Text style={[styles.metaText, { flex: 1 }]} numberOfLines={2}>
+            <Text style={[styles.metaText, { flex: 1 }, isCancelled && styles.strikethrough]} numberOfLines={2}>
               {itemsSummary}
             </Text>
           </View>
@@ -155,10 +156,16 @@ function OrderCard({ item, language }: { item: any; language: string }) {
         )}
 
         {/* Footer: track button */}
-        <View style={styles.cardFooter}>
-          <Ionicons name="navigate-outline" size={14} color={colors.primary} />
-          <Text style={styles.trackText}>{t(language as any, 'trackOrder')}</Text>
-        </View>
+        {isCancelled ? (
+          <View style={styles.cardFooter}>
+            <Text style={{ fontSize: 12, color: colors.error, fontStyle: 'italic' }}>Order Cancelled</Text>
+          </View>
+        ) : (
+          <View style={styles.cardFooter}>
+            <Ionicons name="navigate-outline" size={14} color={colors.primary} />
+            <Text style={styles.trackText}>{t(language as any, 'trackOrder')}</Text>
+          </View>
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -396,4 +403,5 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
   trackText: { fontSize: 13, fontWeight: '700', color: colors.primary },
+  strikethrough: { textDecorationLine: 'line-through' as const, color: '#9CA3AF' },
 });

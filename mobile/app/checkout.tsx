@@ -13,13 +13,12 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
+  Pressable,
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
-  Modal,
 } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, router } from 'expo-router';
 import { useCart } from '@/contexts/CartContext';
@@ -83,6 +82,134 @@ function buildDefaultDeliveryDays(count = 61): { date: string; status: string }[
   return days;
 }
 
+function CalendarPicker({
+  visible,
+  onClose,
+  onSelectDate,
+  minDate,
+  maxDate,
+  availableDates,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  onSelectDate: (date: Date) => void;
+  minDate: Date;
+  maxDate: Date;
+  availableDates: string[];
+}) {
+  const [viewMonth, setViewMonth] = useState(() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() + 1);
+    return d;
+  });
+
+  if (!visible) return null;
+
+  const year = viewMonth.getFullYear();
+  const month = viewMonth.getMonth();
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const monthName = viewMonth.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+  const cells = [
+    ...Array(firstDay).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+  ];
+
+  const isAvailable = (day: number) => {
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    if (availableDates && availableDates.length > 0) {
+      return availableDates.includes(dateStr);
+    }
+    const d = new Date(year, month, day);
+    return d >= minDate && d <= maxDate;
+  };
+
+  const handleDayPress = (day: number) => {
+    if (!isAvailable(day)) return;
+    onSelectDate(new Date(year, month, day));
+    onClose();
+  };
+
+  const prevMonth = () => {
+    const d = new Date(viewMonth);
+    d.setMonth(d.getMonth() - 1);
+    const now = new Date();
+    if (d.getFullYear() < now.getFullYear() ||
+      (d.getFullYear() === now.getFullYear() && d.getMonth() < now.getMonth())) return;
+    setViewMonth(d);
+  };
+
+  const nextMonth = () => {
+    const d = new Date(viewMonth);
+    d.setMonth(d.getMonth() + 1);
+    const limit = new Date();
+    limit.setMonth(limit.getMonth() + 3);
+    if (d > limit) return;
+    setViewMonth(d);
+  };
+
+  return (
+    <Pressable
+      style={{
+        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'flex-end',
+        zIndex: 1000,
+      }}
+      onPress={onClose}
+    >
+      <Pressable onPress={(e) => e.stopPropagation()}>
+        <View style={{
+          backgroundColor: 'white',
+          borderTopLeftRadius: 24, borderTopRightRadius: 24,
+          padding: 20, paddingBottom: 32,
+        }}>
+          <View style={{ width: 40, height: 4, backgroundColor: '#E5E7EB', borderRadius: 2, alignSelf: 'center', marginBottom: 16 }} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <TouchableOpacity onPress={prevMonth} style={{ padding: 8 }}>
+              <Ionicons name="chevron-back" size={20} color={colors.primary} />
+            </TouchableOpacity>
+            <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text }}>{monthName}</Text>
+            <TouchableOpacity onPress={nextMonth} style={{ padding: 8 }}>
+              <Ionicons name="chevron-forward" size={20} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
+          <View style={{ flexDirection: 'row', marginBottom: 8 }}>
+            {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
+              <Text key={d} style={{ flex: 1, textAlign: 'center', fontSize: 11, fontWeight: '600', color: colors.textMuted }}>{d}</Text>
+            ))}
+          </View>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+            {cells.map((day, i) => {
+              if (!day) return <View key={`empty-${i}`} style={{ width: '14.28%', height: 44 }} />;
+              const available = isAvailable(day);
+              return (
+                <TouchableOpacity
+                  key={day}
+                  onPress={() => handleDayPress(day)}
+                  disabled={!available}
+                  style={{ width: '14.28%', height: 44, justifyContent: 'center', alignItems: 'center' }}
+                >
+                  <View style={{
+                    width: 36, height: 36, borderRadius: 18,
+                    justifyContent: 'center', alignItems: 'center',
+                    backgroundColor: available ? colors.primaryLight : 'transparent',
+                  }}>
+                    <Text style={{ fontSize: 14, fontWeight: available ? '600' : '400', color: available ? colors.primary : colors.textLight }}>
+                      {day}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+      </Pressable>
+    </Pressable>
+  );
+}
+
 export default function CheckoutScreen() {
   const { language } = useLanguage();
   const { session } = useAuth();
@@ -95,6 +222,10 @@ export default function CheckoutScreen() {
   const [customerName, setCustomerName] = useState('');
   const [customerEmail, setCustomerEmail] = useState(session?.user?.email ?? '');
   const [customerPhone, setCustomerPhone] = useState('');
+  const [nameFromAccount, setNameFromAccount] = useState(false);
+  const [phoneFromAccount, setPhoneFromAccount] = useState(false);
+  const [recipientName, setRecipientName] = useState('');
+  const [recipientPhone, setRecipientPhone] = useState('');
   const [deliveryDate, setDeliveryDate] = useState('');
   const [deliveryTimeSlotId, setDeliveryTimeSlotId] = useState('');
   const [deliveryTimeSlotLabel, setDeliveryTimeSlotLabel] = useState('');
@@ -126,7 +257,6 @@ export default function CheckoutScreen() {
     return Math.round((filled / 5) * 100);
   })();
   const [calendarVisible, setCalendarVisible] = useState(false);
-  const [calendarDate, setCalendarDate] = useState(() => new Date());
 
   useEffect(() => {
     const today = startOfDay(new Date());
@@ -146,6 +276,15 @@ export default function CheckoutScreen() {
       getDeliveryDestinations().then(setDestinations).catch(() => setDestinations([])),
     ]).finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (session?.user) {
+      const savedName = session.user.user_metadata?.full_name ?? '';
+      if (savedName) { setCustomerName(savedName); setNameFromAccount(true); }
+      const savedPhone = session.user.user_metadata?.phone ?? '';
+      if (savedPhone) { setCustomerPhone(savedPhone); setPhoneFromAccount(true); }
+    }
+  }, [session]);
 
   useFocusEffect(
     useCallback(() => {
@@ -229,6 +368,8 @@ export default function CheckoutScreen() {
       promo_code_id: promoCodeId || undefined,
       discount_amount_egp: promoDiscount,
       card_message: cardMessage.trim() || undefined,
+      recipient_name: recipientName.trim() || null,
+      recipient_phone: recipientPhone.trim() || null,
       items: items.map((i) => ({
         product_id: i.product_id,
         quantity: i.quantity,
@@ -272,7 +413,14 @@ export default function CheckoutScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title: t(language, 'checkout') }} />
+      <Stack.Screen options={{
+        headerShown: true,
+        headerTitle: t(language, 'checkout'),
+        headerBackTitle: '',
+        headerTintColor: colors.primary,
+        headerStyle: { backgroundColor: colors.background },
+        headerShadowVisible: false,
+      }} />
       <CheckoutProgressBar progress={progressPct} />
       <KeyboardAvoidingView
         style={styles.container}
@@ -288,6 +436,9 @@ export default function CheckoutScreen() {
             value={customerName}
             onChangeText={setCustomerName}
           />
+          {nameFromAccount && (
+            <Text style={styles.autoFillHint}>✓ From your account</Text>
+          )}
           <TextInput
             style={styles.input}
             placeholder={t(language, 'emailRequired')}
@@ -303,6 +454,29 @@ export default function CheckoutScreen() {
             placeholderTextColor={colors.textMuted}
             value={customerPhone}
             onChangeText={setCustomerPhone}
+            keyboardType="phone-pad"
+          />
+          {phoneFromAccount && (
+            <Text style={styles.autoFillHint}>✓ From your account</Text>
+          )}
+
+          <Text style={styles.section}>🎁 Recipient Details</Text>
+          <Text style={{ fontSize: 12, color: colors.textMuted, marginTop: 2, marginBottom: 12 }}>
+            Who is receiving this order? Leave blank if it's for you.
+          </Text>
+          <TextInput
+            style={styles.input}
+            placeholder="e.g. Sara Ahmed"
+            placeholderTextColor={colors.textMuted}
+            value={recipientName}
+            onChangeText={setRecipientName}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="e.g. 01012345678"
+            placeholderTextColor={colors.textMuted}
+            value={recipientPhone}
+            onChangeText={setRecipientPhone}
             keyboardType="phone-pad"
           />
 
@@ -331,54 +505,12 @@ export default function CheckoutScreen() {
               })}
               <TouchableOpacity
                 style={styles.dateChip}
-                onPress={() => {
-                  setCalendarDate(deliveryDate ? new Date(deliveryDate) : new Date());
-                  setCalendarVisible(true);
-                }}
+                onPress={() => setCalendarVisible(true)}
               >
                 <Text style={styles.dateChipText}>{t(language, 'seeMore')}</Text>
               </TouchableOpacity>
             </ScrollView>
           </View>
-
-          <Modal visible={calendarVisible} transparent animationType="slide">
-            <TouchableOpacity
-              style={styles.calendarBackdrop}
-              activeOpacity={1}
-              onPress={() => setCalendarVisible(false)}
-            >
-              <View style={styles.calendarModal} onStartShouldSetResponder={() => true}>
-                <View style={styles.calendarHeader}>
-                  <Text style={styles.calendarTitle}>{t(language, 'deliveryDate')}</Text>
-                  <TouchableOpacity onPress={() => setCalendarVisible(false)}>
-                    <Text style={styles.calendarDone}>{t(language, 'pay').replace(/ .*/, '')}</Text>
-                  </TouchableOpacity>
-                </View>
-                <DateTimePicker
-                  value={calendarDate}
-                  mode="date"
-                  display="calendar"
-                  minimumDate={new Date()}
-                  maximumDate={addDays(startOfDay(new Date()), 60)}
-                  onChange={(_, date) => {
-                    if (date) {
-                      setCalendarDate(date);
-                      setDeliveryDate(format(date, 'yyyy-MM-dd'));
-                      if (Platform.OS === 'android') setCalendarVisible(false);
-                    }
-                  }}
-                />
-                {Platform.OS === 'ios' && (
-                  <TouchableOpacity
-                    style={styles.calendarDoneButton}
-                    onPress={() => setCalendarVisible(false)}
-                  >
-                    <Text style={styles.calendarDoneButtonText}>{t(language, 'done')}</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            </TouchableOpacity>
-          </Modal>
 
           {deliveryDate && (
             <>
@@ -525,6 +657,14 @@ export default function CheckoutScreen() {
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
+      <CalendarPicker
+        visible={calendarVisible}
+        onClose={() => setCalendarVisible(false)}
+        onSelectDate={(date: Date) => setDeliveryDate(format(date, 'yyyy-MM-dd'))}
+        minDate={startOfDay(new Date())}
+        maxDate={addDays(startOfDay(new Date()), 90)}
+        availableDates={displayDays.map((d: any) => typeof d.date === 'string' ? d.date.split('T')[0] : '').filter(Boolean)}
+      />
     </>
   );
 }
@@ -569,6 +709,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   textArea: { minHeight: 80 },
+  autoFillHint: { fontSize: 11, color: colors.success, marginTop: 3, marginBottom: spacing.sm },
   dateRowWrap: {
     height: 52,
     marginBottom: spacing.sm,

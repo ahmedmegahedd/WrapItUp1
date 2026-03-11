@@ -188,6 +188,8 @@ export class OrdersService {
       points_earned: pointsEarned,
       payment_status: isCod ? 'PENDING_CASH' : 'pending',
       order_status: 'pending',
+      recipient_name: createOrderDto.recipient_name ?? null,
+      recipient_phone: createOrderDto.recipient_phone ?? null,
     };
     const { data: order, error: orderError } = await supabase
       .from('orders')

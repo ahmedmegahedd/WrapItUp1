@@ -69,6 +69,14 @@ export class CreateOrderDto {
   @IsOptional()
   discount_amount_egp?: number;
 
+  @IsString()
+  @IsOptional()
+  recipient_name?: string;
+
+  @IsString()
+  @IsOptional()
+  recipient_phone?: string;
+
   /** Payment method: 'card' | 'apple_pay' | 'instapay' | 'cod'. Optional; defaults to 'card' for Paymob flow. */
   @IsString()
   @IsOptional()
