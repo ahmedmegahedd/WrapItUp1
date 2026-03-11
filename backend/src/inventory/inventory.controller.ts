@@ -18,6 +18,8 @@ import { CreateMaterialDto } from './dto/create-material.dto';
 import { UpdateMaterialDto } from './dto/update-material.dto';
 import { RestockMaterialDto } from './dto/restock-material.dto';
 import { SetProductRecipeDto } from './dto/set-product-recipe.dto';
+import { CreateCategoryDto } from './dto/create-category.dto';
+import { UpdateCategoryDto } from './dto/update-category.dto';
 
 @Controller('admin/inventory')
 @UseGuards(AdminGuard, PermissionGuard)
@@ -38,6 +40,26 @@ export class InventoryController {
   @Get('shopping-list')
   getShoppingList() {
     return this.inventoryService.getShoppingList();
+  }
+
+  @Get('categories')
+  getAllCategories() {
+    return this.inventoryService.getAllCategories();
+  }
+
+  @Post('categories')
+  createCategory(@Body() dto: CreateCategoryDto) {
+    return this.inventoryService.createCategory(dto);
+  }
+
+  @Patch('categories/:id')
+  updateCategory(@Param('id') id: string, @Body() dto: UpdateCategoryDto) {
+    return this.inventoryService.updateCategory(id, dto);
+  }
+
+  @Delete('categories/:id')
+  deleteCategory(@Param('id') id: string) {
+    return this.inventoryService.deleteCategory(id);
   }
 
   @Get('product/:productId')

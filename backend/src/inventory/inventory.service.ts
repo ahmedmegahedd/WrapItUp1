@@ -4,6 +4,8 @@ import { CreateMaterialDto } from './dto/create-material.dto';
 import { UpdateMaterialDto } from './dto/update-material.dto';
 import { RestockMaterialDto } from './dto/restock-material.dto';
 import { SetProductRecipeDto } from './dto/set-product-recipe.dto';
+import { CreateCategoryDto } from './dto/create-category.dto';
+import { UpdateCategoryDto } from './dto/update-category.dto';
 
 const VALID_UNITS = ['unit', 'kg', 'g', 'm', 'cm', 'L', 'ml'] as const;
 
@@ -39,7 +41,7 @@ export class InventoryService {
     const supabase = this.supabaseService.getAdminClient();
     const { data, error } = await supabase
       .from('materials')
-      .select('*')
+      .select('*, material_categories(id, name, name_ar, color, icon)')
       .order('name');
     if (error) throw new BadRequestException(error.message);
     const rows = (data ?? []).map((row: any) => {
@@ -112,6 +114,7 @@ export class InventoryService {
     if (dto.low_stock_threshold != null)
       insert.low_stock_threshold = dto.low_stock_threshold;
     if (dto.notes != null) insert.notes = dto.notes.trim() || null;
+    insert.category_id = dto.category_id ?? null;
 
     const { data: material, error } = await supabase
       .from('materials')
@@ -152,6 +155,7 @@ export class InventoryService {
     if (dto.low_stock_threshold !== undefined)
       update.low_stock_threshold = dto.low_stock_threshold;
     if (dto.notes !== undefined) update.notes = dto.notes?.trim() || null;
+    if (dto.category_id !== undefined) update.category_id = dto.category_id ?? null;
     update.updated_at = new Date().toISOString();
 
     const { data: material, error } = await supabase
@@ -438,12 +442,13 @@ export class InventoryService {
       threshold: number | null;
       suggestedQuantity: number;
       reason: 'negative' | 'low' | 'demand';
+      category_id: string | null;
     }>
   > {
     const supabase = this.supabaseService.getAdminClient();
     const { data: materials } = await supabase
       .from('materials')
-      .select('id, name, unit, stock_quantity, low_stock_threshold');
+      .select('id, name, unit, stock_quantity, low_stock_threshold, category_id');
     const matList = materials ?? [];
 
     const { data: pendingOrders } = await supabase
@@ -473,6 +478,7 @@ export class InventoryService {
       threshold: number | null;
       suggestedQuantity: number;
       reason: 'negative' | 'low' | 'demand';
+      category_id: string | null;
     }> = [];
 
     for (const m of matList) {
@@ -503,9 +509,80 @@ export class InventoryService {
         threshold,
         suggestedQuantity: Math.max(suggested, debt + gap),
         reason,
+        category_id: (m as any).category_id ?? null,
       });
     }
     return result;
+  }
+
+  async getAllCategories() {
+    const supabase = this.supabaseService.getAdminClient();
+    const { data, error } = await supabase
+      .from('material_categories')
+      .select('*')
+      .order('sort_order', { ascending: true });
+    if (error) throw new BadRequestException(error.message);
+    return data ?? [];
+  }
+
+  async createCategory(dto: CreateCategoryDto) {
+    const supabase = this.supabaseService.getAdminClient();
+    const { data: existing } = await supabase
+      .from('material_categories')
+      .select('sort_order')
+      .order('sort_order', { ascending: false })
+      .limit(1);
+    const maxOrder = (existing?.[0]?.sort_order as number | undefined) ?? 0;
+    const { data, error } = await supabase
+      .from('material_categories')
+      .insert({
+        name: dto.name,
+        name_ar: dto.name_ar ?? null,
+        color: dto.color ?? '#6B7280',
+        icon: dto.icon ?? 'cube-outline',
+        sort_order: dto.sort_order ?? maxOrder + 1,
+      })
+      .select()
+      .single();
+    if (error) throw new BadRequestException(error.message);
+    return data;
+  }
+
+  async updateCategory(id: string, dto: UpdateCategoryDto) {
+    const supabase = this.supabaseService.getAdminClient();
+    const update: Record<string, unknown> = {};
+    if (dto.name !== undefined) update.name = dto.name;
+    if (dto.name_ar !== undefined) update.name_ar = dto.name_ar ?? null;
+    if (dto.color !== undefined) update.color = dto.color;
+    if (dto.icon !== undefined) update.icon = dto.icon;
+    if (dto.sort_order !== undefined) update.sort_order = dto.sort_order;
+    const { data, error } = await supabase
+      .from('material_categories')
+      .update(update)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw new BadRequestException(error.message);
+    return data;
+  }
+
+  async deleteCategory(id: string) {
+    const supabase = this.supabaseService.getAdminClient();
+    const { count } = await supabase
+      .from('materials')
+      .select('*', { count: 'exact', head: true })
+      .eq('category_id', id);
+    if (count && count > 0) {
+      throw new BadRequestException(
+        `Cannot delete category: ${count} material(s) are assigned to it. Reassign them first.`,
+      );
+    }
+    const { error } = await supabase
+      .from('material_categories')
+      .delete()
+      .eq('id', id);
+    if (error) throw new BadRequestException(error.message);
+    return { deleted: true };
   }
 
   private async logTransaction(

@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsOptional, IsIn, Min } from 'class-validator';
+import { IsString, IsNumber, IsOptional, IsIn, IsUUID, Min } from 'class-validator';
 
 const UNITS = ['unit', 'kg', 'g', 'm', 'cm', 'L', 'ml'] as const;
 
@@ -27,4 +27,8 @@ export class CreateMaterialDto {
   @IsString()
   @IsOptional()
   notes?: string;
+
+  @IsUUID()
+  @IsOptional()
+  category_id?: string;
 }
