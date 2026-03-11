@@ -490,11 +490,38 @@ export class OrdersService {
     await this.findOne(id);
 
     if (updateOrderStatusDto.order_status === 'cancelled') {
-      try {
-        await this.inventoryService.refundInventoryForOrder(id);
-      } catch (e) {
-        console.warn('[Orders] refundInventoryForOrder failed (non-blocking):', e);
-      }
+      // Refund material inventory (non-blocking)
+      this.inventoryService.refundInventoryForOrder(id).catch((e) =>
+        console.warn('[Orders] refundInventoryForOrder failed (non-blocking):', e),
+      );
+
+      // Refund product stock quantities (non-blocking)
+      (async () => {
+        try {
+          const { data: orderItems } = await supabase
+            .from('order_items')
+            .select('product_id, quantity')
+            .eq('order_id', id);
+          if (orderItems?.length) {
+            for (const item of orderItems) {
+              const { data: product } = await supabase
+                .from('products')
+                .select('stock_quantity')
+                .eq('id', item.product_id)
+                .single();
+              if (product) {
+                await supabase
+                  .from('products')
+                  .update({ stock_quantity: (product.stock_quantity ?? 0) + item.quantity })
+                  .eq('id', item.product_id);
+              }
+            }
+            console.log(`[Orders] Product stock refunded for cancelled order ${id}`);
+          }
+        } catch (e) {
+          console.warn('[Orders] Product stock refund failed (non-blocking):', e);
+        }
+      })();
     }
 
     const { error } = await supabase

@@ -44,7 +44,7 @@ type NavItemDef = { href: string; label: string; icon: string; exact?: boolean; 
 const NAV_GROUPS: { label: string; items: NavItemDef[] }[] = [
   {
     label: 'OVERVIEW',
-    items: [{ href: '/admin', label: 'Dashboard', icon: 'grid', exact: true }],
+    items: [{ href: '/admin', label: 'Dashboard', icon: 'grid', exact: true, badge: 'pending' as const }],
   },
   {
     label: 'CATALOG',
@@ -359,9 +359,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </>
       )}
 
-      <main style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+      <main style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflowX: 'hidden' }}>
         <div className="lg:hidden" style={{ height: 56, flexShrink: 0 }} />
-        <div style={{ flex: 1, padding: 'clamp(16px, 3vw, 32px)' }}>
+        <div style={{ flex: 1, padding: 'clamp(16px, 3vw, 32px)', minWidth: 0 }}>
           {children}
         </div>
       </main>

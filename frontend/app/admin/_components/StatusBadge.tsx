@@ -5,6 +5,7 @@ interface StatusBadgeProps {
 
 const ORDER_STATUS: Record<string, { bg: string; color: string; label: string }> = {
   pending:          { bg: '#FEF9E7', color: '#B8860B', label: 'Pending' },
+  confirmed:        { bg: '#D1FAE5', color: '#065F46', label: 'Confirmed' },
   preparing:        { bg: '#EBF3FF', color: '#1A56DB', label: 'Preparing' },
   out_for_delivery: { bg: '#F3EEFF', color: '#6B21A8', label: 'Out for Delivery' },
   delivered:        { bg: '#EBF5EF', color: '#4A7C5C', label: 'Delivered' },

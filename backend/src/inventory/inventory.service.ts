@@ -379,7 +379,18 @@ export class InventoryService {
     if (!deductions || deductions.length === 0) return;
 
     for (const tx of deductions) {
-      const before = Number(tx.quantity_after);
+      // Read current stock fresh from DB — don't use stale tx.quantity_after
+      const { data: material } = await supabase
+        .from('materials')
+        .select('stock_quantity, name')
+        .eq('id', tx.material_id)
+        .single();
+      if (!material) {
+        console.warn(`[Inventory] Material ${tx.material_id} not found for refund`);
+        continue;
+      }
+
+      const before = Number(material.stock_quantity ?? 0);
       const change = Math.abs(Number(tx.quantity_change));
       const after = before + change;
 

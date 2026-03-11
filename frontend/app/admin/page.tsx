@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import api from '@/lib/api'
 import StatusBadge from './_components/StatusBadge'
@@ -31,9 +31,28 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
   const [collabProfile, setCollabProfile] = useState<any>(null)
   const [collabEarnings, setCollabEarnings] = useState<any>(null)
+  const [lastUpdated, setLastUpdated] = useState('')
 
   useEffect(() => {
     api.get('/admin/auth/me').then((r) => setMe(r.data?.user ?? null)).catch(() => setMe(null))
+  }, [])
+
+  const fetchAdminData = useCallback(() => {
+    Promise.all([
+      api.get('/admin/orders'),
+      api.get('/admin/products'),
+      api.get('/admin/inventory/low-stock').catch(() => ({ data: [] })),
+      api.get('/admin/inventory/shopping-list').catch(() => ({ data: [] })),
+    ])
+      .then(([ordersRes, productsRes, lowRes, shopRes]) => {
+        setOrders(ordersRes.data || [])
+        setProducts(productsRes.data || [])
+        setLowStockMaterialsCount(Array.isArray(lowRes.data) ? lowRes.data.length : 0)
+        setShoppingListCount(Array.isArray(shopRes.data) ? shopRes.data.length : 0)
+        setLastUpdated(new Date().toLocaleTimeString())
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false))
   }, [])
 
   useEffect(() => {
@@ -54,28 +73,32 @@ export default function AdminDashboard() {
         .finally(() => setLoading(false))
       return
     }
-    Promise.all([
-      api.get('/admin/orders'),
-      api.get('/admin/products'),
-      api.get('/admin/inventory/low-stock').catch(() => ({ data: [] })),
-      api.get('/admin/inventory/shopping-list').catch(() => ({ data: [] })),
-    ])
-      .then(([ordersRes, productsRes, lowRes, shopRes]) => {
-        setOrders(ordersRes.data || [])
-        setProducts(productsRes.data || [])
-        setLowStockMaterialsCount(Array.isArray(lowRes.data) ? lowRes.data.length : 0)
-        setShoppingListCount(Array.isArray(shopRes.data) ? shopRes.data.length : 0)
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false))
-  }, [me?.is_collaborator])
+    fetchAdminData()
+    const interval = setInterval(fetchAdminData, 30000)
+    return () => clearInterval(interval)
+  }, [me?.is_collaborator, fetchAdminData])
 
-  const today = new Date().toISOString().split('T')[0]
-  const todaysOrders = orders.filter((o) => o.delivery_date?.startsWith(today))
+  const todayStr = new Date().toISOString().split('T')[0]
+
+  // Card 1: orders placed today (by created_at)
+  const todaysOrders = orders.filter((o) => o.created_at?.startsWith(todayStr))
+  const todaysOrdersCount = todaysOrders.length
+
+  // Card 2: pending orders
   const pendingOrders = orders.filter((o) => o.order_status === 'pending')
-  const totalRevenue = orders
-    .filter((o) => o.payment_status === 'paid')
-    .reduce((s, o) => s + parseFloat(o.total || 0), 0)
+  const pendingCount = pendingOrders.length
+
+  // Card 3: confirmed today
+  const confirmedTodayCount = orders.filter(
+    (o) => o.order_status === 'confirmed' && o.updated_at?.startsWith(todayStr),
+  ).length
+
+  // Card 4: today's revenue (orders placed today in confirmed+ statuses)
+  const CONFIRMED_STATUSES = ['confirmed', 'preparing', 'out_for_delivery', 'delivered']
+  const todaysRevenue = orders
+    .filter((o) => o.created_at?.startsWith(todayStr) && CONFIRMED_STATUSES.includes(o.order_status))
+    .reduce((sum, o) => sum + (Number(o.total) || 0), 0)
+
   const lowStock = products.filter(
     (p) => p.is_active && p.stock_quantity != null && p.stock_quantity <= 5,
   )
@@ -86,9 +109,12 @@ export default function AdminDashboard() {
     )
     .slice(0, 5)
 
-  // Group today's deliveries by time slot
+  // Delivery widget: by delivery_date, excluding cancelled
+  const todaysDeliveries = orders.filter(
+    (o) => o.delivery_date?.startsWith(todayStr) && o.order_status !== 'cancelled',
+  )
   const slotMap: Record<string, any[]> = {}
-  for (const o of todaysOrders) {
+  for (const o of todaysDeliveries) {
     const slot = o.delivery_time_slot || 'Unspecified'
     if (!slotMap[slot]) slotMap[slot] = []
     slotMap[slot].push(o)
@@ -177,43 +203,15 @@ export default function AdminDashboard() {
     )
   }
 
-  const metricCards = [
-    {
-      label: "Today's Deliveries",
-      value: loading ? '—' : String(todaysOrders.length),
-      sub: loading ? '' : `${todaysOrders.filter((o) => o.order_status === 'delivered').length} delivered`,
-      href: '/admin/orders',
-      icon: '📦',
-      highlight: false,
-    },
-    {
-      label: 'Pending Orders',
-      value: loading ? '—' : String(pendingOrders.length),
-      sub: loading ? '' : pendingOrders.length > 0 ? 'Needs attention' : 'All clear',
-      href: '/admin/orders',
-      icon: '⏳',
-      highlight: !loading && pendingOrders.length > 0,
-    },
-    {
-      label: 'Total Revenue',
-      value: loading ? '—' : formatEgp(totalRevenue),
-      sub: loading ? '' : `${orders.filter((o) => o.payment_status === 'paid').length} paid orders`,
-      href: '/admin/analytics',
-      icon: '💰',
-      highlight: false,
-    },
-    {
-      label: 'Low Stock',
-      value: loading ? '—' : String(lowStock.length),
-      sub: loading ? '' : lowStock.length > 0 ? 'Items ≤ 5 units' : 'All well stocked',
-      href: '/admin/products',
-      icon: '⚠️',
-      highlight: !loading && lowStock.length > 0,
-    },
-  ]
-
   return (
     <div style={{ padding: '24px 24px 40px', maxWidth: 1100, margin: '0 auto' }}>
+      <style>{`
+        @keyframes pulse-border {
+          0%, 100% { border-color: #FCD34D; box-shadow: 0 0 0 2px #FEF3C7; }
+          50% { border-color: #F59E0B; box-shadow: 0 0 0 3px #FDE68A; }
+        }
+      `}</style>
+
       {/* Page header */}
       <div style={{ marginBottom: 28 }}>
         <h1 style={{ fontSize: 26, fontWeight: 700, color: 'var(--admin-text)', margin: 0, lineHeight: 1.2 }}>
@@ -228,54 +226,55 @@ export default function AdminDashboard() {
           <SkeletonCards count={4} />
         </div>
       ) : (
-        <div
-          className="grid grid-cols-2 lg:grid-cols-4"
-          style={{ gap: 14, marginBottom: 28 }}
-        >
-          {metricCards.map((card) => (
-            <Link
-              key={card.label}
-              href={card.href}
-              style={{
-                background: 'var(--admin-surface)',
-                border: `1px solid ${card.highlight ? 'var(--admin-accent)' : 'var(--admin-border)'}`,
-                borderRadius: 'var(--admin-radius)',
-                padding: '18px 20px',
-                textDecoration: 'none',
-                display: 'block',
-                boxShadow: card.highlight
-                  ? '0 0 0 3px var(--admin-accent-light)'
-                  : 'var(--admin-shadow)',
-                transition: 'transform 0.1s ease, box-shadow 0.15s ease',
-              }}
-            >
-              <div style={{ fontSize: 20, marginBottom: 10 }}>{card.icon}</div>
-              <div
-                style={{
-                  fontSize: 28,
-                  fontWeight: 700,
-                  color: card.highlight ? 'var(--admin-accent)' : 'var(--admin-text)',
-                  lineHeight: 1,
-                }}
-              >
-                {card.value}
-              </div>
-              <div
-                style={{
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: 'var(--admin-text)',
-                  marginTop: 6,
-                }}
-              >
-                {card.label}
-              </div>
-              <div style={{ fontSize: 12, color: 'var(--admin-text-3)', marginTop: 3 }}>
-                {card.sub}
+        <>
+          <div className="grid grid-cols-2 lg:grid-cols-4" style={{ gap: 14, marginBottom: 8 }}>
+            {/* Card 1: Today's Orders */}
+            <Link href="/admin/orders" style={{ textDecoration: 'none' }}>
+              <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #F3F4F6', padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.06)', transition: 'box-shadow 0.15s ease' }}>
+                <div style={{ width: 44, height: 44, borderRadius: '50%', backgroundColor: '#FDF2F8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>📦</div>
+                <div style={{ fontSize: 30, fontWeight: 800, color: '#111827', marginTop: 12, lineHeight: 1 }}>{todaysOrdersCount}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: 6 }}>Today&apos;s Orders</div>
+                <div style={{ fontSize: 12, color: '#9CA3AF', marginTop: 4 }}>orders placed today</div>
               </div>
             </Link>
-          ))}
-        </div>
+
+            {/* Card 2: Pending Orders */}
+            <Link href="/admin/orders" style={{ textDecoration: 'none' }}>
+              <div style={{ background: '#fff', borderRadius: 16, border: pendingCount > 0 ? '2px solid #FCD34D' : '1px solid #F3F4F6', padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.06)', animation: pendingCount > 0 ? 'pulse-border 2s infinite' : 'none' }}>
+                <div style={{ width: 44, height: 44, borderRadius: '50%', backgroundColor: '#FFFBEB', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>⏳</div>
+                <div style={{ fontSize: 30, fontWeight: 800, color: pendingCount > 0 ? '#F59E0B' : '#111827', marginTop: 12, lineHeight: 1 }}>{pendingCount}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: 6 }}>Pending Orders</div>
+                <div style={{ fontSize: 12, color: '#9CA3AF', marginTop: 4 }}>{pendingCount > 0 ? 'awaiting confirmation' : 'all clear'}</div>
+              </div>
+            </Link>
+
+            {/* Card 3: Confirmed Today */}
+            <Link href="/admin/orders" style={{ textDecoration: 'none' }}>
+              <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #F3F4F6', padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.06)', transition: 'box-shadow 0.15s ease' }}>
+                <div style={{ width: 44, height: 44, borderRadius: '50%', backgroundColor: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>✅</div>
+                <div style={{ fontSize: 30, fontWeight: 800, color: '#111827', marginTop: 12, lineHeight: 1 }}>{confirmedTodayCount}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: 6 }}>Confirmed Today</div>
+                <div style={{ fontSize: 12, color: '#9CA3AF', marginTop: 4 }}>orders confirmed today</div>
+              </div>
+            </Link>
+
+            {/* Card 4: Today's Revenue */}
+            <Link href="/admin/analytics" style={{ textDecoration: 'none' }}>
+              <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #F3F4F6', padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.06)', transition: 'box-shadow 0.15s ease' }}>
+                <div style={{ width: 44, height: 44, borderRadius: '50%', backgroundColor: '#F5F3FF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>💰</div>
+                <div style={{ fontSize: 30, fontWeight: 800, color: '#111827', marginTop: 12, lineHeight: 1 }}>{formatEgp(todaysRevenue)}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: 6 }}>Today&apos;s Revenue</div>
+                <div style={{ fontSize: 12, color: '#9CA3AF', marginTop: 4 }}>from confirmed orders</div>
+              </div>
+            </Link>
+          </div>
+
+          {lastUpdated && (
+            <p style={{ fontSize: 11, color: '#9CA3AF', textAlign: 'right', marginBottom: 20, marginTop: 4 }}>
+              Auto-refreshes every 30s · Last updated: {lastUpdated}
+            </p>
+          )}
+        </>
       )}
 
       {/* Inventory & Shopping List cards */}
@@ -528,7 +527,7 @@ export default function AdminDashboard() {
           <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--admin-text)' }}>
             Today&apos;s Delivery Schedule
           </span>
-          {!loading && todaysOrders.length > 0 && (
+          {!loading && todaysDeliveries.length > 0 && (
             <span
               style={{
                 background: 'var(--admin-accent-light)',
@@ -539,7 +538,7 @@ export default function AdminDashboard() {
                 borderRadius: 100,
               }}
             >
-              {todaysOrders.length} order{todaysOrders.length !== 1 ? 's' : ''}
+              {todaysDeliveries.length} deliver{todaysDeliveries.length !== 1 ? 'ies' : 'y'} today
             </span>
           )}
         </div>
@@ -554,7 +553,7 @@ export default function AdminDashboard() {
               />
             ))}
           </div>
-        ) : todaysOrders.length === 0 ? (
+        ) : todaysDeliveries.length === 0 ? (
           <div
             style={{
               padding: '40px 20px',
